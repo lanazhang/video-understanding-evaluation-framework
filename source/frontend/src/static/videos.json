@@ -1,0 +1,98 @@
+[
+  {
+    "id": "video-1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    "name": "Rainy Day",
+    "url": "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-rainy-day.mp4",
+    "thumbnail": "https://via.placeholder.com/320x180?text=Rainy+Day",
+    "duration": "0:30",
+    "labelCount": 3,
+    "status": "Completed",
+    "label": "Action",
+    "group": "Group A",
+    "uploadDate": "2024-01-15",
+    "labels": [
+      {
+        "id": "label-a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        "name": "Person walking",
+        "timestamp": 2.5,
+        "duration": 5
+      },
+      {
+        "id": "label-b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        "name": "Car passing",
+        "timestamp": 8.0,
+        "duration": 3
+      },
+      {
+        "id": "label-c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+        "name": "Rain scene",
+        "timestamp": 15.5,
+        "duration": 10
+      }
+    ]
+  },
+  {
+    "id": "video-2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
+    "name": "Transform GenAI",
+    "url": "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-transform-genai.mp4",
+    "thumbnail": "https://via.placeholder.com/320x180?text=Transform+GenAI",
+    "duration": "0:45",
+    "labelCount": 3,
+    "status": "In Progress",
+    "label": "Scene",
+    "group": "Group B",
+    "uploadDate": "2024-01-16",
+    "labels": [
+      {
+        "id": "label-d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+        "name": "Opening scene",
+        "timestamp": 0,
+        "duration": 4
+      },
+      {
+        "id": "label-e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+        "name": "Action sequence",
+        "timestamp": 12.3,
+        "duration": 8
+      },
+      {
+        "id": "label-f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+        "name": "Technology showcase",
+        "timestamp": 20.0,
+        "duration": 6
+      }
+    ]
+  },
+  {
+    "id": "video-3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e7f",
+    "name": "Magical Day Out",
+    "url": "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-magical-day-out.mp4",
+    "thumbnail": "https://via.placeholder.com/320x180?text=Magical+Day+Out",
+    "duration": "0:35",
+    "labelCount": 3,
+    "status": "Pending",
+    "label": "Action",
+    "group": "Group A",
+    "uploadDate": "2024-01-17",
+    "labels": [
+      {
+        "id": "label-a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
+        "name": "Intro",
+        "timestamp": 0,
+        "duration": 2
+      },
+      {
+        "id": "label-b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e",
+        "name": "Main content",
+        "timestamp": 5.5,
+        "duration": 15
+      },
+      {
+        "id": "label-c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f",
+        "name": "Outro",
+        "timestamp": 22.0,
+        "duration": 3
+      }
+    ]
+  }
+]

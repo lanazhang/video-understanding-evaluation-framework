@@ -1,0 +1,71 @@
+[
+  {
+    "id": "eval-d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "taskName": "Evaluation Task 1",
+    "status": "completed",
+    "videoId": "video-1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    "groundTruthTaskId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "model": "nova-2-lite",
+    "createdDate": "2024-01-20",
+    "processedDate": "2024-01-20",
+    "results": {
+      "precision": 0.85,
+      "recall": 0.90,
+      "f1Score": 0.87,
+      "truePositives": 2,
+      "falsePositives": 1,
+      "falseNegatives": 0,
+      "predictedLabels": [
+        {
+          "id": "pred-label-1",
+          "name": "Person walking",
+          "timestamp": 2.3,
+          "duration": 5.2,
+          "confidence": 0.92,
+          "matchedGroundTruth": "label-a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+          "evaluation": "true-positive"
+        },
+        {
+          "id": "pred-label-2",
+          "name": "Car passing",
+          "timestamp": 7.8,
+          "duration": 3.5,
+          "confidence": 0.88,
+          "matchedGroundTruth": "label-b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+          "evaluation": "true-positive"
+        },
+        {
+          "id": "pred-label-3",
+          "name": "Person running",
+          "timestamp": 12.0,
+          "duration": 2.0,
+          "confidence": 0.65,
+          "matchedGroundTruth": null,
+          "evaluation": "false-positive"
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval-e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+    "taskName": "Evaluation Task 2",
+    "status": "in-progress",
+    "videoId": "video-2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
+    "groundTruthTaskId": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    "model": "gemini-video",
+    "createdDate": "2024-01-21",
+    "processedDate": null,
+    "results": null
+  },
+  {
+    "id": "eval-f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+    "taskName": "Evaluation Task 3",
+    "status": "pending",
+    "videoId": "video-3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e7f",
+    "groundTruthTaskId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "model": "twelvelabs-pegasus-3.0-vu",
+    "createdDate": "2024-01-22",
+    "processedDate": null,
+    "results": null
+  }
+]

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "taskName": "ground-truth Task 1",
+    "status": "pending",
+    "selectedVideos": [
+      "video-1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "video-2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"
+    ],
+    "eventTypes": "Person walking, Car passing, Rain scene",
+    "baseModel": "nova-1-lite",
+    "requireHumanAnnotation": true,
+    "createdDate": "2024-01-10"
+  },
+  {
+    "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    "taskName": "ground-truth Task 2",
+    "status": "completed",
+    "selectedVideos": [
+      "video-3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e7f"
+    ],
+    "eventTypes": "Opening scene, Action sequence, Technology showcase",
+    "baseModel": "twelvelabs-pegasus-2.7-vu",
+    "requireHumanAnnotation": true,
+    "createdDate": "2024-01-12"
+  },
+  {
+    "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "taskName": "ground-truth Task 3",
+    "status": "in-progress",
+    "selectedVideos": [
+      "video-1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+    ],
+    "eventTypes": "Intro, Main content, Outro",
+    "baseModel": "gemini-video",
+    "requireHumanAnnotation": false,
+    "createdDate": "2024-01-15"
+  }
+]

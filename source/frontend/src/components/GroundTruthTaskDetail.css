@@ -1,0 +1,723 @@
+.task-detail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.task-detail-header h1 {
+  margin: 0;
+}
+
+.btn-back {
+  padding: 8px 16px;
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+
+.btn-back:hover {
+  background-color: #d0d0d0;
+}
+
+.task-detail-content {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.video-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.video-card-thumbnail {
+  width: 100%;
+  height: 180px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.video-card-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.video-card-content {
+  padding: 15px;
+}
+
+.video-card-title {
+  margin: 0 0 10px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+}
+
+.video-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.video-card-info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.video-detail-view {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.video-left-section {
+  flex: 0 0 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.video-player-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.video-info-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.video-info-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.2em;
+}
+
+.video-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.video-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.video-info-label {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: 500;
+}
+
+.video-info-value {
+  font-size: 1em;
+  color: #333;
+}
+
+.labels-right-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.review-mode-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.review-mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.review-mode-header h3 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.btn-toggle-review {
+  padding: 10px 20px;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-toggle-review:hover {
+  background-color: #535bf2;
+}
+
+.btn-toggle-review.active {
+  background-color: #4caf50;
+}
+
+.review-mode-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.review-instructions {
+  padding: 15px;
+  background-color: #f0f7ff;
+  border-left: 4px solid #646cff;
+  border-radius: 4px;
+}
+
+.review-instructions p {
+  margin: 0 0 8px 0;
+  font-size: 0.9em;
+  color: #333;
+  line-height: 1.5;
+}
+
+.review-instructions p:last-child {
+  margin-bottom: 0;
+}
+
+.annotation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.time-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-mark {
+  flex: 1;
+  padding: 10px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.btn-mark:hover:not(:disabled) {
+  background-color: #1976d2;
+}
+
+.btn-mark:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.time-display {
+  display: flex;
+  gap: 15px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.95em;
+}
+
+.time-edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.time-edit-section .time-display {
+  background-color: transparent;
+  padding: 0;
+  gap: 15px;
+}
+
+.time-edit-section .time-input-group {
+  flex: 1;
+}
+
+.time-edit-section .time-input-group label {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 5px;
+  font-family: inherit;
+}
+
+.time-edit-section .time-input-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.event-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-selection label {
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+.event-selection input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.annotation-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save-annotation,
+.btn-cancel-annotation {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.btn-save-annotation {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-save-annotation:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.btn-save-annotation:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-cancel-annotation {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-cancel-annotation:hover {
+  background-color: #da190b;
+}
+
+.video-player {
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-player video {
+  display: block;
+  max-height: 500px;
+}
+
+.labels-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.labels-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.labels-header h3 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.quick-review-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-quick-review {
+  flex: 1;
+  padding: 8px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-quick-review.accept {
+  background-color: #4caf50;
+}
+
+.btn-quick-review.accept:hover {
+  background-color: #45a049;
+}
+
+.btn-quick-review.reject {
+  background-color: #f44336;
+}
+
+.btn-quick-review.reject:hover {
+  background-color: #da190b;
+}
+
+.btn-quick-review.adjust {
+  background-color: #ff9800;
+}
+
+.btn-quick-review.adjust:hover {
+  background-color: #f57c00;
+}
+
+.labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.label-item {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label-item:hover {
+  background-color: #f0f0f0;
+  border-color: #646cff;
+}
+
+.label-item.active {
+  background-color: #e8eaff;
+  border-color: #646cff;
+}
+
+.label-item.reviewed {
+  border-width: 3px;
+}
+
+.label-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.label-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.label-time {
+  font-size: 0.9em;
+  color: #666;
+  font-family: monospace;
+}
+
+.label-item.human-annotation {
+  background-color: #e8f5e9;
+  border-color: #4caf50;
+}
+
+.label-item .badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75em;
+  margin-left: 8px;
+}
+
+.btn-delete-annotation {
+  padding: 4px 12px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  margin-left: 10px;
+}
+
+.btn-delete-annotation:hover {
+  background-color: #da190b;
+}
+
+.label-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-review {
+  padding: 6px 12px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s;
+}
+
+.btn-review:hover {
+  background-color: #1976d2;
+}
+
+.review-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-review-option {
+  padding: 6px 12px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: all 0.2s;
+}
+
+.btn-review-option.tp {
+  background-color: #4caf50;
+}
+
+.btn-review-option.tp:hover {
+  background-color: #45a049;
+}
+
+.btn-review-option.fp {
+  background-color: #f44336;
+}
+
+.btn-review-option.fp:hover {
+  background-color: #da190b;
+}
+
+.btn-review-option.edit {
+  background-color: #ff9800;
+}
+
+.btn-review-option.edit:hover {
+  background-color: #f57c00;
+}
+
+.review-badge {
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.label-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label-edit-header {
+  font-weight: 600;
+  color: #333;
+}
+
+.label-edit-times {
+  display: flex;
+  gap: 15px;
+}
+
+.time-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.time-input-group label {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: 500;
+}
+
+.time-input-group input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.label-edit-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save-edit,
+.btn-cancel-edit {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.btn-save-edit {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-save-edit:hover {
+  background-color: #45a049;
+}
+
+.btn-cancel-edit {
+  background-color: #999;
+  color: white;
+}
+
+.btn-cancel-edit:hover {
+  background-color: #777;
+}
+
+.capture-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f0f7ff;
+  border-radius: 6px;
+  border: 1px solid #d0e7ff;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #4caf50;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.toggle-label {
+  font-size: 0.95em;
+  color: #333;
+  font-weight: 500;
+}
+
+.capture-hint {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
+  font-style: italic;
+}

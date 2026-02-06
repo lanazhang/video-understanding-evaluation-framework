@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import './EvaluationTaskDetail.css'
 import videosData from '../static/videos.json'
 import groundTruthTasksData from '../static/groundTruthTasks.json'
+import groundTruthResultsData from '../static/groundTruthResults.json'
 
 function EvaluationTaskDetail({ task, onBack }) {
   const [selectedLabel, setSelectedLabel] = useState(null)
@@ -13,8 +14,11 @@ function EvaluationTaskDetail({ task, onBack }) {
   const video = videosData.find(v => v.id === task.videoId)
   const groundTruthTask = groundTruthTasksData.find(gt => gt.id === task.groundTruthTaskId)
   
-  // Get ground truth labels for this video
-  const groundTruthLabels = video?.labels || []
+  // Get ground truth labels for this video from groundTruthResults
+  const groundTruthResult = groundTruthResultsData.find(
+    result => result.groundTruthTaskId === task.groundTruthTaskId && result.videoId === task.videoId
+  )
+  const groundTruthLabels = groundTruthResult?.labels || []
   const predictedLabels = task.results?.predictedLabels || []
 
   const handleLabelClick = (label) => {

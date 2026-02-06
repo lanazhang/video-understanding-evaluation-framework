@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import './GroundTruthTaskDetail.css'
 import taskConfig from '../static/taskConfig.json'
 import videosData from '../static/videos.json'
+import groundTruthResultsData from '../static/groundTruthResults.json'
 
 function GroundTruthTaskDetail({ task, onBack }) {
   const [selectedVideo, setSelectedVideo] = useState(null)
@@ -21,6 +22,19 @@ function GroundTruthTaskDetail({ task, onBack }) {
   const videos = videosData.filter(video => 
     task.selectedVideos && task.selectedVideos.includes(video.id)
   )
+
+  // Get ground truth results for videos in this task
+  const getVideoResults = (videoId) => {
+    return groundTruthResultsData.find(
+      result => result.groundTruthTaskId === task.id && result.videoId === videoId
+    )
+  }
+
+  // Get labels for selected video
+  const videoResults = selectedVideo ? getVideoResults(selectedVideo.id) : null
+  const videoLabels = videoResults?.labels || []
+  const videoStatus = videoResults?.status || 'pending'
+  const videoLabelCount = videoResults?.labelCount || 0
 
   // Parse event types from task
   const eventTypes = task.eventTypes ? task.eventTypes.split(',').map(e => e.trim()) : taskConfig.eventTypes
@@ -222,10 +236,10 @@ function GroundTruthTaskDetail({ task, onBack }) {
                       <span>Duration: {video.duration}</span>
                     </div>
                     <div className="video-card-info-item">
-                      <span>Labels: {video.labelCount}</span>
+                      <span>Labels: {getVideoResults(video.id)?.labelCount || 0}</span>
                     </div>
                     <div className="video-card-info-item">
-                      <span>Status: {video.status}</span>
+                      <span>Status: {getVideoResults(video.id)?.status || 'pending'}</span>
                     </div>
                   </div>
                 </div>
@@ -262,11 +276,11 @@ function GroundTruthTaskDetail({ task, onBack }) {
                       </div>
                       <div className="video-info-item">
                         <span className="video-info-label">Status</span>
-                        <span className="video-info-value">{selectedVideo.status}</span>
+                        <span className="video-info-value">{videoStatus}</span>
                       </div>
                       <div className="video-info-item">
                         <span className="video-info-label">Total Labels</span>
-                        <span className="video-info-value">{selectedVideo.labelCount}</span>
+                        <span className="video-info-value">{videoLabelCount}</span>
                       </div>
                     </div>
                   </div>
@@ -402,10 +416,10 @@ function GroundTruthTaskDetail({ task, onBack }) {
                   
                   <div className="labels-section">
                     <div className="labels-header">
-                      <h3>All Labels ({selectedVideo.labels.length + humanAnnotations.length})</h3>
+                      <h3>All Labels ({videoLabels.length + humanAnnotations.length})</h3>
                     </div>
                     <div className="labels-list">
-                      {selectedVideo.labels.map((label) => {
+                      {videoLabels.map((label) => {
                         const reviewBadge = getReviewBadge(label.id)
                         
                         return (

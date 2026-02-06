@@ -5,6 +5,7 @@ import videosData from '../static/videos.json'
 function VideoManagement() {
   const [videos, setVideos] = useState([])
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [uploadForm, setUploadForm] = useState({
     files: [],
     name: '',
@@ -61,13 +62,44 @@ function VideoManagement() {
     setVideos(prev => prev.filter(v => v.id !== id))
   }
 
+  // Filter videos based on search query
+  const filteredVideos = videos.filter(video => {
+    const query = searchQuery.toLowerCase()
+    const name = video.name?.toLowerCase() || ''
+    const label = video.label?.toLowerCase() || ''
+    const group = video.group?.toLowerCase() || ''
+    
+    return name.includes(query) || 
+           label.includes(query) || 
+           group.includes(query)
+  })
+
   return (
     <div className="video-management">
       <div className="content-header">
-        <h1>Video Management</h1>
+        <h1>Video Inventory</h1>
         <button className="btn-create" onClick={() => setShowUploadModal(true)}>
           + Upload Videos
         </button>
+      </div>
+
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search videos..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+        {searchQuery && (
+          <button 
+            className="btn-clear-search"
+            onClick={() => setSearchQuery('')}
+            title="Clear search"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       <div className="video-table">
@@ -83,7 +115,14 @@ function VideoManagement() {
             </tr>
           </thead>
           <tbody>
-            {videos.map(video => (
+            {filteredVideos.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="no-results-cell">
+                  {searchQuery ? `No videos found matching "${searchQuery}"` : 'No videos uploaded yet'}
+                </td>
+              </tr>
+            ) : (
+              filteredVideos.map(video => (
               <tr key={video.id}>
                 <td>{video.name}</td>
                 <td>{video.duration}</td>
@@ -96,7 +135,8 @@ function VideoManagement() {
                   </button>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>

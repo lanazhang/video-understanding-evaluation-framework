@@ -16,6 +16,7 @@ function App() {
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [selectedTask, setSelectedTask] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchTasks(activeMenu)
@@ -50,6 +51,7 @@ function App() {
   const handleMenuClick = (menu) => {
     setActiveMenu(menu)
     setSelectedTask(null) // Reset selected task when changing menu
+    setSearchQuery('') // Reset search when changing menu
   }
 
   const handleCreateTask = (formData) => {
@@ -80,6 +82,20 @@ function App() {
     setSelectedTask(null)
     setSidebarCollapsed(false) // Expand sidebar when returning to list
   }
+
+  // Filter tasks based on search query
+  const filteredTasks = tasks.filter(task => {
+    const query = searchQuery.toLowerCase()
+    const taskName = task.taskName?.toLowerCase() || ''
+    const status = task.status?.toLowerCase() || ''
+    const model = task.model?.toLowerCase() || ''
+    const baseModel = task.baseModel?.toLowerCase() || ''
+    
+    return taskName.includes(query) || 
+           status.includes(query) || 
+           model.includes(query) || 
+           baseModel.includes(query)
+  })
 
   return (
     <div className="App">
@@ -132,10 +148,10 @@ function App() {
             <button 
               className={activeMenu === 'videos' ? 'active' : ''}
               onClick={() => handleMenuClick('videos')}
-              title="Video Management"
+              title="Video Inventory"
             >
               <span className="menu-icon">🎥</span>
-              <span className="menu-text">Video Management</span>
+              <span className="menu-text">Video Inventory</span>
             </button>
           </nav>
         </div>
@@ -156,11 +172,32 @@ function App() {
                   + Create Task
                 </button>
               </div>
+              <div className="search-bar">
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+                {searchQuery && (
+                  <button 
+                    className="btn-clear-search"
+                    onClick={() => setSearchQuery('')}
+                    title="Clear search"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
               {loading ? (
                 <p>Loading tasks...</p>
               ) : (
                 <div className="task-list">
-                  {tasks.map(task => (
+                  {filteredTasks.length === 0 ? (
+                    <p className="no-results">No tasks found matching "{searchQuery}"</p>
+                  ) : (
+                    filteredTasks.map(task => (
                     <div 
                       key={task.id} 
                       className="task-item"
@@ -213,7 +250,8 @@ function App() {
                         </div>
                       )}
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               )}
             </>

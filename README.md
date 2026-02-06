@@ -1,23 +1,34 @@
 # Video Understanding Evaluation Framework
 
-A web-based tool for evaluating video understanding models by comparing their predictions against ground truth annotations.
+A flexible tool that streamlines video labeling and evaluation, enabling teams to work with their own data, reduce ground-truth bias, and accelerate model development.
 
-## Overview
+## Why This Matters
 
-This framework helps you assess the performance of various video understanding models (including Nova, Gemini, TwelveLabs, and others) by:
+Video understanding is a core growth driver in the GenAI market, enabling new revenue streams across media, advertising, education, retail, and enterprise. By transforming video into structured, actionable intelligence, it powers monetization use cases like contextual ads, shoppable content, personalization, and automation—making it a strategic capability, not just a technical one.
 
-- **Managing Videos**: Upload and organize video content with metadata
-- **Creating Ground Truth**: Define reference annotations manually or with model assistance
-- **Running Evaluations**: Process videos with different models and compare results against ground truth
-- **Reviewing Results**: Analyze predictions with metrics (precision, recall, F1) and verify labels individually
+## The Challenge
 
-## Features
+Video understanding evaluation is uniquely complex:
 
-- Support for multiple model types: multimodal embedding, image frame-based, video clip-based, and video understanding models
-- Human annotation workflow with timestamp capture
-- Side-by-side comparison of predicted vs ground truth labels
-- Interactive video player with label navigation
-- Evaluation metrics and verification tools
+- **Diverse use cases**: Event detection, scene understanding, labeling, and temporal reasoning often require multiple models rather than a single solution
+- **Varied definitions**: "Events" differ widely across industries (M&E content moderation, sports events, IP camera surveillance)
+- **Limited access**: Representative sample videos are often restricted by licensing constraints
+- **Resource-intensive**: Ground-truth generation requires significant time and effort
+- **Complex tooling**: Effective evaluation demands rich UI tools for labeling, visualization, and temporal analysis
+
+From a data scientist's perspective, obtaining high-quality datasets and accurate labels is a major challenge. Diverse content, licensing limits, and complex event definitions make ground-truth generation resource-intensive, yet it's essential for efficient model training and reliable evaluation.
+
+## Solution
+
+This framework helps teams quickly assess customer-provided videos and recommend the most suitable models—not based on popularity or biased assumptions, but on actual data and use cases. It enables rapid insights, supports larger-scale ground-truth tasks, and improves model training by allowing evaluation across multiple models and methods.
+
+### Key Features
+
+- **User-uploaded videos & custom labeling**: Efficiently label videos for specific use cases, reducing dependence on public/licensed datasets and minimizing ground-truth bias
+- **Cross-model comparison**: Supports TwelveLabs, Gemini, LLaMA, OpenAI, and Nova Understanding with different video understanding methods (frame-sampling, embedding-based)
+- **Human-in-the-loop efficiency**: Auto-label with a base model and quickly refine with human input, reducing labeling time from weeks to hours
+- **Flexible evaluation workflow**: Compare outputs across models and methods to identify optimal solutions, adaptable for different industries and content types
+- **Interactive review tools**: Side-by-side comparison of predicted vs ground truth labels with metrics (precision, recall, F1) and individual label verification
 
 ## Getting Started
 

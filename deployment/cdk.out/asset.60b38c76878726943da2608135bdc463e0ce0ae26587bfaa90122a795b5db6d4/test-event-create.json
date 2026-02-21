@@ -1,0 +1,6 @@
+{
+  "Action": "create",
+  "TaskId": "test-task-456",
+  "FileName": "sample-video.mp4",
+  "NumParts": 5
+}

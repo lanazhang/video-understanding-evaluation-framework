@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './CreateGroundTruthTask.css'
 import { modelGroups } from '../static/modelConfig'
+import { FetchPost } from '../utils/apiHelper'
 
 function CreateGroundTruthTask({ onClose, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -11,23 +12,51 @@ function CreateGroundTruthTask({ onClose, onSubmit }) {
     requireHumanAnnotation: true,
   })
   const [availableVideos, setAvailableVideos] = useState([])
+  const [loadingVideos, setLoadingVideos] = useState(false)
+  const [videoError, setVideoError] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(12)
+  const [totalCount, setTotalCount] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
 
   useEffect(() => {
     fetchAvailableVideos()
-  }, [])
+  }, [currentPage, searchQuery])
 
   const fetchAvailableVideos = async () => {
-    // TODO: Replace with actual API call
-    // const response = await fetch('/api/videos')
-    // const data = await response.json()
-    // setAvailableVideos(data)
+    setLoadingVideos(true)
+    setVideoError(null)
     
-    // Mock data
-    setAvailableVideos([
-      { id: 1, name: 'Sample Video 1', label: 'Action', group: 'Group A' },
-      { id: 2, name: 'Sample Video 2', label: 'Scene', group: 'Group B' },
-      { id: 3, name: 'Sample Video 3', label: 'Action', group: 'Group A' },
-    ])
+    try {
+      const startIndex = (currentPage - 1) * pageSize
+      
+      const payload = {
+        start_index: startIndex,
+        page_size: pageSize,
+        uploaded_by: '',
+        group: ''
+      }
+      
+      const data = await FetchPost('/video/get-videos', payload, 'EvalService')
+      
+      if (data.statusCode === 200) {
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        setAvailableVideos(responseBody.videos || [])
+        setTotalCount(responseBody.total_count || 0)
+        setHasMore(responseBody.has_more || false)
+      } else {
+        const errorMessage = typeof data.body === 'object' && data.body.error 
+          ? data.body.error 
+          : data.body
+        setVideoError(errorMessage || 'Failed to fetch videos')
+      }
+    } catch (err) {
+      console.error('Error fetching videos:', err)
+      setVideoError(err.message || 'Failed to fetch videos')
+    } finally {
+      setLoadingVideos(false)
+    }
   }
 
   const handleInputChange = (e) => {
@@ -39,11 +68,23 @@ function CreateGroundTruthTask({ onClose, onSubmit }) {
   }
 
   const handleVideoUpload = (e) => {
-    const selectedIds = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+    const selectedIds = Array.from(e.target.selectedOptions, option => option.value)
     setFormData(prev => ({
       ...prev,
       selectedVideos: selectedIds
     }))
+  }
+
+  const toggleVideoSelection = (videoId) => {
+    setFormData(prev => {
+      const isSelected = prev.selectedVideos.includes(videoId)
+      return {
+        ...prev,
+        selectedVideos: isSelected
+          ? prev.selectedVideos.filter(id => id !== videoId)
+          : [...prev.selectedVideos, videoId]
+      }
+    })
   }
 
   const removeVideo = (videoId) => {
@@ -52,6 +93,40 @@ function CreateGroundTruthTask({ onClose, onSubmit }) {
       selectedVideos: prev.selectedVideos.filter(id => id !== videoId)
     }))
   }
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1) // Reset to first page on search
+  }
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const getTotalPages = () => {
+    return Math.ceil(totalCount / pageSize)
+  }
+
+  const getThumbnailUrl = (video) => {
+    if (video.thumbnail_url) {
+      return video.thumbnail_url
+    }
+    return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90"%3E%3Crect width="160" height="90" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="%23666"%3ENo Thumbnail%3C/text%3E%3C/svg%3E'
+  }
+
+  const filteredVideos = availableVideos.filter(video => {
+    const query = searchQuery.toLowerCase()
+    const name = video.name?.toLowerCase() || ''
+    return name.includes(query)
+  })
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -82,33 +157,99 @@ function CreateGroundTruthTask({ onClose, onSubmit }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="videos">Select Videos *</label>
-            <select
-              id="videos"
-              multiple
-              size="5"
-              onChange={handleVideoUpload}
-              className="video-select"
-              required={formData.selectedVideos.length === 0}
-            >
-              {availableVideos.map(video => (
-                <option key={video.id} value={video.id}>
-                  {video.name} - {video.label} ({video.group})
-                </option>
-              ))}
-            </select>
-            <p className="help-text">Hold Ctrl/Cmd to select multiple videos</p>
+            <label>Select Videos *</label>
+            {videoError && (
+              <div className="error-message">{videoError}</div>
+            )}
+            
+            <div className="video-search">
+              <input
+                type="text"
+                placeholder="Search videos..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="search-input-small"
+              />
+            </div>
+
+            {loadingVideos ? (
+              <div className="loading-message">Loading videos...</div>
+            ) : (
+              <>
+                <div className="video-grid">
+                  {filteredVideos.map(video => {
+                    const videoId = video.Id || video.id
+                    const isSelected = formData.selectedVideos.includes(videoId)
+                    return (
+                      <div
+                        key={videoId}
+                        className={`video-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => toggleVideoSelection(videoId)}
+                      >
+                        <img
+                          src={getThumbnailUrl(video)}
+                          alt={video.name}
+                          className="video-card-thumbnail"
+                          onError={(e) => {
+                            e.target.src = getThumbnailUrl({})
+                          }}
+                        />
+                        <div className="video-card-info">
+                          <div className="video-card-name">{video.name}</div>
+                          {isSelected && (
+                            <div className="video-card-badge">✓ Selected</div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {totalCount > 0 && (
+                  <div className="video-pagination">
+                    <button
+                      type="button"
+                      className="btn-page-small"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1 || loadingVideos}
+                    >
+                      Previous
+                    </button>
+                    <span className="page-info-small">
+                      Page {currentPage} of {getTotalPages()}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-page-small"
+                      onClick={handleNextPage}
+                      disabled={!hasMore || loadingVideos}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
             {formData.selectedVideos.length > 0 && (
-              <div className="video-list">
-                {formData.selectedVideos.map(videoId => {
-                  const video = availableVideos.find(v => v.id === videoId)
-                  return video ? (
-                    <div key={videoId} className="video-item">
-                      <span>{video.name}</span>
-                      <button type="button" onClick={() => removeVideo(videoId)}>Remove</button>
-                    </div>
-                  ) : null
-                })}
+              <div className="selected-videos-summary">
+                <strong>{formData.selectedVideos.length} video(s) selected</strong>
+                <div className="video-list">
+                  {formData.selectedVideos.map(videoId => {
+                    const video = availableVideos.find(v => (v.Id || v.id) === videoId)
+                    return video ? (
+                      <div key={videoId} className="video-item">
+                        <span>{video.name}</span>
+                        <button type="button" onClick={() => removeVideo(videoId)}>Remove</button>
+                      </div>
+                    ) : (
+                      <div key={videoId} className="video-item">
+                        <span>Video ID: {videoId}</span>
+                        <button type="button" onClick={() => removeVideo(videoId)}>Remove</button>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>

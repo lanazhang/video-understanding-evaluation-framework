@@ -1,0 +1,8 @@
+{
+  "id": "test-video-123",
+  "name": "Sample Test Video",
+  "description": "This is a test video for development",
+  "s3_bucket": "my-eval-bucket",
+  "s3_key_video": "tasks/test-video-123/videos/sample.mp4",
+  "uploaded_by": "test-user@example.com"
+}

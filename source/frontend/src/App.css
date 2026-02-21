@@ -9,17 +9,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 30px;
-  height: 70px;
-  background-color: #2c3e50;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 12px 24px;
+  height: auto;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .app-title {
   margin: 0;
-  font-size: 1.5em;
+  font-size: 1.2em;
   font-weight: 600;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .user-profile {
@@ -29,33 +33,37 @@
 .profile-button {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: transparent;
-  border: none;
-  color: white;
+  border: 1px solid #e9ecef;
+  color: #495057;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
 .profile-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #f8f9fa;
+  border-color: #f97316;
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: #646cff;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  color: white;
+  font-size: 0.9em;
 }
 
 .user-name {
-  font-size: 1em;
+  font-size: 0.9em;
+  font-weight: 500;
 }
 
 .user-menu {
@@ -94,16 +102,17 @@
 }
 
 .sidebar {
-  width: 250px;
-  background-color: #f5f5f5;
-  padding: 20px;
-  border-right: 1px solid #ddd;
+  width: 70px;
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 16px 8px;
+  border-right: 1px solid #e9ecef;
   transition: width 0.3s ease, padding 0.3s ease;
+  position: relative;
 }
 
-.sidebar.collapsed {
-  width: 70px;
-  padding: 20px 10px;
+.sidebar.expanded {
+  width: 220px;
+  padding: 16px;
 }
 
 .sidebar-header {
@@ -111,39 +120,57 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  height: 40px;
+  padding: 0 4px;
 }
 
 .sidebar h2 {
   margin: 0;
-  font-size: 1.5em;
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed h2 {
+  font-size: 1.2em;
   opacity: 0;
   width: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
   overflow: hidden;
 }
 
-.btn-collapse {
-  padding: 6px 10px;
-  background-color: #e0e0e0;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1.2em;
-  transition: background-color 0.2s;
-  min-width: 32px;
+.sidebar.expanded h2 {
+  opacity: 1;
+  width: auto;
 }
 
-.btn-collapse:hover {
-  background-color: #d0d0d0;
+.btn-toggle {
+  padding: 6px;
+  background-color: transparent;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.sidebar:not(.expanded) .btn-toggle {
+  margin-left: 0;
+}
+
+.btn-toggle:hover {
+  background-color: #e9ecef;
+  border-color: #f97316;
+  color: #f97316;
 }
 
 .sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .sidebar button {
@@ -151,76 +178,89 @@
   align-items: center;
   gap: 12px;
   text-align: left;
-  padding: 12px 16px;
+  padding: 12px;
   border: none;
   background-color: transparent;
   cursor: pointer;
-  border-radius: 6px;
-  font-size: 1em;
-  transition: background-color 0.2s;
-}
-
-.sidebar.collapsed button {
-  justify-content: center;
-  padding: 12px 8px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  transition: all 0.2s ease;
+  justify-content: flex-start;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar button:hover {
-  background-color: #e0e0e0;
+  background-color: #e9ecef;
 }
 
 .sidebar button.active {
-  background-color: #646cff;
+  background-color: #f97316;
   color: white;
 }
 
 .menu-icon {
-  font-size: 1.2em;
-  min-width: 24px;
-  text-align: center;
+  min-width: 28px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menu-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
 }
 
 .menu-text {
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed .menu-text {
   opacity: 0;
   width: 0;
+  transition: opacity 0.3s ease;
   overflow: hidden;
+}
+
+.sidebar.expanded .menu-text {
+  opacity: 1;
+  width: auto;
 }
 
 .content {
   flex: 1;
-  padding: 40px;
+  padding: 32px;
   overflow-y: auto;
+  background-color: #fafbfc;
 }
 
 .content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .content-header h1 {
   margin: 0;
+  font-size: 1.8em;
 }
 
 .btn-create {
-  padding: 10px 20px;
-  background-color: #646cff;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1em;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .btn-create:hover {
-  background-color: #535bf2;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
 }
 
 .search-bar {
@@ -239,8 +279,8 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #646cff;
-  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .btn-clear-search {
@@ -288,7 +328,7 @@
 
 .task-item:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: #646cff;
+  border-color: #f97316;
 }
 
 .task-item-header {
@@ -342,7 +382,7 @@
 }
 
 .metric-preview strong {
-  color: #646cff;
+  color: #f97316;
   margin-right: 4px;
 }
 
@@ -366,4 +406,24 @@
 .status.in-progress {
   background-color: #d1ecf1;
   color: #0c5460;
+}
+
+/* Amplify Authenticator Customization */
+[data-amplify-authenticator] {
+  --amplify-colors-brand-primary-10: #ffedd5;
+  --amplify-colors-brand-primary-80: #f97316;
+  --amplify-colors-brand-primary-90: #ea580c;
+  --amplify-colors-brand-primary-100: #c2410c;
+}
+
+.user-info {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  word-break: break-word;
 }

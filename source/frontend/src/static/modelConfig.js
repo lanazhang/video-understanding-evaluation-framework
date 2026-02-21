@@ -4,15 +4,13 @@ export const modelGroups = [
     models: [
       {
         displayName: 'Nova MME',
-        modelId: '', // To be populated
-      },
-      {
-        displayName: 'TwelveLabs Marengo 2.7',
-        modelId: '', // To be populated
+        modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
+        api: '/video/start-nova-mme'
       },
       {
         displayName: 'TwelveLabs Marengo 3.0',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-twelvelabs-marengo-30'
       },
     ],
   },
@@ -21,31 +19,38 @@ export const modelGroups = [
     models: [
       {
         displayName: 'Nova 1 Lite',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-nova-1-lite'
       },
       {
         displayName: 'Nova 2 Lite',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-nova-2-lite'
       },
       {
         displayName: 'Nova 1 Pro',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-nova-1-pro'
       },
       {
         displayName: 'Nova 2 Pro',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-nova-2-pro'
       },
       {
         displayName: 'Llama',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-llama'
       },
       {
         displayName: 'OpenAI',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-openai'
       },
       {
         displayName: 'Gemini',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-frame-gemini'
       },
     ],
   },
@@ -54,19 +59,23 @@ export const modelGroups = [
     models: [
       {
         displayName: 'Nova Lite 1',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-clip-nova-lite-1'
       },
       {
         displayName: 'Nova Lite 2',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-clip-nova-lite-2'
       },
       {
         displayName: 'Nova Pro 1',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-clip-nova-pro-1'
       },
       {
         displayName: 'Nova Pro 2',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-clip-nova-pro-2'
       },
     ],
   },
@@ -75,31 +84,38 @@ export const modelGroups = [
     models: [
       {
         displayName: 'Nova Lite 1',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-nova-lite-1'
       },
       {
         displayName: 'Nova Lite 2',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-nova-lite-2'
       },
       {
         displayName: 'Nova Pro 1',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-nova-pro-1'
       },
       {
         displayName: 'Nova Pro 2',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-nova-pro-2'
       },
       {
         displayName: 'TwelveLabs Pegasus 2.7',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-twelvelabs-pegasus-27'
       },
       {
         displayName: 'TwelveLabs Pegasus 3',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-twelvelabs-pegasus-3'
       },
       {
         displayName: 'Gemini',
-        modelId: '', // To be populated
+        modelId: '',
+        api: '/video/start-understanding-gemini'
       },
     ],
   },

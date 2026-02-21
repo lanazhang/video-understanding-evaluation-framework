@@ -32,6 +32,8 @@ This framework helps teams quickly assess customer-provided videos and recommend
 
 ## Getting Started
 
+### Development
+
 ```bash
 cd source/frontend
 npm install
@@ -39,3 +41,30 @@ npm run dev
 ```
 
 Open http://localhost:5173 in your browser.
+
+### Production Build
+
+To create a production build for deployment as a static website:
+
+```bash
+cd source/frontend
+npm run build
+```
+
+The build output will be in the `source/frontend/dist` directory. You can deploy this folder to any static hosting service (AWS S3, Netlify, Vercel, GitHub Pages, etc.).
+
+**Subfolder Deployment**: The app is configured to be deployed to `/video-evaluation/` subfolder. To change this:
+1. Edit `source/frontend/vite.config.js` and update the `base` property to your desired path (e.g., `/my-app/`)
+2. Rebuild with `npm run build`
+3. Deploy the `dist` folder to your domain's subfolder
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## Tech Stack
+
+- React + Vite
+- JSON-based mock data (backend API integration pending)

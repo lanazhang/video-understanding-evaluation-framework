@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import '@aws-amplify/ui-react/styles.css'
+import { Authenticator } from '@aws-amplify/ui-react'
+import { signOut } from 'aws-amplify/auth'
 import CreateGroundTruthTask from './components/CreateGroundTruthTask'
 import CreateEvaluationTask from './components/CreateEvaluationTask'
 import VideoManagement from './components/VideoManagement'
@@ -9,14 +12,15 @@ import groundTruthTasksData from './static/groundTruthTasks.json'
 import evaluationTasksData from './static/evaluationTasks.json'
 
 function App() {
-  const [activeMenu, setActiveMenu] = useState('ground-truth')
+  const [activeMenu, setActiveMenu] = useState('videos')
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [selectedTask, setSelectedTask] = useState(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarExpanded, setSidebarExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [videoKey, setVideoKey] = useState(0) // Key to force VideoManagement remount
 
   useEffect(() => {
     fetchTasks(activeMenu)
@@ -43,15 +47,22 @@ function App() {
     }
   }
 
-  const handleLogout = () => {
-    // TODO: Implement logout logic
-    console.log('Logging out...')
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setShowUserMenu(false)
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   const handleMenuClick = (menu) => {
     setActiveMenu(menu)
     setSelectedTask(null) // Reset selected task when changing menu
     setSearchQuery('') // Reset search when changing menu
+    if (menu === 'videos') {
+      setVideoKey(prev => prev + 1) // Force VideoManagement to remount
+    }
   }
 
   const handleCreateTask = (formData) => {
@@ -75,12 +86,10 @@ function App() {
 
   const handleTaskClick = (task) => {
     setSelectedTask(task)
-    setSidebarCollapsed(true) // Auto-collapse sidebar when viewing task detail
   }
 
   const handleBackToList = () => {
     setSelectedTask(null)
-    setSidebarCollapsed(false) // Expand sidebar when returning to list
   }
 
   // Filter tasks based on search query
@@ -98,43 +107,69 @@ function App() {
   })
 
   return (
-    <div className="App">
-      <header className="top-bar">
-        <h1 className="app-title">Video Understanding Evaluation Framework</h1>
-        <div className="user-profile">
-          <button 
-            className="profile-button"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-          >
-            <span className="user-avatar">U</span>
-            <span className="user-name">User</span>
-          </button>
-          {showUserMenu && (
-            <div className="user-menu">
-              <button onClick={handleLogout}>Logout</button>
+    <Authenticator>
+      {({ signOut, user }) => (
+        <div className="App">
+          <header className="top-bar">
+            <h1 className="app-title">Video Understanding Evaluation Framework</h1>
+            <div className="user-profile">
+              <button 
+                className="profile-button"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                <span className="user-avatar">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
+                <span className="user-name">{user?.username || 'User'}</span>
+              </button>
+              {showUserMenu && (
+                <div className="user-menu">
+                  <div className="user-info">
+                    <p className="user-email">{user?.signInDetails?.loginId || user?.username}</p>
+                  </div>
+                  <button onClick={handleLogout}>Logout</button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </header>
+          </header>
       <div className="main-content">
-        <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className={`sidebar ${sidebarExpanded ? 'expanded' : ''}`}>
           <div className="sidebar-header">
             <h2>Menu</h2>
             <button 
-              className="btn-collapse"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="btn-toggle"
+              onClick={() => setSidebarExpanded(!sidebarExpanded)}
+              title={sidebarExpanded ? 'Collapse menu' : 'Expand menu'}
             >
-              {sidebarCollapsed ? '»' : '«'}
+              {sidebarExpanded ? '«' : '»'}
             </button>
           </div>
           <nav>
+            <button 
+              className={activeMenu === 'videos' ? 'active' : ''}
+              onClick={() => handleMenuClick('videos')}
+              title="Videos"
+            >
+              <span className="menu-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+              </span>
+              <span className="menu-text">Videos</span>
+            </button>
             <button 
               className={activeMenu === 'ground-truth' ? 'active' : ''}
               onClick={() => handleMenuClick('ground-truth')}
               title="Ground Truth"
             >
-              <span className="menu-icon">📋</span>
+              <span className="menu-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </span>
               <span className="menu-text">Ground Truth</span>
             </button>
             <button 
@@ -142,22 +177,19 @@ function App() {
               onClick={() => handleMenuClick('evaluation')}
               title="Evaluation"
             >
-              <span className="menu-icon">📊</span>
+              <span className="menu-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 11l3 3L22 4"></path>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+              </span>
               <span className="menu-text">Evaluation</span>
-            </button>
-            <button 
-              className={activeMenu === 'videos' ? 'active' : ''}
-              onClick={() => handleMenuClick('videos')}
-              title="Video Inventory"
-            >
-              <span className="menu-icon">🎥</span>
-              <span className="menu-text">Video Inventory</span>
             </button>
           </nav>
         </div>
         <div className="content">
           {activeMenu === 'videos' ? (
-            <VideoManagement />
+            <VideoManagement key={videoKey} />
           ) : selectedTask ? (
             activeMenu === 'ground-truth' ? (
               <GroundTruthTaskDetail task={selectedTask} onBack={handleBackToList} />
@@ -270,7 +302,9 @@ function App() {
           onSubmit={handleCreateEvaluationTask}
         />
       )}
-    </div>
+        </div>
+      )}
+    </Authenticator>
   )
 }
 

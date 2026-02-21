@@ -2,31 +2,37 @@
   {
     "id": "video-1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
     "name": "Rainy Day",
-    "url": "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-rainy-day.mp4",
-    "thumbnail": "https://via.placeholder.com/320x180?text=Rainy+Day",
-    "duration": "0:30",
-    "label": "Action",
-    "group": "Group A",
-    "uploadDate": "2024-01-15"
+    "description": "A captivating advertisement showcasing AWS services on a rainy day",
+    "s3_bucket": "ws-assets-prod-iad-r-iad-ed304a55c2ca1aee",
+    "s3_key_video": "8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-rainy-day.mp4",
+    "s3_key_thumbnail": "8082573f-f39e-4e39-a48f-f3562cc6e597/thumbnails/rainy-day.jpg",
+    "duration": 30,
+    "resolution": "1920x1080",
+    "uploaded_ts": "2024-01-15T10:30:00Z",
+    "uploaded_by": "john.doe@example.com"
   },
   {
     "id": "video-2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
     "name": "Transform GenAI",
-    "url": "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-transform-genai.mp4",
-    "thumbnail": "https://via.placeholder.com/320x180?text=Transform+GenAI",
-    "duration": "0:45",
-    "label": "Scene",
-    "group": "Group B",
-    "uploadDate": "2024-01-16"
+    "description": "Demonstrating the power of generative AI transformation with AWS",
+    "s3_bucket": "ws-assets-prod-iad-r-iad-ed304a55c2ca1aee",
+    "s3_key_video": "8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-transform-genai.mp4",
+    "s3_key_thumbnail": "8082573f-f39e-4e39-a48f-f3562cc6e597/thumbnails/transform-genai.jpg",
+    "duration": 45,
+    "resolution": "1920x1080",
+    "uploaded_ts": "2024-01-16T14:20:00Z",
+    "uploaded_by": "jane.smith@example.com"
   },
   {
     "id": "video-3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e7f",
     "name": "Magical Day Out",
-    "url": "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-magical-day-out.mp4",
-    "thumbnail": "https://via.placeholder.com/320x180?text=Magical+Day+Out",
-    "duration": "0:35",
-    "label": "Action",
-    "group": "Group A",
-    "uploadDate": "2024-01-17"
+    "description": "Experience the magic of cloud computing on a beautiful day",
+    "s3_bucket": "ws-assets-prod-iad-r-iad-ed304a55c2ca1aee",
+    "s3_key_video": "8082573f-f39e-4e39-a48f-f3562cc6e597/aws-ads-magical-day-out.mp4",
+    "s3_key_thumbnail": "8082573f-f39e-4e39-a48f-f3562cc6e597/thumbnails/magical-day-out.jpg",
+    "duration": 35,
+    "resolution": "1920x1080",
+    "uploaded_ts": "2024-01-17T09:15:00Z",
+    "uploaded_by": "bob.johnson@example.com"
   }
 ]

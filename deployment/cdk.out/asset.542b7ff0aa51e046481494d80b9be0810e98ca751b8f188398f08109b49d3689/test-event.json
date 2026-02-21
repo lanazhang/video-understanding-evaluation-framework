@@ -1,0 +1,5 @@
+{
+  "id": "test-video-123",
+  "s3_bucket": "my-eval-bucket",
+  "s3_key_video": "tasks/test-video-123/videos/sample.mp4"
+}

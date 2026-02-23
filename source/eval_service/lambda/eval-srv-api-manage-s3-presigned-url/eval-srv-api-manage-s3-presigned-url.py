@@ -9,6 +9,13 @@ VIDEO_UPLOAD_S3_PREFIX = os.environ.get("VIDEO_UPLOAD_S3_PREFIX")
 
 s3 = boto3.client('s3')
 
+# CORS headers for all responses
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+}
+
 def lambda_handler(event, context):
     
     action = event.get("Action", "create")
@@ -47,20 +54,22 @@ def lambda_handler(event, context):
         except Exception as ex:
             return {
                 'statusCode': 500,
-                'body': f'Failed to create multi parts upload urls: {ex}'
+                'headers': CORS_HEADERS,
+                'body': json.dumps({'error': f'Failed to create multi parts upload urls: {str(ex)}'})
             }
         
         return {
             'statusCode': 200,
-            'body': {
+            'headers': CORS_HEADERS,
+            'body': json.dumps({
                 "TaskId": task_id,
                 "FileName": file_name,
                 "UploadUrl": url,
-                "S3Bucket":VIDEO_UPLOAD_S3_BUCKET,
+                "S3Bucket": VIDEO_UPLOAD_S3_BUCKET,
                 "S3Key": key,
                 "UploadId": upload_id,
                 "UploadPartUrls": part_urls
-            }
+            })
         }
     elif action == 'complete':
         upload_id = event.get("UploadId")
@@ -76,12 +85,14 @@ def lambda_handler(event, context):
         except Exception as ex:
             return {
                 'statusCode': 500,
-                'body': f'Failed to complete the uploading task: {ex}'
+                'headers': CORS_HEADERS,
+                'body': json.dumps({'error': f'Failed to complete the uploading task: {str(ex)}'})
             }
         return {
-                'statusCode': 200,
-                'body': f'Uploading task completed.'
-            }
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'message': 'Uploading task completed.'})
+        }
             
     elif action == "abort": 
         upload_id = event.get("UploadId")
@@ -91,11 +102,13 @@ def lambda_handler(event, context):
             UploadId = upload_id
         )
         return {
-                'statusCode': 200,
-                'body': f'Uploading task aborted.'
-            }
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'message': 'Uploading task aborted.'})
+        }
 
     return {
-            'statusCode': 400,
-            'body': 'Invalid request'
-        }
+        'statusCode': 400,
+        'headers': CORS_HEADERS,
+        'body': json.dumps({'error': 'Invalid request'})
+    }

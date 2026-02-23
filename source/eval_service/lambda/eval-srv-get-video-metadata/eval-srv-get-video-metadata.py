@@ -17,13 +17,13 @@ def lambda_handler(event, context):
     try:
         print(f"Received event: {json.dumps(event)}")
         
-        # Parse event
-        video_id = event.get('id')
-        s3_bucket = event.get('s3_bucket')
-        s3_key_video = event.get('s3_key_video')
+        # Parse event - accept PascalCase
+        video_id = event.get('Id')
+        s3_bucket = event.get('S3Bucket')
+        s3_key_video = event.get('S3KeyVideo')
         
         if not all([video_id, s3_bucket, s3_key_video]):
-            raise ValueError("Missing required fields: id, s3_bucket, s3_key_video")
+            raise ValueError("Missing required fields: Id, S3Bucket, S3KeyVideo")
         
         # Download video to local disk
         video_filename = s3_key_video.split('/')[-1]
@@ -39,10 +39,10 @@ def lambda_handler(event, context):
         print(f"Updating DynamoDB with metadata for video {video_id}")
         table.update_item(
             Key={'Id': video_id},
-            UpdateExpression='SET #dur = :duration, resolution = :resolution, fps = :fps, #sz = :size, s3_key_thumbnail = :thumbnail',
+            UpdateExpression='SET #dur = :duration, Resolution = :resolution, Fps = :fps, #sz = :size, S3KeyThumbnail = :thumbnail',
             ExpressionAttributeNames={
-                '#dur': 'duration',  # 'duration' is a reserved word in DynamoDB
-                '#sz': 'size'  # 'size' is a reserved word in DynamoDB
+                '#dur': 'Duration',  # 'Duration' is a reserved keyword
+                '#sz': 'Size'  # 'Size' is a reserved keyword
             },
             ExpressionAttributeValues={
                 ':duration': Decimal(str(video_metadata['Duration'])),
@@ -59,8 +59,8 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'body': json.dumps({
                 'message': 'Video metadata updated successfully',
-                'id': video_id,
-                'metadata': video_metadata
+                'Id': video_id,
+                'MetaData': video_metadata
             }, default=str)
         }
     

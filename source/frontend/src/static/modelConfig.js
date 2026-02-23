@@ -5,12 +5,51 @@ export const modelGroups = [
       {
         displayName: 'Nova MME',
         modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
-        api: '/video/start-nova-mme'
+        api: '/video/start-nova-mme',
+        parameterType: 'nova-mme',
+        dims: [1024, 3072, 384, 256]
       },
       {
         displayName: 'TwelveLabs Marengo 3.0',
+        modelId: 'twelvelabs.marengo-embed-3-0-v1:0',
+        api: '/video/start-tlabs-mme',
+        parameterType: 'twelvelabs',
+        dims: [512]
+      },
+    ],
+  },
+  {
+    groupName: 'Video Understanding',
+    models: [
+      {
+        displayName: 'Nova Lite 1',
         modelId: '',
-        api: '/video/start-twelvelabs-marengo-30'
+        api: '/video/start-understanding-nova-lite-1'
+      },
+      {
+        displayName: 'Nova Lite 2',
+        modelId: '',
+        api: '/video/start-understanding-nova-lite-2'
+      },
+      {
+        displayName: 'Nova Pro 1',
+        modelId: '',
+        api: '/video/start-understanding-nova-pro-1'
+      },
+      {
+        displayName: 'Nova Pro 2',
+        modelId: '',
+        api: '/video/start-understanding-nova-pro-2'
+      },
+      {
+        displayName: 'TwelveLabs Pegasus 3',
+        modelId: '',
+        api: '/video/start-understanding-twelvelabs-pegasus-3'
+      },
+      {
+        displayName: 'Gemini',
+        modelId: '',
+        api: '/video/start-understanding-gemini'
       },
     ],
   },
@@ -76,46 +115,6 @@ export const modelGroups = [
         displayName: 'Nova Pro 2',
         modelId: '',
         api: '/video/start-clip-nova-pro-2'
-      },
-    ],
-  },
-  {
-    groupName: 'Video Understanding',
-    models: [
-      {
-        displayName: 'Nova Lite 1',
-        modelId: '',
-        api: '/video/start-understanding-nova-lite-1'
-      },
-      {
-        displayName: 'Nova Lite 2',
-        modelId: '',
-        api: '/video/start-understanding-nova-lite-2'
-      },
-      {
-        displayName: 'Nova Pro 1',
-        modelId: '',
-        api: '/video/start-understanding-nova-pro-1'
-      },
-      {
-        displayName: 'Nova Pro 2',
-        modelId: '',
-        api: '/video/start-understanding-nova-pro-2'
-      },
-      {
-        displayName: 'TwelveLabs Pegasus 2.7',
-        modelId: '',
-        api: '/video/start-understanding-twelvelabs-pegasus-27'
-      },
-      {
-        displayName: 'TwelveLabs Pegasus 3',
-        modelId: '',
-        api: '/video/start-understanding-twelvelabs-pegasus-3'
-      },
-      {
-        displayName: 'Gemini',
-        modelId: '',
-        api: '/video/start-understanding-gemini'
       },
     ],
   },

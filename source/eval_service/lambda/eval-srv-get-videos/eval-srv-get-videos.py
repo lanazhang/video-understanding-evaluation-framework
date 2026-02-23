@@ -87,7 +87,7 @@ def lambda_handler(event, context):
         
         # Add uploaded_by filter if provided
         if uploaded_by:
-            filter_expressions.append('uploaded_by = :uploaded_by')
+            filter_expressions.append('UploadedBy = :uploaded_by')
             expression_attribute_values[':uploaded_by'] = uploaded_by
         
         # Add group filter if provided
@@ -118,8 +118,8 @@ def lambda_handler(event, context):
             if not last_evaluated_key:
                 break
         
-        # Sort by uploaded_ts in descending order (newest first)
-        all_items.sort(key=lambda x: x.get('uploaded_ts', ''), reverse=True)
+        # Sort by UploadedTs in descending order (newest first)
+        all_items.sort(key=lambda x: x.get('UploadedTs', ''), reverse=True)
         
         # Calculate pagination
         total_count = len(all_items)
@@ -128,9 +128,9 @@ def lambda_handler(event, context):
         
         # Generate pre-signed URLs for thumbnails and videos
         for item in paginated_items:
-            s3_bucket = item.get('s3_bucket')
-            s3_key_thumbnail = item.get('s3_key_thumbnail')
-            s3_key_video = item.get('s3_key_video')
+            s3_bucket = item.get('S3Bucket')
+            s3_key_thumbnail = item.get('S3KeyThumbnail')
+            s3_key_video = item.get('S3KeyVideo')
             
             # Generate thumbnail pre-signed URL
             if s3_bucket and s3_key_thumbnail:

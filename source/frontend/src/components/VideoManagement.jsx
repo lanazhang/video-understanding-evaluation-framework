@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import './VideoManagement.css'
 import VideoUpload from './VideoUpload'
-import VideoDetail from './VideoDetail'
 import { FetchPost } from '../utils/apiHelper'
+import refreshIcon from '../assets/icons/refresh.svg'
+import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import { modelGroups } from '../static/modelConfig'
 
 function VideoManagement() {
   const [videos, setVideos] = useState([])
   const [showUploadModal, setShowUploadModal] = useState(false)
-  const [selectedVideo, setSelectedVideo] = useState(null)
   const [showAnalyze, setShowAnalyze] = useState(false)
   const [analyzeVideo, setAnalyzeVideo] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -16,6 +16,13 @@ function VideoManagement() {
   const [error, setError] = useState(null)
   const [sortField, setSortField] = useState('uploaded_ts')
   const [sortDirection, setSortDirection] = useState('desc')
+  
+  // Task expansion and search state
+  const [expandedTaskId, setExpandedTaskId] = useState(null)
+  const [searchText, setSearchText] = useState('')
+  const [searchResults, setSearchResults] = useState(null)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState(null)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -120,15 +127,6 @@ function VideoManagement() {
     }
   }
 
-  const handleVideoClick = (video) => {
-    setSelectedVideo(video)
-  }
-
-  const handleVideoDeleted = (videoId) => {
-    // Remove from local state after successful deletion
-    setVideos(prev => prev.filter(v => v.Id !== videoId && v.id !== videoId))
-  }
-
   const handleAnalyze = (video) => {
     setAnalyzeVideo(video)
     setShowAnalyze(true)
@@ -174,9 +172,9 @@ function VideoManagement() {
   // Filter videos based on search query
   const filteredVideos = videos.filter(video => {
     const query = searchQuery.toLowerCase()
-    const name = video.name?.toLowerCase() || ''
-    const description = video.description?.toLowerCase() || ''
-    const uploadedBy = video.uploaded_by?.toLowerCase() || ''
+    const name = video.Name?.toLowerCase() || ''
+    const description = video.Description?.toLowerCase() || ''
+    const uploadedBy = video.UploadedBy?.toLowerCase() || ''
     
     return name.includes(query) || 
            description.includes(query) || 
@@ -216,7 +214,7 @@ function VideoManagement() {
     if (video.video_url) {
       return video.video_url
     }
-    return `https://${video.s3_bucket}.s3.us-east-1.amazonaws.com/${video.s3_key_video}`
+    return `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`
   }
 
   const getThumbnailUrl = (video) => {
@@ -253,11 +251,7 @@ function VideoManagement() {
             disabled={loading}
             title="Refresh video list"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
+            <img src={refreshIcon} alt="Refresh" />
           </button>
           <button className="btn-create" onClick={() => setShowUploadModal(true)}>
             + Upload Videos
@@ -317,11 +311,11 @@ function VideoManagement() {
                   </tr>
                 ) : (
                   sortedAndFilteredVideos.map(video => (
-                  <tr key={video.Id || video.id} onClick={() => handleVideoClick(video)} style={{ cursor: 'pointer' }}>
+                  <tr key={video.Id || video.id}>
                     <td>
                       <img 
                         src={getThumbnailUrl(video) || placeholderThumbnail} 
-                        alt={video.name}
+                        alt={video.Name}
                         className="video-thumbnail"
                         onError={(e) => {
                           e.target.src = placeholderThumbnail
@@ -330,10 +324,10 @@ function VideoManagement() {
                     </td>
                     <td>
                       <span className="video-link">
-                        {video.name}
+                        {video.Name}
                       </span>
                     </td>
-                    <td>{formatDate(video.uploaded_ts)}</td>
+                    <td>{formatDate(video.UploadedTs)}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button 
@@ -398,23 +392,326 @@ function VideoManagement() {
           onCancel={() => setShowUploadModal(false)}
         />
       )}
-
-      {selectedVideo && (
-        <VideoDetail
-          video={selectedVideo}
-          onClose={() => setSelectedVideo(null)}
-          onDelete={handleVideoDeleted}
-        />
-      )}
     </div>
   )
 }
 
 // Analyze View Component (replaces the list)
 function AnalyzeView({ video, onBack }) {
-  const [selectedModel, setSelectedModel] = useState(null)
-  const [activeTab, setActiveTab] = useState(modelGroups[0]?.groupName || '')
-  const [running, setRunning] = useState(false)
+  const [activeTab, setActiveTab] = useState('embedding')
+  const [analyzeTasks, setAnalyzeTasks] = useState([])
+  const [loadingTasks, setLoadingTasks] = useState(false)
+  const [tasksError, setTasksError] = useState(null)
+  
+  // Task expansion and search state
+  const [expandedTaskId, setExpandedTaskId] = useState(null)
+  const [searchText, setSearchText] = useState({})
+  const [topK, setTopK] = useState({})
+  const [searchResults, setSearchResults] = useState({})
+  const [searchLoading, setSearchLoading] = useState({})
+  const [searchError, setSearchError] = useState({})
+  const [showResultsModal, setShowResultsModal] = useState(false)
+  const [currentSearchResults, setCurrentSearchResults] = useState(null)
+  const [currentTaskId, setCurrentTaskId] = useState(null)
+  const [currentVectorIndex, setCurrentVectorIndex] = useState(null)
+  const [createParams, setCreateParams] = useState({
+    modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
+    // Nova MME parameters
+    durationS: 5,
+    embedMode: 'AUDIO_VIDEO_COMBINED',
+    embeddingDim: 1024, // Will be updated based on selected model
+    // TwelveLabs parameters
+    segmentationMethod: 'dynamic',
+    minDurationSec: 4,
+    embeddingScope: ['clip'],
+    embeddingOption: ['visual', 'audio', 'transcription'],
+    description: ''
+  })
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState(null)
+  
+  // Get selected model info
+  const selectedModel = modelGroups
+    .find(group => group.groupName === 'Multimodal Embedding')
+    ?.models.find(model => model.modelId === createParams.modelId)
+  
+  // Update embeddingDim when model changes
+  useEffect(() => {
+    if (selectedModel?.dims && selectedModel.dims.length > 0) {
+      // Check if current dim is valid for selected model
+      if (!selectedModel.dims.includes(parseInt(createParams.embeddingDim))) {
+        setCreateParams(prev => ({ ...prev, embeddingDim: selectedModel.dims[0] }))
+      }
+    }
+  }, [selectedModel, createParams.embeddingDim])
+  
+  // Video player ref
+  const videoPlayerRef = useRef(null)
+  const modalVideoPlayerRef = useRef(null)
+
+  // Load analyze tasks when component mounts
+  useEffect(() => {
+    loadAnalyzeTasks()
+  }, [])
+
+  const loadAnalyzeTasks = async () => {
+    const videoId = video.Id || video.id
+    
+    if (!videoId) {
+      console.error('No video ID available')
+      return
+    }
+    
+    setLoadingTasks(true)
+    setTasksError(null)
+    try {
+      const data = await FetchPost('/video/get-analyze-tasks', { VideoId: videoId }, 'EvalService')
+      
+      if (data.statusCode === 200) {
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        const allTasks = responseBody.Tasks || []
+        // Filter for nova-mme type tasks
+        const mmeTasks = allTasks.filter(task => task.Type === 'nova-mme')
+        setAnalyzeTasks(mmeTasks)
+      } else {
+        const errorMessage = typeof data.body === 'object' && data.body.error 
+          ? data.body.error 
+          : data.body
+        setTasksError(errorMessage || 'Failed to load analyze tasks')
+      }
+    } catch (err) {
+      console.error('Error loading analyze tasks:', err)
+      setTasksError('Failed to load analyze tasks')
+    } finally {
+      setLoadingTasks(false)
+    }
+  }
+
+  const handleOpenSearchModal = (taskId, vectorIndex) => {
+    setCurrentTaskId(taskId)
+    setCurrentVectorIndex(vectorIndex)
+    setShowResultsModal(true)
+    // Clear previous results
+    setCurrentSearchResults(null)
+  }
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm('Are you sure you want to delete this task? This will remove all associated data including embeddings and cannot be undone.')) {
+      return
+    }
+
+    try {
+      const data = await FetchPost('/video/delete-analyze-task', { TaskId: taskId }, 'EvalService')
+      
+      if (data.statusCode === 200) {
+        // Remove from local state
+        setAnalyzeTasks(prev => prev.filter(t => t.Id !== taskId))
+        alert('Task deleted successfully')
+      } else {
+        const errorMessage = typeof data.body === 'object' && data.body.error 
+          ? data.body.error 
+          : data.body
+        alert(`Failed to delete task: ${errorMessage}`)
+      }
+    } catch (err) {
+      console.error('Error deleting task:', err)
+      alert(`Failed to delete task: ${err.message}`)
+    }
+  }
+
+  const handleSearch = async (taskId, vectorIndex) => {
+    const searchKey = `search_${taskId}`
+    const textKey = `text_${taskId}`
+    const topKKey = `topK_${taskId}`
+    
+    const currentSearchText = searchText[textKey] || ''
+    const currentTopK = topK[topKKey] || 10
+    
+    if (!currentSearchText.trim()) {
+      setSearchError(prev => ({ ...prev, [searchKey]: 'Please enter a search query' }))
+      return
+    }
+
+    setSearchLoading(prev => ({ ...prev, [searchKey]: true }))
+    setSearchError(prev => ({ ...prev, [searchKey]: null }))
+    setSearchResults(prev => ({ ...prev, [searchKey]: null }))
+
+    try {
+      const payload = {
+        TaskId: taskId,
+        SearchText: currentSearchText,
+        InputType: 'text',
+        TopK: parseInt(currentTopK) || 10,
+        PageSize: 1000,  // Large page size to get all results
+        FromIndex: 0,
+        IncludeVideoUrl: true,
+        EmbeddingOptions: ['audio-video', 'video', 'audio']
+      }
+
+      const data = await FetchPost('/video/nova-mme-search-vector', payload, 'EvalService')
+      
+      if (data.statusCode === 200) {
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        setSearchResults(prev => ({ ...prev, [searchKey]: responseBody || [] }))
+        // Update modal results
+        setCurrentSearchResults(responseBody || [])
+      } else {
+        const errorMessage = typeof data.body === 'object' && data.body.error 
+          ? data.body.error 
+          : data.body
+        setSearchError(prev => ({ ...prev, [searchKey]: errorMessage || 'Search failed' }))
+      }
+    } catch (err) {
+      console.error('Error searching embeddings:', err)
+      setSearchError(prev => ({ ...prev, [searchKey]: 'Search failed: ' + err.message }))
+    } finally {
+      setSearchLoading(prev => ({ ...prev, [searchKey]: false }))
+    }
+  }
+
+  const handleTimeRangeClick = (startSec, endSec) => {
+    if (modalVideoPlayerRef.current) {
+      const video = modalVideoPlayerRef.current
+      const endTime = parseFloat(endSec || 0)
+      
+      // Set the start time
+      video.currentTime = parseFloat(startSec || 0)
+      video.muted = true
+      
+      // Remove any existing timeupdate listener to avoid duplicates
+      const existingListener = video._stopAtEndListener
+      if (existingListener) {
+        video.removeEventListener('timeupdate', existingListener)
+      }
+      
+      // Create new listener to stop at end time
+      const stopAtEndListener = () => {
+        if (video.currentTime >= endTime) {
+          video.pause()
+          video.removeEventListener('timeupdate', stopAtEndListener)
+          delete video._stopAtEndListener
+        }
+      }
+      
+      // Store reference to listener for cleanup
+      video._stopAtEndListener = stopAtEndListener
+      video.addEventListener('timeupdate', stopAtEndListener)
+      
+      // Start playing
+      video.play().catch(err => {
+        console.log('Auto-play prevented:', err)
+      })
+    }
+  }
+
+  const handleCreateEmbedding = async () => {
+    setCreating(true)
+    setCreateError(null)
+
+    try {
+      let payload
+      
+      if (selectedModel?.parameterType === 'nova-mme') {
+        // Check if a task with the same parameters already exists
+        const durationS = parseInt(createParams.durationS)
+        const embeddingDim = parseInt(createParams.embeddingDim)
+        
+        const existingTask = analyzeTasks.find(task => 
+          task.Type === 'nova-mme' &&
+          task.Request?.DurationS === durationS &&
+          task.Request?.EmbedMode === createParams.embedMode &&
+          task.Request?.EmbeddingDim === embeddingDim
+        )
+
+        if (existingTask) {
+          const confirmCreate = window.confirm(
+            `A task with the same parameters already exists:\n\n` +
+            `Type: ${existingTask.Type}\n` +
+            `Duration: ${existingTask.Request?.DurationS}s\n` +
+            `Mode: ${existingTask.Request?.EmbedMode}\n` +
+            `Dimension: ${existingTask.Request?.EmbeddingDim}\n` +
+            `Status: ${existingTask.Status}\n\n` +
+            `Do you want to create a duplicate task?`
+          )
+          
+          if (!confirmCreate) {
+            setCreating(false)
+            return
+          }
+        }
+
+        payload = {
+          VideoId: video.Id || video.id,
+          ModelId: createParams.modelId,
+          Description: createParams.description,
+          Request: {
+            DurationS: durationS,
+            EmbedMode: createParams.embedMode,
+            EmbeddingDim: embeddingDim
+          }
+        }
+      } else if (selectedModel?.parameterType === 'twelvelabs') {
+        // TwelveLabs payload
+        payload = {
+          VideoId: video.Id || video.id,
+          ModelId: createParams.modelId,
+          Description: createParams.description,
+          Request: {
+            segmentation: {
+              method: createParams.segmentationMethod,
+              [createParams.segmentationMethod]: {
+                minDurationSec: createParams.minDurationSec.toString()
+              }
+            },
+            embeddingScope: createParams.embeddingScope,
+            embeddingOption: createParams.embeddingOption
+          }
+        }
+      } else {
+        setCreateError('Unknown model type')
+        setCreating(false)
+        return
+      }
+
+      const data = await FetchPost(selectedModel.api, payload, 'EvalService')
+      
+      if (data.statusCode === 200) {
+        // Reset form to defaults based on model type
+        if (selectedModel?.parameterType === 'nova-mme') {
+          setCreateParams(prev => ({
+            ...prev,
+            durationS: 5,
+            embedMode: 'AUDIO_VIDEO_COMBINED',
+            embeddingDim: 1024,
+            description: ''
+          }))
+        } else if (selectedModel?.parameterType === 'twelvelabs') {
+          setCreateParams(prev => ({
+            ...prev,
+            segmentationMethod: 'dynamic',
+            minDurationSec: 4,
+            embeddingScope: ['clip'],
+            embeddingOption: ['visual', 'audio', 'transcription'],
+            description: ''
+          }))
+        }
+        setCreateError(null)
+        // Reload tasks
+        loadAnalyzeTasks()
+        alert('Embedding task started successfully!')
+      } else {
+        const errorMessage = typeof data.body === 'object' && data.body.error 
+          ? data.body.error 
+          : data.body
+        setCreateError(errorMessage || 'Failed to start embedding task')
+      }
+    } catch (err) {
+      console.error('Error creating embedding:', err)
+      setCreateError('Failed to start embedding task: ' + err.message)
+    } finally {
+      setCreating(false)
+    }
+  }
 
   // Helper functions for formatting
   const formatDuration = (seconds) => {
@@ -447,68 +744,21 @@ function AnalyzeView({ video, onBack }) {
     return resolution
   }
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A'
+    return new Date(timestamp).toLocaleString()
+  }
+
   const formatFps = (fps) => {
     if (!fps) return 'N/A'
     return `${Math.round(fps)} fps`
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!selectedModel) {
-      alert('Please select a model')
-      return
-    }
-
-    setRunning(true)
-    
-    if (!selectedModel.api) {
-      alert('Model API endpoint not configured')
-      setRunning(false)
-      return
-    }
-
-    try {
-      // Prepare request payload
-      const payload = {
-        video_id: video.Id || video.id,
-        model_id: selectedModel.modelId,
-        requested_by: 'current_user' // TODO: Get from Cognito
-      }
-
-      console.log(`Calling API: ${selectedModel.api}`, payload)
-      
-      // Call the API endpoint specified in the model config
-      const data = await FetchPost(selectedModel.api, payload, 'EvalService')
-      
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        alert(`Analysis started successfully!\nTask ID: ${responseBody.task_id}`)
-        onBack()
-      } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        alert(`Failed to start analysis: ${errorMessage}`)
-      }
-    } catch (err) {
-      console.error('Error starting analysis:', err)
-      alert(`Failed to start analysis: ${err.message}`)
-    } finally {
-      setRunning(false)
-    }
-  }
-
-  const activeGroup = modelGroups.find(g => g.groupName === activeTab)
-
   return (
     <div className="analyze-view">
       <div className="analyze-header">
         <button className="btn-back" onClick={onBack}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
+          <img src={arrowLeftIcon} alt="Back" />
           Back to Videos
         </button>
         <h1>Analyze Video</h1>
@@ -516,110 +766,520 @@ function AnalyzeView({ video, onBack }) {
 
       <div className="analyze-content">
         <div className="video-preview-section">
-          <h3>Selected Video</h3>
           <div className="video-preview-card">
-            <img 
-              src={video.thumbnail_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="320" height="180"%3E%3Crect fill="%23e0e0e0" width="320" height="180"/%3E%3C/svg%3E'} 
-              alt={video.name}
-              className="video-preview-thumbnail"
-            />
+            <video 
+              ref={videoPlayerRef}
+              src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
+              controls
+              muted
+              className="video-preview-player"
+            >
+              Your browser does not support the video tag.
+            </video>
             <div className="video-preview-info">
-              <h4>{video.name}</h4>
+              <h4>{video.Name}</h4>
               <p className="video-id">ID: {video.Id || video.id}</p>
               <div className="video-metadata">
                 <div className="metadata-row">
                   <div className="metadata-item">
                     <span className="metadata-label">Duration:</span>
-                    <span className="metadata-value">{formatDuration(video.duration)}</span>
+                    <span className="metadata-value">{formatDuration(video.Duration)}</span>
                   </div>
                   <div className="metadata-item">
                     <span className="metadata-label">Resolution:</span>
-                    <span className="metadata-value">{formatResolution(video.resolution)}</span>
+                    <span className="metadata-value">{formatResolution(video.Resolution)}</span>
                   </div>
                 </div>
                 <div className="metadata-row">
                   <div className="metadata-item">
                     <span className="metadata-label">Frame Rate:</span>
-                    <span className="metadata-value">{formatFps(video.fps)}</span>
+                    <span className="metadata-value">{formatFps(video.Fps)}</span>
                   </div>
                   <div className="metadata-item">
                     <span className="metadata-label">File Size:</span>
-                    <span className="metadata-value">{formatFileSize(video.size)}</span>
+                    <span className="metadata-value">{formatFileSize(video.Size)}</span>
+                  </div>
+                </div>
+                <div className="metadata-row">
+                  <div className="metadata-item">
+                    <span className="metadata-label">Uploaded By:</span>
+                    <span className="metadata-value">{video.UploadedBy || 'N/A'}</span>
+                  </div>
+                  <div className="metadata-item">
+                    <span className="metadata-label">Uploaded:</span>
+                    <span className="metadata-value">{formatDate(video.UploadedTs)}</span>
                   </div>
                 </div>
               </div>
-              {video.description && <p className="video-description">{video.description}</p>}
+              {video.Description && <p className="video-description">{video.Description}</p>}
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="analyze-form">
-          <div className="form-group">
-            <label>Select Model Category and Model *</label>
-            
-            {/* Tabs */}
-            <div className="model-tabs">
-              {modelGroups.map(group => (
-                <button
-                  key={group.groupName}
-                  type="button"
-                  className={`tab-button ${activeTab === group.groupName ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveTab(group.groupName)
-                    setSelectedModel(null) // Clear selection when switching tabs
-                  }}
-                >
-                  {group.groupName}
-                </button>
-              ))}
-            </div>
+        <div className="analyze-form">
+          {/* Tabs */}
+          <div className="analyze-tabs">
+            <button
+              type="button"
+              className={`tab-button ${activeTab === 'embedding' ? 'active' : ''}`}
+              onClick={() => setActiveTab('embedding')}
+            >
+              Multimodal Embedding
+            </button>
+            <button
+              type="button"
+              className={`tab-button ${activeTab === 'understanding' ? 'active' : ''}`}
+              onClick={() => setActiveTab('understanding')}
+            >
+              Video Understanding
+            </button>
+          </div>
 
-            {/* Model List */}
-            <div className="model-list-container">
-              {activeGroup && activeGroup.models.map((model, index) => (
-                <div
-                  key={index}
-                  className={`model-item ${selectedModel === model ? 'selected' : ''}`}
-                  onClick={() => setSelectedModel(model)}
-                >
-                  <div className="model-item-radio">
-                    <input
-                      type="radio"
-                      name="model"
-                      checked={selectedModel === model}
-                      onChange={() => setSelectedModel(model)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
+          {/* Tab Content */}
+          {activeTab === 'embedding' && (
+            <div className="tab-content">
+              <div className="tasks-display-section">
+                <div className="section-header-with-action">
+                  <h3>Multimodal Embedding Tasks</h3>
+                  <button 
+                    className="btn-refresh" 
+                    onClick={loadAnalyzeTasks}
+                    disabled={loadingTasks}
+                    title="Refresh task list"
+                  >
+                    <img src={refreshIcon} alt="Refresh" />
+                  </button>
+                </div>
+                {tasksError && (
+                  <div className="alert alert-error">{tasksError}</div>
+                )}
+                
+                {loadingTasks ? (
+                  <div className="loading-message">Loading tasks...</div>
+                ) : analyzeTasks.length > 0 ? (
+                  <div className="analyze-tasks-list">
+                    {analyzeTasks.map((task) => {
+                      const isExpanded = expandedTaskId === task.Id
+                      return (
+                        <div key={task.Id} className="analyze-task-item compact">
+                          <div className="task-compact-header">
+                            <div className="task-compact-info">
+                              <span className={`task-status ${task.Status}`}>{task.Status}</span>
+                              <span className="task-compact-detail">
+                                {task.ModelId || 'N/A'}
+                              </span>
+                              <span className="task-compact-detail">
+                                {task.Type}
+                              </span>
+                            </div>
+                            <div className="task-actions">
+                              {task.Status === 'completed' && task.Result && task.Result.S3VectorIndex && (
+                                <button 
+                                  className="btn-search-icon"
+                                  onClick={() => handleOpenSearchModal(task.Id, task.Result.S3VectorIndex)}
+                                  title="Search embeddings"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="2"/>
+                                    <path d="M11 11L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                  </svg>
+                                  <span>Search Embeddings</span>
+                                </button>
+                              )}
+                              <button 
+                                className="btn-delete-task"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteTask(task.Id)
+                                }}
+                                title="Delete task"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 0 1 1.334-1.334h2.666a1.333 1.333 0 0 1 1.334 1.334V4m2 0v9.333a1.333 1.333 0 0 1-1.334 1.334H4.667a1.333 1.333 0 0 1-1.334-1.334V4h9.334Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                              <button 
+                                className="btn-expand"
+                                onClick={() => setExpandedTaskId(isExpanded ? null : task.Id)}
+                                title={isExpanded ? 'Collapse' : 'Expand'}
+                              >
+                                <svg 
+                                  width="16" 
+                                  height="16" 
+                                  viewBox="0 0 16 16" 
+                                  fill="none" 
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                                >
+                                  <path 
+                                    d="M4 6L8 10L12 6" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {isExpanded && (
+                            <div className="task-details">
+                              <div className="task-detail-grid">
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Task ID:</span>
+                                  <span className="detail-value">{task.Id}</span>
+                                </div>
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Type:</span>
+                                  <span className="detail-value">{task.Type}</span>
+                                </div>
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Model:</span>
+                                  <span className="detail-value">{task.ModelId || 'N/A'}</span>
+                                </div>
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Created:</span>
+                                  <span className="detail-value">{formatDate(task.StartedTs)}</span>
+                                </div>
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Duration:</span>
+                                  <span className="detail-value">{task.Request?.DurationS || 'N/A'}s</span>
+                                </div>
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Embed Mode:</span>
+                                  <span className="detail-value">{task.Request?.EmbedMode || 'N/A'}</span>
+                                </div>
+                                <div className="task-detail-row">
+                                  <span className="detail-label">Embedding Dimension:</span>
+                                  <span className="detail-value">{task.Request?.EmbeddingDim || 'N/A'}</span>
+                                </div>
+                                {task.Status === 'completed' && task.Result && (
+                                  <>
+                                    <div className="task-detail-row">
+                                      <span className="detail-label">Embeddings:</span>
+                                      <span className="detail-value">{task.Result.EmbeddingCount || 0}</span>
+                                    </div>
+                                    {task.CompletedTs && (
+                                      <div className="task-detail-row">
+                                        <span className="detail-label">Completed:</span>
+                                        <span className="detail-value">{formatDate(task.CompletedTs)}</span>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                              
+                              {task.Status === 'completed' && task.Result && (
+                                <>
+                                  <div className="task-detail-full-width">
+                                    <div className="task-detail-row">
+                                      <span className="detail-label">S3 Vector Bucket:</span>
+                                      <span className="detail-value">{task.Result.S3VectorBucket || 'N/A'}</span>
+                                    </div>
+                                    <div className="task-detail-row">
+                                      <span className="detail-label">S3 Vector Index:</span>
+                                      <span className="detail-value">{task.Result.S3VectorIndex || 'N/A'}</span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
-                  <div className="model-item-content">
-                    <div className="model-item-name">{model.displayName}</div>
-                    {model.modelId && (
-                      <div className="model-item-id">{model.modelId}</div>
+                ) : (
+                  <div className="no-tasks-message">
+                    No multimodal embedding tasks found for this video.
+                  </div>
+                )}
+              </div>
+
+              {/* Create New Embedding Section */}
+              <div className="create-embedding-section">
+                <h3>Create New Embedding</h3>
+                
+                {createError && (
+                  <div className="alert alert-error">{createError}</div>
+                )}
+                
+                <div className="create-embedding-form">
+                  {/* Model Selection - Always shown first */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="modelId">Model</label>
+                      <select
+                        id="modelId"
+                        value={createParams.modelId}
+                        onChange={(e) => setCreateParams(prev => ({ ...prev, modelId: e.target.value }))}
+                      >
+                        {modelGroups
+                          .find(group => group.groupName === 'Multimodal Embedding')
+                          ?.models.map((model, index) => (
+                            <option 
+                              key={model.modelId || `model-${index}`} 
+                              value={model.modelId}
+                              disabled={!model.modelId}
+                            >
+                              {model.displayName}{model.modelId ? ` (${model.modelId})` : ' (Not Available)'}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Nova MME Parameters */}
+                  {selectedModel?.parameterType === 'nova-mme' && (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="durationS">Segment Duration (s)</label>
+                        <input
+                          type="number"
+                          id="durationS"
+                          min="1"
+                          max="60"
+                          value={createParams.durationS}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, durationS: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="embedMode">Embedding Mode</label>
+                        <select
+                          id="embedMode"
+                          value={createParams.embedMode}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, embedMode: e.target.value }))}
+                        >
+                          <option value="AUDIO_VIDEO_COMBINED">Audio + Video</option>
+                          <option value="VIDEO_ONLY">Video Only</option>
+                          <option value="AUDIO_ONLY">Audio Only</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="embeddingDim">Dimension</label>
+                        <select
+                          id="embeddingDim"
+                          value={createParams.embeddingDim}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, embeddingDim: e.target.value }))}
+                        >
+                          {selectedModel?.dims?.map(dim => (
+                            <option key={dim} value={dim}>{dim}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="description">Description (Optional)</label>
+                        <input
+                          type="text"
+                          id="description"
+                          value={createParams.description}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Task description..."
+                        />
+                      </div>
+
+                      <div className="form-group form-group-button">
+                        <label>&nbsp;</label>
+                        <button 
+                          className="btn-create-embedding"
+                          onClick={handleCreateEmbedding}
+                          disabled={creating}
+                        >
+                          {creating ? 'Creating...' : 'Create Embedding'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TwelveLabs Parameters */}
+                  {selectedModel?.parameterType === 'twelvelabs' && (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="segmentationMethod">Segmentation Method</label>
+                        <select
+                          id="segmentationMethod"
+                          value={createParams.segmentationMethod}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, segmentationMethod: e.target.value }))}
+                        >
+                          <option value="dynamic">Dynamic</option>
+                          <option value="fixed">Fixed</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="minDurationSec">Min Duration (s)</label>
+                        <input
+                          type="number"
+                          id="minDurationSec"
+                          min="1"
+                          max="60"
+                          value={createParams.minDurationSec}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, minDurationSec: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="embeddingScope">Embedding Scope</label>
+                        <select
+                          id="embeddingScope"
+                          multiple
+                          value={createParams.embeddingScope}
+                          onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value)
+                            setCreateParams(prev => ({ ...prev, embeddingScope: selected }))
+                          }}
+                        >
+                          <option value="clip">Clip</option>
+                          <option value="video">Video</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="embeddingOption">Embedding Options</label>
+                        <select
+                          id="embeddingOption"
+                          multiple
+                          value={createParams.embeddingOption}
+                          onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value)
+                            setCreateParams(prev => ({ ...prev, embeddingOption: selected }))
+                          }}
+                        >
+                          <option value="visual">Visual</option>
+                          <option value="audio">Audio</option>
+                          <option value="transcription">Transcription</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="description">Description (Optional)</label>
+                        <input
+                          type="text"
+                          id="description"
+                          value={createParams.description}
+                          onChange={(e) => setCreateParams(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Task description..."
+                        />
+                      </div>
+
+                      <div className="form-group form-group-button">
+                        <label>&nbsp;</label>
+                        <button 
+                          className="btn-create-embedding"
+                          onClick={handleCreateEmbedding}
+                          disabled={creating}
+                        >
+                          {creating ? 'Creating...' : 'Create Embedding'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'understanding' && (
+            <div className="tab-content">
+              <div className="coming-soon-section">
+                <p>Video Understanding features coming soon.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Search Results Modal */}
+      {showResultsModal && currentTaskId && (
+        <div className="modal-overlay" onClick={() => setShowResultsModal(false)}>
+          <div className="modal-content search-results-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Search Embeddings</h2>
+              <button className="close-button" onClick={() => setShowResultsModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body-split">
+              <div className="modal-video-section">
+                <video 
+                  ref={modalVideoPlayerRef}
+                  src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
+                  controls
+                  muted
+                  className="modal-video-player"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="modal-results-section">
+                <div className="search-controls-modal">
+                  <input
+                    type="text"
+                    className="search-text-input"
+                    placeholder="Enter search query..."
+                    value={searchText[`text_${currentTaskId}`] || ''}
+                    onChange={(e) => setSearchText(prev => ({ ...prev, [`text_${currentTaskId}`]: e.target.value }))}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch(currentTaskId, currentVectorIndex)}
+                    disabled={searchLoading[`search_${currentTaskId}`]}
+                  />
+                  <input
+                    type="number"
+                    className="search-topk-input"
+                    placeholder="Top K"
+                    min="1"
+                    max="100"
+                    value={topK[`topK_${currentTaskId}`] || 10}
+                    onChange={(e) => setTopK(prev => ({ ...prev, [`topK_${currentTaskId}`]: e.target.value }))}
+                    disabled={searchLoading[`search_${currentTaskId}`]}
+                    title="Number of results to return (1-100)"
+                  />
+                  <button 
+                    className="btn-search"
+                    onClick={() => handleSearch(currentTaskId, currentVectorIndex)}
+                    disabled={searchLoading[`search_${currentTaskId}`] || !(searchText[`text_${currentTaskId}`] || '').trim()}
+                  >
+                    {searchLoading[`search_${currentTaskId}`] ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
+                
+                {searchError[`search_${currentTaskId}`] && (
+                  <div className="alert alert-error">{searchError[`search_${currentTaskId}`]}</div>
+                )}
+                
+                {currentSearchResults && currentSearchResults.length > 0 && (
+                  <div className="search-results-header">
+                    <h3>Results ({currentSearchResults.length})</h3>
+                  </div>
+                )}
+                
+                {currentSearchResults && (
+                  <div className="results-list-modal">
+                    {currentSearchResults.length > 0 ? (
+                      currentSearchResults.map((result, index) => (
+                        <div key={index} className="result-item-compact">
+                          <span className="result-rank">#{index + 1}</span>
+                          <button 
+                            className="time-range-link"
+                            onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
+                            title="Click to navigate video to this timestamp"
+                          >
+                            {parseFloat(result.StartSec || 0).toFixed(2)}s-{parseFloat(result.EndSec || 0).toFixed(2)}s
+                          </button>
+                          <span className="result-distance">Distance: {result.Distance?.toFixed(4) || 'N/A'}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-results-message">No results found</div>
                     )}
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-
-            {selectedModel && (
-              <p className="help-text">Selected: {selectedModel.displayName}</p>
-            )}
           </div>
-
-          <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={onBack} disabled={running}>
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="btn-primary" 
-              disabled={running || !selectedModel}
-            >
-              {running ? 'Starting Analysis...' : 'Start Analysis'}
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -666,15 +1326,14 @@ function AdHocTestModal({ video, onClose }) {
 
         <div className="adhoc-body">
           <div className="video-info-section">
-            <h3>Selected Video</h3>
             <div className="video-info-card">
               <img 
                 src={video.thumbnail_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="90"%3E%3Crect fill="%23e0e0e0" width="160" height="90"/%3E%3C/svg%3E'} 
-                alt={video.name}
+                alt={video.Name}
                 className="video-info-thumbnail"
               />
               <div className="video-info-details">
-                <strong>{video.name}</strong>
+                <strong>{video.Name}</strong>
                 <p>ID: {video.Id || video.id}</p>
               </div>
             </div>

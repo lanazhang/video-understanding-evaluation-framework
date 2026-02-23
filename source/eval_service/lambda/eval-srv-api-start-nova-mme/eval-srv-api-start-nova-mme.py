@@ -29,12 +29,12 @@ def lambda_handler(event, context):
         # Parse body
         body = event if isinstance(event, dict) else json.loads(event)
         
-        # Validate required fields
-        video_id = body.get("video_id")
+        # Validate required fields - accept both snake_case (API) and PascalCase (internal)
+        video_id = body.get("VideoId") or body.get("video_id")
         if not video_id:
             return {
                 'statusCode': 400,
-                'body': json.dumps({'error': 'Missing required field: video_id'})
+                'body': json.dumps({'error': 'Missing required field: VideoId or video_id'})
             }
         
         # Get video details from video table
@@ -46,8 +46,8 @@ def lambda_handler(event, context):
             }
         
         video_item = video_response['Item']
-        s3_bucket = video_item.get('s3_bucket')
-        s3_key = video_item.get('s3_key_video')
+        s3_bucket = video_item.get('S3Bucket')
+        s3_key = video_item.get('S3KeyVideo')
         
         if not s3_bucket or not s3_key:
             return {
@@ -58,17 +58,22 @@ def lambda_handler(event, context):
         # Generate task ID
         task_id = str(uuid.uuid4())
         
-        # Get parameters with defaults
-        model_id = body.get("model_id", DEFAULT_NOVA_MME_MODEL_ID)
-        embed_mode = body.get("embed_mode", "AUDIO_VIDEO_COMBINED")
-        duration_s = int(body.get("duration_s", 5))
-        requested_by = body.get("requested_by", "unknown")
+        # Get parameters with defaults - accept both naming conventions
+        model_id = body.get("ModelId") or body.get("model_id") or DEFAULT_NOVA_MME_MODEL_ID
+        description = body.get("Description") or body.get("description") or ""
+        
+        # Request parameters - accept both naming conventions
+        request_params = body.get("Request", {})
+        duration_s = int(request_params.get("DurationS") or body.get("duration_s") or 5)
+        embed_mode = request_params.get("EmbedMode") or body.get("embed_mode") or "AUDIO_VIDEO_COMBINED"
+        embedding_dim = int(request_params.get("EmbeddingDim") or body.get("embedding_dim") or EMBEDDING_DIM)
+        requested_by = request_params.get("RequestedBy") or body.get("requested_by") or "unknown"
         
         # Determine video format
         video_format = s3_key.split("/")[-1].split(".")[-1].lower()
         
         # Define S3 output prefix
-        s3_prefix_output = f'tasks/{video_id}/nova-mme/{task_id}/'
+        s3_prefix_output = f'tasks/{video_id}/video-analyze/{task_id}/'
         
         # Create output folder placeholder (workaround before Nova fix output support prefix)
         tmp_key = s3_prefix_output + ".tmp"
@@ -84,7 +89,7 @@ def lambda_handler(event, context):
         request = {
             "taskType": "SEGMENTED_EMBEDDING",
             "segmentedEmbeddingParams": {
-                "embeddingDimension": EMBEDDING_DIM,
+                "embeddingDimension": embedding_dim,
                 "embeddingPurpose": "GENERIC_INDEX",
                 "video": {
                     "format": video_format,
@@ -116,24 +121,25 @@ def lambda_handler(event, context):
         invocation_arn = bedrock_response["invocationArn"]
         print(f"Task ARN: {invocation_arn}")
         
-        # Store analysis record to DynamoDB
+        # Store analysis record to DynamoDB using new schema
         timestamp = datetime.now(timezone.utc).isoformat()
         analyze_item = {
             "Id": task_id,
-            "type": "nova-mme",
-            "video_id": video_id,
-            "video_name": video_item.get('name', ''),
-            "status": "processing",
-            "model_id": model_id,
-            "embed_mode": embed_mode,
-            "duration_s": duration_s,
-            "embedding_dim": EMBEDDING_DIM,
-            "invocation_arn": invocation_arn,
-            "s3_bucket": s3_bucket,
-            "s3_output_prefix": s3_prefix_output,
-            "requested_by": requested_by,
-            "requested_ts": timestamp,
-            "request_params": body
+            "Type": "nova-mme",
+            "VideoId": video_id,
+            "Description": description,
+            "ModelId": model_id,
+            "StartedTs": timestamp,
+            "Status": "processing",
+            "Request": {
+                "DurationS": duration_s,
+                "EmbedMode": embed_mode,
+                "EmbeddingDim": embedding_dim,
+            },
+            "Result": {
+                "S3BucketResult": s3_bucket,
+                "S3OutputPrefix": s3_prefix_output
+            }
         }
         
         print(f"Storing analysis record: {json.dumps(analyze_item, default=str)}")

@@ -1,15 +1,14 @@
 # Pre stack
-S3_BUCKET_DATA_PREFIX='video-eval'
-COGNITO_NAME_PREFIX='video-eval'
-LAMBDA_NAME_PREFIX='video-eval-'
-COGNITO_NAME_PREFIX='video-eval'
-AGENTCORE_RUNTIME_NAME_PREFIX='video_eval_video_understanding_agent'
+S3_BUCKET_DATA_PREFIX='bedrock-video-eval'
+COGNITO_NAME_PREFIX='bedrock-video-eval'
+LAMBDA_NAME_PREFIX='bedrock-video-eval-'
+COGNITO_NAME_PREFIX='bedrock-video-eval'
 
-S3_VECTOR_BUCKET_NAME='video-eval-vector-bucket'
-S3_VECTOR_INDEX_NAME='nova-mme-video-clip-1024'
-S3_VECTOR_INDEX_NOVA_MME_FIXED = "nova-mme-video-async-1024"
-S3_VECTOR_INDEX_TLABS_27 = 'tlabs-video-1024'
-S3_VECTOR_INDEX_TLABS_30 = 'tlabs-video-512'
+S3_VECTOR_BUCKET_NAME='bedrock-video-eval-vector-bucket'
+S3_VECTOR_INDEX_NAME='bedrock-nova-mme-video-clip-1024'
+S3_VECTOR_INDEX_NOVA_MME_FIXED = "bedrock-nova-mme-video-async-1024"
+S3_VECTOR_INDEX_TLABS_27 = 'bedrock-tlabs-video-1024'
+S3_VECTOR_INDEX_TLABS_30 = 'bedrock-tlabs-video-512'
 EMBEDDING_DIM_DEFAULT_NOVA_MME = '1024'
 EMBEDDING_DIM_DEFAULT_27='1024'
 EMBEDDING_DIM_DEFAULT_30='512'

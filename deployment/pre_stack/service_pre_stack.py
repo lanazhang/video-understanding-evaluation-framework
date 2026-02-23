@@ -115,14 +115,6 @@ class ServicePreStack(NestedStack):
                 statements=[
                     _iam.PolicyStatement(
                         effect=_iam.Effect.ALLOW,
-                        actions=["bedrock-agentcore:InvokeAgentRuntime"],
-                        resources=[
-                            f"arn:aws:bedrock-agentcore:{self.region}:{self.account_id}:runtime/{AGENTCORE_RUNTIME_NAME_PREFIX}*",
-                            f"arn:aws:bedrock-agentcore:{self.region}:{self.account_id}:runtime/{AGENTCORE_RUNTIME_NAME_PREFIX}*/runtime-endpoint/*"
-                        ]
-                    ),
-                    _iam.PolicyStatement(
-                        effect=_iam.Effect.ALLOW,
                         actions=["cognito-identity:GetCredentialsForIdentity"],
                         resources=["*"]
                     ),

@@ -10,6 +10,10 @@ import GroundTruthTaskDetail from './components/GroundTruthTaskDetail'
 import EvaluationTaskDetail from './components/EvaluationTaskDetail'
 import groundTruthTasksData from './static/groundTruthTasks.json'
 import evaluationTasksData from './static/evaluationTasks.json'
+import logoIcon from './assets/icons/logo.svg'
+import videoIcon from './assets/icons/video.svg'
+import documentIcon from './assets/icons/document.svg'
+import checkIcon from './assets/icons/check.svg'
 
 function App() {
   const [activeMenu, setActiveMenu] = useState('videos')
@@ -110,30 +114,13 @@ function App() {
     <Authenticator>
       {({ signOut, user }) => (
         <div className="App">
-          <header className="top-bar">
-            <h1 className="app-title">Video Understanding Evaluation Framework</h1>
-            <div className="user-profile">
-              <button 
-                className="profile-button"
-                onClick={() => setShowUserMenu(!showUserMenu)}
-              >
-                <span className="user-avatar">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
-                <span className="user-name">{user?.username || 'User'}</span>
-              </button>
-              {showUserMenu && (
-                <div className="user-menu">
-                  <div className="user-info">
-                    <p className="user-email">{user?.signInDetails?.loginId || user?.username}</p>
-                  </div>
-                  <button onClick={handleLogout}>Logout</button>
-                </div>
-              )}
-            </div>
-          </header>
       <div className="main-content">
         <div className={`sidebar ${sidebarExpanded ? 'expanded' : ''}`}>
+          <div className="sidebar-logo">
+            <img src={logoIcon} alt="VUEF Logo" className="app-logo" />
+            <span className="app-logo-text">Video Understanding Evaluation Framework</span>
+          </div>
           <div className="sidebar-header">
-            <h2>Menu</h2>
             <button 
               className="btn-toggle"
               onClick={() => setSidebarExpanded(!sidebarExpanded)}
@@ -149,10 +136,7 @@ function App() {
               title="Videos"
             >
               <span className="menu-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                </svg>
+                <img src={videoIcon} alt="Videos" />
               </span>
               <span className="menu-text">Videos</span>
             </button>
@@ -162,13 +146,7 @@ function App() {
               title="Ground Truth"
             >
               <span className="menu-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
+                <img src={documentIcon} alt="Ground Truth" />
               </span>
               <span className="menu-text">Ground Truth</span>
             </button>
@@ -178,14 +156,30 @@ function App() {
               title="Evaluation"
             >
               <span className="menu-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 11l3 3L22 4"></path>
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                </svg>
+                <img src={checkIcon} alt="Evaluation" />
               </span>
               <span className="menu-text">Evaluation</span>
             </button>
           </nav>
+          
+          <div className="sidebar-footer">
+            <div className="user-profile">
+              <button 
+                className="profile-button"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                title={user?.username || 'User'}
+              >
+                <span className="user-avatar">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
+                <span className="menu-text user-name-sidebar">{user?.username || 'User'}</span>
+              </button>
+              {showUserMenu && (
+                <div className="user-menu">
+                  <div className="username">{user?.username || 'User'}</div>
+                  <button onClick={handleLogout}>Logout</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <div className="content">
           {activeMenu === 'videos' ? (

@@ -50,7 +50,7 @@
   "DataBucketE3889A50": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
-    "BucketName": "video-eval-307857433580-us-east-1",
+    "BucketName": "bedrock-video-eval-307857433580-us-east-1",
     "CorsConfiguration": {
      "CorsRules": [
       {
@@ -437,7 +437,7 @@
      }
     },
     "SmsVerificationMessage": "The verification code to your new account is {####}",
-    "UserPoolName": "video-eval-user-pool",
+    "UserPoolName": "bedrock-video-eval-user-pool",
     "VerificationMessageTemplate": {
      "DefaultEmailOption": "CONFIRM_WITH_CODE",
      "EmailMessage": "The verification code to your new account is {####}",
@@ -502,7 +502,7 @@
       }
      }
     ],
-    "IdentityPoolName": "video-eval-identity-pool"
+    "IdentityPoolName": "bedrock-video-eval-identity-pool"
    },
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServicePreStack/AppIdentityPool"
@@ -552,14 +552,6 @@
       "PolicyDocument": {
        "Statement": [
         {
-         "Action": "bedrock-agentcore:InvokeAgentRuntime",
-         "Effect": "Allow",
-         "Resource": [
-          "arn:aws:bedrock-agentcore:us-east-1:307857433580:runtime/video_eval_video_understanding_agent*",
-          "arn:aws:bedrock-agentcore:us-east-1:307857433580:runtime/video_eval_video_understanding_agent*/runtime-endpoint/*"
-         ]
-        },
-        {
          "Action": "cognito-identity:GetCredentialsForIdentity",
          "Effect": "Allow",
          "Resource": "*"
@@ -580,7 +572,7 @@
        ],
        "Version": "2012-10-17"
       },
-      "PolicyName": "video-eval-identity-pool-poliy"
+      "PolicyName": "bedrock-video-eval-identity-pool-poliy"
      }
     ]
    },
@@ -672,8 +664,8 @@
          ],
          "Effect": "Allow",
          "Resource": [
-          "arn:aws:s3:::video-eval-307857433580-us-east-1",
-          "arn:aws:s3:::video-eval-307857433580-us-east-1/*"
+          "arn:aws:s3:::bedrock-video-eval-307857433580-us-east-1",
+          "arn:aws:s3:::bedrock-video-eval-307857433580-us-east-1/*"
          ]
         },
         {
@@ -688,7 +680,7 @@
         {
          "Action": "s3vectors:*",
          "Effect": "Allow",
-         "Resource": "arn:aws:s3vectors:us-east-1:307857433580:bucket/video-eval-vector-bucket*"
+         "Resource": "arn:aws:s3vectors:us-east-1:307857433580:bucket/bedrock-video-eval-vector-bucket*"
         },
         {
          "Action": "logs:CreateLogGroup",
@@ -701,7 +693,7 @@
           "logs:PutLogEvents"
          ],
          "Effect": "Allow",
-         "Resource": "arn:aws:logs:us-east-1:307857433580:log-group:/aws/lambda/video-eval-util-pre-provision:*"
+         "Resource": "arn:aws:logs:us-east-1:307857433580:log-group:/aws/lambda/bedrock-video-eval-util-pre-provision:*"
         }
        ],
        "Version": "2012-10-17"
@@ -719,12 +711,12 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
-     "S3Key": "bf03c57215dbd96e49b561a36937dd94f59346de24ef96ad50049944ae5022f6.zip"
+     "S3Key": "793e1af7b6b6e29913c6386a77d894919d82095307cbf19f7c5d68fd47b090f0.zip"
     },
     "EphemeralStorage": {
      "Size": 10240
     },
-    "FunctionName": "video-eval-util-pre-provision",
+    "FunctionName": "bedrock-video-eval-util-pre-provision",
     "Handler": "util-pre-provision.on_event",
     "Layers": [
      "arn:aws:lambda:us-east-1:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
@@ -744,7 +736,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServicePreStack/util-pre-provision_function/Resource",
-    "aws:asset:path": "asset.bf03c57215dbd96e49b561a36937dd94f59346de24ef96ad50049944ae5022f6",
+    "aws:asset:path": "asset.793e1af7b6b6e29913c6386a77d894919d82095307cbf19f7c5d68fd47b090f0",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -824,7 +816,7 @@
        {
         "Ref": "DataBucketE3889A50"
        },
-       "\\\", \\\"s3_key\\\": \\\"layer/scenedetect_layer.zip\\\"}], \\\"S3Vectors\\\": [{\\\"BucketName\\\": \\\"video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"nova-mme-video-clip-1024\\\", \\\"IndexDim\\\": \\\"1024\\\"}, {\\\"BucketName\\\": \\\"video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"nova-mme-video-async-1024\\\", \\\"IndexDim\\\": \\\"1024\\\"}, {\\\"BucketName\\\": \\\"video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"tlabs-video-1024\\\", \\\"IndexDim\\\": \\\"1024\\\"}, {\\\"BucketName\\\": \\\"video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"tlabs-video-512\\\", \\\"IndexDim\\\": \\\"512\\\"}]}\"},\"physicalResourceId\":{\"id\":\"Trigger\"}}"
+       "\\\", \\\"s3_key\\\": \\\"layer/scenedetect_layer.zip\\\"}], \\\"S3Vectors\\\": [{\\\"BucketName\\\": \\\"bedrock-video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"bedrock-nova-mme-video-clip-1024\\\", \\\"IndexDim\\\": \\\"1024\\\"}, {\\\"BucketName\\\": \\\"bedrock-video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"bedrock-nova-mme-video-async-1024\\\", \\\"IndexDim\\\": \\\"1024\\\"}, {\\\"BucketName\\\": \\\"bedrock-video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"bedrock-tlabs-video-1024\\\", \\\"IndexDim\\\": \\\"1024\\\"}, {\\\"BucketName\\\": \\\"bedrock-video-eval-vector-bucket\\\", \\\"IndexName\\\": \\\"bedrock-tlabs-video-512\\\", \\\"IndexDim\\\": \\\"512\\\"}]}\"},\"physicalResourceId\":{\"id\":\"Trigger\"}}"
       ]
      ]
     },

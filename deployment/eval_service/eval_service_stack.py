@@ -13,6 +13,8 @@ from aws_cdk import (
     RemovalPolicy,
     custom_resources as cr,
     aws_logs as logs,
+    aws_events as events,
+    aws_events_targets as targets,
 )
 from aws_cdk.aws_apigateway import IdentitySource
 
@@ -54,6 +56,7 @@ class EvalServiceStack(NestedStack):
         # Only deploy Cognito and API Gateway for S3 presigned URL management
         self.deploy_dynamodb()
         self.deploy_lambda_layer()
+        self.deploy_s3_listener()
         self.deploy_cognito()
         self.deploy_apigw()
 
@@ -76,19 +79,19 @@ class EvalServiceStack(NestedStack):
             projection_type=_dynamodb.ProjectionType.ALL 
         )
 
-        # Video analyze table
+        # Video analyze table (video_task)
         video_analyze_table = _dynamodb.Table(self,
             id='video-analyze-table',
             table_name=DYNAMO_VIDEO_ANALYZE_TABLE,
             partition_key=_dynamodb.Attribute(name='Id', type=_dynamodb.AttributeType.STRING),
-            sort_key=_dynamodb.Attribute(name='type', type=_dynamodb.AttributeType.STRING),
+            sort_key=_dynamodb.Attribute(name='Type', type=_dynamodb.AttributeType.STRING),
             point_in_time_recovery=True,
             removal_policy=RemovalPolicy.DESTROY
         )
         video_analyze_table.add_global_secondary_index(
-            index_name="video_id-index",
+            index_name="VideoId-index",
             partition_key=_dynamodb.Attribute(
-                name="video_id",
+                name="VideoId",
                 type=_dynamodb.AttributeType.STRING
             ),
             projection_type=_dynamodb.ProjectionType.ALL
@@ -130,8 +133,227 @@ class EvalServiceStack(NestedStack):
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
             description="python3.13 opencv-python-headless 4.12.0.88"
         )
+        self.boto3_layer = _lambda.LayerVersion(self, 'Boto3PyLayer',
+            code=_lambda.S3Code(bucket=layer_bucket, key=LAMBDA_LAYER_SOURCE_S3_KEY_BOTO3),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
+            description="python3.13 boto3 for S3 vectors"
+        )
         self.aws_layer = _lambda.LayerVersion.from_layer_version_arn(self, "AwsLayerPowerTool", 
             layer_version_arn=f"arn:aws:lambda:{self.region}:336392948345:layer:AWSSDKPandas-Python313:4"
+        )
+
+    def deploy_s3_listener(self):
+        # Get reference to the S3 bucket
+        s3_eval_bucket = _s3.Bucket.from_bucket_name(self, "EvalBucket", bucket_name=self.s3_bucket_name_eval)
+        
+        # Create S3 listener Lambda role
+        lambda_key = "eval-srv-s3-listener"
+        lambda_s3_listener_role = _iam.Role(
+            self, "EvalSrvLambdaS3ListenerRole",
+            assumed_by=_iam.ServicePrincipal("lambda.amazonaws.com"),
+            inline_policies={f"{lambda_key}-policy": _iam.PolicyDocument(
+                statements=[
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["s3:ListBucket","s3:GetObject","s3:PutObject","s3:DeleteObject","s3:ListMultipartUploadParts","s3:ListBucketMultipartUploads"],
+                        resources=[f"arn:aws:s3:::{self.s3_bucket_name_eval}",f"arn:aws:s3:::{self.s3_bucket_name_eval}/*"]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=[
+                            "s3vectors:CreateIndex",
+                            "s3vectors:DeleteIndex",
+                            "s3vectors:DescribeIndex",
+                            "s3vectors:ListIndexes",
+                            "s3vectors:PutVectors",
+                            "s3vectors:GetVectors",
+                            "s3vectors:DeleteVectors",
+                            "s3vectors:QueryVectors"
+                        ],
+                        resources=[
+                            f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}",
+                            f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}*"
+                        ]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["logs:CreateLogGroup"],
+                        resources=[f"arn:aws:logs:{self.region}:{self.account_id}:*"]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["logs:CreateLogStream", "logs:PutLogEvents"],
+                        resources=[f"arn:aws:logs:{self.region}:{self.account_id}:log-group:/aws/lambda/{LAMBDA_NAME_PREFIX}{lambda_key}:*"]
+                    ),
+                    _iam.PolicyStatement(
+                        actions=["dynamodb:DeleteItem","dynamodb:Query", "dynamodb:Scan", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
+                        resources=[
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_TABLE}",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_ANALYZE_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_ANALYZE_TABLE}",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_USAGE_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_USAGE_TABLE}",
+                        ]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["bedrock:InvokeModel"],
+                        resources=[
+                            "arn:aws:bedrock:*:*:foundation-model/*",
+                            "arn:aws:bedrock:*:*:inference-profile/*"
+                        ]
+                    )
+                ]
+            )}
+        )
+        
+        # Create S3 listener Lambda function
+        lambda_s3_listener = _lambda.Function(
+            self, 
+            id='eval_srv_s3_listener_function', 
+            function_name=f"{LAMBDA_NAME_PREFIX}{lambda_key}", 
+            runtime=_lambda.Runtime.PYTHON_3_13,
+            handler=f'{lambda_key}.lambda_handler',
+            code=_lambda.Code.from_asset(os.path.join("../source/", f"eval_service/lambda/{lambda_key}")),
+            timeout=Duration.seconds(180),
+            role=lambda_s3_listener_role,
+            memory_size=10240,
+            layers=[self.boto3_layer],
+            environment={
+                'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                'S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME,
+                'S3_VECTOR_INDEX': S3_VECTOR_INDEX_NAME,
+                'DYNAMO_VIDEO_USAGE_TABLE': DYNAMO_VIDEO_USAGE_TABLE,
+                'MODEL_ID_BEDROCK_MME': MODEL_ID_video_evalE,
+            },
+        )
+        
+        # Grant S3 access to trigger the Lambda function
+        s3_eval_bucket.grant_read(lambda_s3_listener)
+        
+        # Create EventBridge rule for S3 events
+        s3_event_rule = events.Rule(
+            self, "S3ObjectCreatedRule",
+            description="Trigger Lambda when .jsonl files are created in tasks/ prefix",
+            event_pattern=events.EventPattern(
+                source=["aws.s3"],
+                detail_type=["Object Created"],
+                detail={
+                    "bucket": {"name": [self.s3_bucket_name_eval]},
+                    "object": {"key": [{"wildcard": "tasks/*/video-analyze/*.jsonl"}]}
+                }
+            )
+        )
+        
+        # Add Lambda as target for the EventBridge rule
+        s3_event_rule.add_target(targets.LambdaFunction(lambda_s3_listener))
+        
+        # Grant EventBridge permission to invoke the Lambda
+        lambda_s3_listener.add_permission(
+            "AllowEventBridgeInvoke",
+            principal=_iam.ServicePrincipal("events.amazonaws.com"),
+            source_arn=s3_event_rule.rule_arn
+        )
+        
+        # Create TwelveLabs S3 listener Lambda role
+        lambda_key = "eval-srv-s3-listener-tlabs"
+        lambda_s3_listener_tlabs_role = _iam.Role(
+            self, "EvalSrvLambdaS3ListenerTlabsRole",
+            assumed_by=_iam.ServicePrincipal("lambda.amazonaws.com"),
+            inline_policies={f"{lambda_key}-policy": _iam.PolicyDocument(
+                statements=[
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["s3:ListBucket","s3:GetObject","s3:PutObject","s3:DeleteObject","s3:ListMultipartUploadParts","s3:ListBucketMultipartUploads"],
+                        resources=[f"arn:aws:s3:::{self.s3_bucket_name_eval}",f"arn:aws:s3:::{self.s3_bucket_name_eval}/*"]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=[
+                            "s3vectors:CreateIndex",
+                            "s3vectors:DeleteIndex",
+                            "s3vectors:DescribeIndex",
+                            "s3vectors:ListIndexes",
+                            "s3vectors:PutVectors",
+                            "s3vectors:GetVectors",
+                            "s3vectors:DeleteVectors",
+                            "s3vectors:QueryVectors"
+                        ],
+                        resources=[
+                            f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}",
+                            f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}*"
+                        ]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["logs:CreateLogGroup"],
+                        resources=[f"arn:aws:logs:{self.region}:{self.account_id}:*"]
+                    ),
+                    _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["logs:CreateLogStream", "logs:PutLogEvents"],
+                        resources=[f"arn:aws:logs:{self.region}:{self.account_id}:log-group:/aws/lambda/{LAMBDA_NAME_PREFIX}{lambda_key}:*"]
+                    ),
+                    _iam.PolicyStatement(
+                        actions=["dynamodb:DeleteItem","dynamodb:Query", "dynamodb:Scan", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
+                        resources=[
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_TABLE}",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_ANALYZE_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_ANALYZE_TABLE}",
+                        ]
+                    )
+                ]
+            )}
+        )
+        
+        # Create TwelveLabs S3 listener Lambda function
+        lambda_s3_listener_tlabs = _lambda.Function(
+            self, 
+            id='eval_srv_s3_listener_tlabs_function', 
+            function_name=f"{LAMBDA_NAME_PREFIX}{lambda_key}", 
+            runtime=_lambda.Runtime.PYTHON_3_13,
+            handler=f'{lambda_key}.lambda_handler',
+            code=_lambda.Code.from_asset(os.path.join("../source/", f"eval_service/lambda/{lambda_key}")),
+            timeout=Duration.seconds(180),
+            role=lambda_s3_listener_tlabs_role,
+            memory_size=10240,
+            layers=[self.boto3_layer],
+            environment={
+                'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                'TLABS_S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME,
+                'TLABS_S3_VECTOR_INDEX': 'tlabs-mme-27',
+                'TLABS_S3_VECTOR_INDEX_30': 'tlabs-mme-30',
+            },
+        )
+        
+        # Grant S3 access to trigger the Lambda function
+        s3_eval_bucket.grant_read(lambda_s3_listener_tlabs)
+        
+        # Create EventBridge rule for TwelveLabs S3 events
+        s3_event_rule_tlabs = events.Rule(
+            self, "S3ObjectCreatedRuleTlabs",
+            description="Trigger Lambda when TwelveLabs output.json files are created",
+            event_pattern=events.EventPattern(
+                source=["aws.s3"],
+                detail_type=["Object Created"],
+                detail={
+                    "bucket": {"name": [self.s3_bucket_name_eval]},
+                    "object": {"key": [{"wildcard": "tasks/*/video-analyze/*/output.json"}]}
+                }
+            )
+        )
+        
+        # Add Lambda as target for the EventBridge rule
+        s3_event_rule_tlabs.add_target(targets.LambdaFunction(lambda_s3_listener_tlabs))
+        
+        # Grant EventBridge permission to invoke the Lambda
+        lambda_s3_listener_tlabs.add_permission(
+            "AllowEventBridgeInvokeTlabs",
+            principal=_iam.ServicePrincipal("events.amazonaws.com"),
+            source_arn=s3_event_rule_tlabs.rule_arn
         )
 
     def deploy_step_function(self):
@@ -559,13 +781,17 @@ class EvalServiceStack(NestedStack):
             layers=[self.moviepy_layer]
         )
         
+        # Note: Nova MME Lambda will be created by the API endpoint below
+        # We reference it by its function name here
         self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="add-video", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_add_video_role,
                 lambda_file_name=lambda_key,
                 memory_m=128, timeout_s=10, ephemeral_storage_size=512,
                 evns={
                     'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
-                    'METADATA_LAMBDA_NAME': lambda_get_video_metadata.function_name
+                    'METADATA_LAMBDA_NAME': lambda_get_video_metadata.function_name,
+                    'NOVA_MME_LAMBDA_NAME': f"{LAMBDA_NAME_PREFIX}eval-srv-api-start-nova-mme",
+                    'TLABS_MME_LAMBDA_NAME': f"{LAMBDA_NAME_PREFIX}eval-srv-api-start-tlabs-mme"
                 },
             )   
 
@@ -584,21 +810,48 @@ class EvalServiceStack(NestedStack):
 
         # POST /v1/eval/video/delete-video
         lambda_key='eval-srv-delete-video'
-        lambda_delete_video_role = self.create_role(lambda_key, ["dynamodb","s3"])
+        lambda_delete_video_role = self.create_role(lambda_key, ["dynamodb","s3","s3vectors"])
         self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="delete-video", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_delete_video_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
                 evns={
                     'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
-                    'VIDEO_UPLOAD_S3_PREFIX': VIDEO_UPLOAD_S3_PREFIX
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME,
+                    'S3_VECTOR_INDEX': S3_VECTOR_INDEX_NAME
+                },
+            )   
+
+        # POST /v1/eval/video/delete-analyze-task
+        lambda_key='eval-srv-delete-analyze-task'
+        lambda_delete_analyze_task_role = self.create_role(lambda_key, ["dynamodb","s3","s3vectors"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="delete-analyze-task", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_delete_analyze_task_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME
+                },
+            )
+
+        # POST /v1/eval/video/get-analyze-tasks
+        lambda_key='eval-srv-get-analyze-tasks'
+        lambda_get_analyze_tasks_role = self.create_role(lambda_key, ["dynamodb"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="get-analyze-tasks", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_get_analyze_tasks_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE
                 },
             )   
 
         # POST /v1/eval/video/start-nova-mme
         lambda_key='eval-srv-api-start-nova-mme'
         lambda_start_nova_mme_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="start-nova-mme", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="start-nova-mme", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_start_nova_mme_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=60, ephemeral_storage_size=512,
@@ -608,7 +861,40 @@ class EvalServiceStack(NestedStack):
                     'EMBEDDING_DIM': EMBEDDING_DIM_DEFAULT,
                     'DEFAULT_NOVA_MME_MODEL_ID': MODEL_ID_video_evalE
                 },
-            )   
+            )
+
+        # POST /v1/eval/video/start-tlabs-mme
+        lambda_key='eval-srv-api-start-tlabs-mme'
+        lambda_start_tlabs_mme_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="start-tlabs-mme", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_start_tlabs_mme_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=60, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'DEFAULT_TLABS_MME_MODEL_ID': 'twelvelabs.marengo-embed-3-0-v1:0'
+                },
+            )
+
+        # POST /v1/eval/video/nova-mme-search-vector
+        lambda_key='eval-srv-api-nova-mme-search-vector'
+        lambda_search_vector_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock","s3vectors"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="nova-mme-search-vector", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_search_vector_role,
+                lambda_file_name=lambda_key,
+                memory_m=512, timeout_s=60, ephemeral_storage_size=512,
+                evns={
+                    'S3_PRESIGNED_URL_EXPIRY_S': S3_PRESIGNED_URL_EXPIRY_S,
+                    'S3_BUCKET_DATA': self.s3_bucket_name_eval,
+                    'DYNAMO_VIDEO_TASK_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'MODEL_ID': MODEL_ID_video_evalE,
+                    'NOVA_S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME,
+                    'NOVA_S3_VECTOR_INDEX': S3_VECTOR_INDEX_NAME,
+                    'EMBEDDING_DIM': EMBEDDING_DIM_DEFAULT
+                },
+                layers=[self.boto3_layer]
+            )
 
         # API Gateway - end
 
@@ -681,8 +967,20 @@ class EvalServiceStack(NestedStack):
             statements.append(
                 _iam.PolicyStatement(
                         effect=_iam.Effect.ALLOW,
-                        actions=["s3vectors:*"],
-                        resources=[f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}*"]
+                        actions=[
+                            "s3vectors:CreateIndex",
+                            "s3vectors:DeleteIndex",
+                            "s3vectors:DescribeIndex",
+                            "s3vectors:ListIndexes",
+                            "s3vectors:PutVectors",
+                            "s3vectors:GetVectors",
+                            "s3vectors:DeleteVectors",
+                            "s3vectors:QueryVectors"
+                        ],
+                        resources=[
+                            f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}",
+                            f"arn:aws:s3vectors:{self.region}:{self.account_id}:bucket/{S3_VECTOR_BUCKET_NAME}/*"
+                        ]
                     )
             )
         if "lambda" in policies:
@@ -754,15 +1052,15 @@ class EvalServiceStack(NestedStack):
         resource = root.add_resource(
                 path1, 
                 default_cors_preflight_options=_apigw.CorsOptions(
-                allow_methods=['POST', 'OPTIONS'],
+                allow_methods=[method, 'OPTIONS'],
                 allow_origins=_apigw.Cors.ALL_ORIGINS),
         )
 
-        method = resource.add_method(
+        resource.add_method(
             method, 
             _apigw.LambdaIntegration(
                 lambda_function,
-                proxy=True
+                #proxy=True
             ),
             authorizer=auth,
             authorization_type=_apigw.AuthorizationType.COGNITO

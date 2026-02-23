@@ -103,6 +103,36 @@ export const evalAPI = {
       console.error('Error fetching evaluation task:', error)
       throw error
     }
+  },
+
+  // Analyze Tasks
+  getAnalyzeTasks: async (videoId, type = null) => {
+    try {
+      const queryParams = type ? `?VideoId=${videoId}&Type=${type}` : `?VideoId=${videoId}`
+      return await FetchGet(`/video/get-analyze-tasks${queryParams}`, null, 'EvalService')
+    } catch (error) {
+      console.error('Error fetching analyze tasks:', error)
+      throw error
+    }
+  },
+
+  startNovaMme: async (payload) => {
+    try {
+      return await FetchPost('/video/start-nova-mme', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error starting Nova MME:', error)
+      throw error
+    }
+  },
+
+  // Vector Search
+  searchVectorEmbeddings: async (payload) => {
+    try {
+      return await FetchPost('/video/nova-mme-search-vector', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error searching vector embeddings:', error)
+      throw error
+    }
   }
 }
 

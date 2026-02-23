@@ -5,10 +5,28 @@ import { fetchUserAttributes } from 'aws-amplify/auth'
 import { modelGroups } from '../static/modelConfig'
 
 function VideoUpload({ onSuccess, onCancel }) {
+  // Get only Multimodal Embedding models
+  const embeddingModels = modelGroups.find(g => g.groupName === 'Multimodal Embedding')?.models || []
+  
   const [uploadFiles, setUploadFiles] = useState([])
   const [taskName, setTaskName] = useState('')
   const [description, setDescription] = useState('')
-  const [selectedEmbeddings, setSelectedEmbeddings] = useState([])
+  const [selectedEmbeddings, setSelectedEmbeddings] = useState([]) // Default to none checked
+  const [novaMmeConfig, setNovaMmeConfig] = useState({
+    durationS: 5,
+    embedMode: 'AUDIO_VIDEO_COMBINED',
+    embeddingDim: 1024
+  })
+  const [twelveLabsConfig, setTwelveLabsConfig] = useState({
+    Segmentation: {
+      Method: 'dynamic',
+      Dynamic: {
+        MinDurationSec: 4
+      }
+    },
+    EmbeddingScope: ['clip'],
+    EmbeddingOption: ['visual', 'audio', 'transcription']
+  })
   const [alert, setAlert] = useState(null)
   const [status, setStatus] = useState(null) // null, generateurl, uploading, loading
   const [numChunks, setNumChunks] = useState(null)
@@ -17,9 +35,6 @@ function VideoUpload({ onSuccess, onCancel }) {
   const fileInputRef = useRef(null)
 
   const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB chunks
-
-  // Get only Multimodal Embedding models
-  const embeddingModels = modelGroups.find(g => g.groupName === 'Multimodal Embedding')?.models || []
 
   const toggleEmbedding = (model) => {
     setSelectedEmbeddings(prev =>
@@ -33,7 +48,22 @@ function VideoUpload({ onSuccess, onCancel }) {
     setUploadFiles([])
     setTaskName('')
     setDescription('')
-    setSelectedEmbeddings([])
+    setSelectedEmbeddings([]) // Reset to none checked
+    setNovaMmeConfig({
+      durationS: 5,
+      embedMode: 'AUDIO_VIDEO_COMBINED',
+      embeddingDim: 1024
+    })
+    setTwelveLabsConfig({
+      Segmentation: {
+        Method: 'dynamic',
+        Dynamic: {
+          MinDurationSec: 4
+        }
+      },
+      EmbeddingScope: ['clip'],
+      EmbeddingOption: ['visual', 'audio', 'transcription']
+    })
     setAlert(null)
     setStatus(null)
     setNumChunks(null)
@@ -86,23 +116,30 @@ function VideoUpload({ onSuccess, onCancel }) {
         'EvalService'
       )
 
-      if (data.statusCode !== 200) {
+      // Handle response - data might be the body directly or wrapped
+      const responseData = data.body ? (typeof data.body === 'string' ? JSON.parse(data.body) : data.body) : data
+      
+      if (data.statusCode && data.statusCode !== 200) {
         setStatus(null)
-        setAlert(data.body || 'Failed to generate presigned URLs')
+        setAlert(responseData.error || responseData.message || 'Failed to generate presigned URLs')
         setCurrentUploadingFileName(null)
         return
       }
 
-      if (data.body) {
+      if (responseData.UploadPartUrls) {
         await uploadFile({
-          taskId: data.body.TaskId,
-          uploadS3Url: data.body.UploadUrl,
-          uploadedS3Bucket: data.body.S3Bucket,
-          uploadedS3KeyVideo: data.body.S3Key,
-          uploadId: data.body.UploadId,
-          uploadPartUrls: data.body.UploadPartUrls,
+          taskId: responseData.TaskId,
+          uploadS3Url: responseData.UploadUrl,
+          uploadedS3Bucket: responseData.S3Bucket,
+          uploadedS3KeyVideo: responseData.S3Key,
+          uploadId: responseData.UploadId,
+          uploadPartUrls: responseData.UploadPartUrls,
           numChunks: chunks
         }, file)
+      } else {
+        setStatus(null)
+        setAlert('No upload URLs received from server')
+        setCurrentUploadingFileName(null)
       }
     } catch (err) {
       setStatus(null)
@@ -164,8 +201,11 @@ function VideoUpload({ onSuccess, onCancel }) {
         'EvalService'
       )
 
-      if (completeData.statusCode !== 200) {
-        setAlert(completeData.body || 'Failed to complete upload')
+      // Handle response - data might be the body directly or wrapped
+      const completeResponseData = completeData.body ? (typeof completeData.body === 'string' ? JSON.parse(completeData.body) : completeData.body) : completeData
+
+      if (completeData.statusCode && completeData.statusCode !== 200) {
+        setAlert(completeResponseData.error || completeResponseData.message || 'Failed to complete upload')
         setStatus(null)
         setCurrentUploadingFileName(null)
         return
@@ -192,31 +232,55 @@ function VideoUpload({ onSuccess, onCancel }) {
       console.error('Failed to fetch user attributes:', err)
     }
 
+    // Build embedding configurations if models are selected
+    const embeddingConfigs = selectedEmbeddings.map(model => {
+      if (model.displayName.toLowerCase().includes('twelve')) {
+        return {
+          ModelId: model.modelId,
+          ModelName: model.displayName,
+          Config: {
+            Segmentation: twelveLabsConfig.Segmentation,
+            EmbeddingScope: twelveLabsConfig.EmbeddingScope,
+            EmbeddingOption: twelveLabsConfig.EmbeddingOption
+          }
+        }
+      } else {
+        // Nova MME or other models
+        return {
+          ModelId: model.modelId,
+          ModelName: model.displayName,
+          Config: {
+            DurationS: novaMmeConfig.durationS,
+            EmbedMode: novaMmeConfig.embedMode,
+            EmbeddingDim: novaMmeConfig.embeddingDim
+          }
+        }
+      }
+    })
+
     const payload = {
-      id: urlResp.taskId,
-      name: taskName,
-      description: description,
-      s3_bucket: urlResp.uploadedS3Bucket,
-      s3_key_video: urlResp.uploadedS3KeyVideo,
-      uploaded_by: uploadedBy
+      Id: urlResp.taskId,
+      Name: taskName,
+      Description: description,
+      S3Bucket: urlResp.uploadedS3Bucket,
+      S3KeyVideo: urlResp.uploadedS3KeyVideo,
+      UploadedBy: uploadedBy,
+      EmbeddingConfigs: embeddingConfigs.length > 0 ? embeddingConfigs : undefined
     }
 
     try {
       const data = await FetchPost('/video/add-video', payload, 'EvalService')
 
-      if (data.statusCode !== 200) {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
+      // Handle response - data might be the body directly or wrapped
+      const responseData = data.body ? (typeof data.body === 'string' ? JSON.parse(data.body) : data.body) : data
+
+      if (data.statusCode && data.statusCode !== 200) {
+        const errorMessage = responseData.error || responseData.message || 'Failed to add video'
         setStatus(null)
         setAlert(errorMessage)
         setCurrentUploadingFileName(null)
       } else {
-        // Trigger embedding generation if any models are selected
-        if (selectedEmbeddings.length > 0) {
-          await triggerEmbeddingGeneration(urlResp.taskId, uploadedBy)
-        }
-        
+        // Video uploaded successfully - embedding tasks are created by add-video Lambda
         setCurrentUploadingFileName(null)
         resetState()
         onSuccess()
@@ -225,36 +289,6 @@ function VideoUpload({ onSuccess, onCancel }) {
       setStatus(null)
       setAlert(err.message)
       setCurrentUploadingFileName(null)
-    }
-  }
-
-  const triggerEmbeddingGeneration = async (videoId, uploadedBy) => {
-    console.log(`Triggering embedding generation for video: ${videoId}`)
-    
-    for (const model of selectedEmbeddings) {
-      if (!model.api) {
-        console.warn(`No API endpoint configured for ${model.displayName}`)
-        continue
-      }
-
-      try {
-        const payload = {
-          video_id: videoId,
-          model_id: model.modelId,
-          requested_by: uploadedBy
-        }
-
-        console.log(`Calling ${model.api} for ${model.displayName}`)
-        const data = await FetchPost(model.api, payload, 'EvalService')
-        
-        if (data.statusCode === 200) {
-          console.log(`Successfully started embedding generation: ${model.displayName}`)
-        } else {
-          console.error(`Failed to start embedding for ${model.displayName}:`, data.body)
-        }
-      } catch (err) {
-        console.error(`Error starting embedding for ${model.displayName}:`, err)
-      }
     }
   }
 
@@ -386,6 +420,169 @@ function VideoUpload({ onSuccess, onCancel }) {
               <p className="help-text">
                 {selectedEmbeddings.length} embedding{selectedEmbeddings.length > 1 ? 's' : ''} will be generated after upload
               </p>
+            )}
+            
+            {/* Nova MME Configuration */}
+            {selectedEmbeddings.some(m => m.displayName.includes('Nova')) && (
+              <div className="nova-mme-config">
+                <h4>Nova MME Configuration</h4>
+                <div className="config-row">
+                  <div className="config-field">
+                    <label htmlFor="durationS">Segment Duration (seconds)</label>
+                    <input
+                      type="number"
+                      id="durationS"
+                      min="1"
+                      max="600"
+                      value={novaMmeConfig.durationS}
+                      onChange={(e) => setNovaMmeConfig(prev => ({
+                        ...prev,
+                        durationS: parseInt(e.target.value) || 5
+                      }))}
+                      disabled={isUploading}
+                    />
+                    <p className="help-text-small">Duration of each video segment (1-600 seconds)</p>
+                  </div>
+                  
+                  <div className="config-field">
+                    <label htmlFor="embedMode">Embedding Mode</label>
+                    <select
+                      id="embedMode"
+                      value={novaMmeConfig.embedMode}
+                      onChange={(e) => setNovaMmeConfig(prev => ({
+                        ...prev,
+                        embedMode: e.target.value
+                      }))}
+                      disabled={isUploading}
+                    >
+                      <option value="AUDIO_VIDEO_COMBINED">Audio + Video Combined</option>
+                      <option value="AUDIO_VIDEO_SEPARATE">Audio + Video Separate</option>
+                      <option value="VIDEO_ONLY">Video Only</option>
+                      <option value="AUDIO_ONLY">Audio Only</option>
+                    </select>
+                    <p className="help-text-small">How to process audio and video streams</p>
+                  </div>
+                  
+                  <div className="config-field">
+                    <label htmlFor="embeddingDim">Embedding Dimension</label>
+                    <select
+                      id="embeddingDim"
+                      value={novaMmeConfig.embeddingDim}
+                      onChange={(e) => setNovaMmeConfig(prev => ({
+                        ...prev,
+                        embeddingDim: parseInt(e.target.value)
+                      }))}
+                      disabled={isUploading}
+                    >
+                      <option value={3072}>3072</option>
+                      <option value={1024}>1024</option>
+                      <option value={384}>384</option>
+                      <option value={256}>256</option>
+                    </select>
+                    <p className="help-text-small">Dimension of the embedding vectors</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* TwelveLabs Configuration */}
+            {selectedEmbeddings.some(m => m.displayName.toLowerCase().includes('twelve')) && (
+              <div className="twelvelabs-config">
+                <h4>TwelveLabs Configuration</h4>
+                
+                <div className="config-section">
+                  <label>Segmentation Method</label>
+                  <div className="config-row">
+                    <div className="config-field">
+                      <select
+                        value={twelveLabsConfig.Segmentation.Method}
+                        onChange={(e) => setTwelveLabsConfig(prev => ({
+                          ...prev,
+                          Segmentation: {
+                            ...prev.Segmentation,
+                            Method: e.target.value
+                          }
+                        }))}
+                        disabled={isUploading}
+                      >
+                        <option value="dynamic">Dynamic</option>
+                        <option value="fixed">Fixed</option>
+                      </select>
+                    </div>
+                    
+                    {twelveLabsConfig.Segmentation.Method === 'dynamic' && (
+                      <div className="config-field">
+                        <label htmlFor="minDurationSec">Min Duration (seconds)</label>
+                        <input
+                          type="number"
+                          id="minDurationSec"
+                          min="1"
+                          max="60"
+                          value={twelveLabsConfig.Segmentation.Dynamic.MinDurationSec}
+                          onChange={(e) => setTwelveLabsConfig(prev => ({
+                            ...prev,
+                            Segmentation: {
+                              ...prev.Segmentation,
+                              Dynamic: {
+                                MinDurationSec: parseInt(e.target.value) || 4
+                              }
+                            }
+                          }))}
+                          disabled={isUploading}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="config-section">
+                  <label>Embedding Scope</label>
+                  <div className="checkbox-group">
+                    {['clip', 'video'].map(scope => (
+                      <label key={scope} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={twelveLabsConfig.EmbeddingScope.includes(scope)}
+                          onChange={(e) => {
+                            setTwelveLabsConfig(prev => ({
+                              ...prev,
+                              EmbeddingScope: e.target.checked
+                                ? [...prev.EmbeddingScope, scope]
+                                : prev.EmbeddingScope.filter(s => s !== scope)
+                            }))
+                          }}
+                          disabled={isUploading}
+                        />
+                        <span>{scope.charAt(0).toUpperCase() + scope.slice(1)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="config-section">
+                  <label>Embedding Options</label>
+                  <div className="checkbox-group">
+                    {['visual', 'audio', 'transcription'].map(option => (
+                      <label key={option} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={twelveLabsConfig.EmbeddingOption.includes(option)}
+                          onChange={(e) => {
+                            setTwelveLabsConfig(prev => ({
+                              ...prev,
+                              EmbeddingOption: e.target.checked
+                                ? [...prev.EmbeddingOption, option]
+                                : prev.EmbeddingOption.filter(o => o !== option)
+                            }))
+                          }}
+                          disabled={isUploading}
+                        />
+                        <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 

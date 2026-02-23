@@ -197,3 +197,251 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Tabs */
+.video-detail-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 28px;
+}
+
+.tab-button {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  color: #1f2937;
+}
+
+.tab-button.active {
+  color: #f97316;
+  border-bottom-color: #f97316;
+}
+
+/* Embedding Section */
+.embedding-section {
+  grid-column: 1 / -1;
+  padding: 20px 0;
+}
+
+.error-message {
+  padding: 12px 16px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.analyze-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analyze-tasks-list h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.tasks-info {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.btn-create-new-embedding {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.btn-create-new-embedding:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+}
+
+.analyze-task-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.task-id {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.task-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.task-status.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.task-status.processing {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.task-status.completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.task-status.failed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.task-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-detail-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.task-detail-row .detail-label {
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 140px;
+}
+
+.task-detail-row .detail-value {
+  color: #1f2937;
+}
+
+.no-tasks-section {
+  text-align: center;
+  padding: 20px;
+}
+
+.no-tasks-section p {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.start-analysis-form {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: left;
+  background: #f9fafb;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.start-analysis-form h3 {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+}
+
+.start-analysis-form .form-group {
+  margin-bottom: 20px;
+}
+
+.start-analysis-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.start-analysis-form input,
+.start-analysis-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.start-analysis-form input:focus,
+.start-analysis-form select:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.start-analysis-form .help-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.btn-start-analysis {
+  width: 100%;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.btn-start-analysis:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+}
+
+.btn-start-analysis:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

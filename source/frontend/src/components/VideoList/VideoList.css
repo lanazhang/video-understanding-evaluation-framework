@@ -1,0 +1,90 @@
+/* Extracted from VideoManagement.css - Video List specific styles */
+.video-list {
+  width: 100%;
+}
+
+.video-table {
+  background: white;
+  border-radius: 12px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  width: 100%;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 1000px;
+}
+
+th, td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+th:nth-child(1), td:nth-child(1) { width: 180px; }
+th:nth-child(2), td:nth-child(2) { width: 320px; }
+th:nth-child(3), td:nth-child(3) { width: 240px; }
+th:nth-child(4), td:nth-child(4) { 
+  width: 260px; 
+  white-space: normal;
+}
+
+thead {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.9em;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  user-select: none;
+}
+
+th[style*="cursor: pointer"]:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  color: #f97316;
+}
+
+td {
+  padding: 16px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+tbody tr:hover {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+.no-results-cell {
+  text-align: center;
+  padding: 40px 20px !important;
+  color: #666;
+  font-size: 14px;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.alert-error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+}

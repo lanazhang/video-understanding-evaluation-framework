@@ -73,7 +73,7 @@ def lambda_handler(event, context):
         video_format = s3_key.split("/")[-1].split(".")[-1].lower()
         
         # Define S3 output prefix
-        s3_prefix_output = f'tasks/{video_id}/video-analyze/{task_id}/'
+        s3_prefix_output = f'tasks/{video_id}/video-analyze/nova-mme/{task_id}/'
         
         # Create output folder placeholder (workaround before Nova fix output support prefix)
         tmp_key = s3_prefix_output + ".tmp"

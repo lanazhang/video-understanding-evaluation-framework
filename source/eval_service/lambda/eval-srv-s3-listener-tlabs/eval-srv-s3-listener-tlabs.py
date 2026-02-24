@@ -8,6 +8,7 @@ import json
 import boto3
 import os
 import utils
+import hashlib
 from datetime import datetime, timezone
 
 DYNAMO_VIDEO_ANALYZE_TABLE = os.environ.get("DYNAMO_VIDEO_ANALYZE_TABLE")
@@ -36,15 +37,15 @@ def lambda_handler(event, context):
             s3_bucket = event["detail"]["bucket"]["name"]
             s3_key = event["detail"]["object"]["key"]
             
-            # Extract task_id from S3 key path: tasks/{video_id}/video-analyze/{task_id}/...
+            # Extract task_id from S3 key path: tasks/{video_id}/video-analyze/tlabs/{task_id}/...
             path_parts = s3_key.split('/')
-            if len(path_parts) < 4:
+            if len(path_parts) < 5:
                 return {
                     'statusCode': 400,
                     'body': f'Invalid S3 key format: {s3_key}'
                 }
             
-            task_id = path_parts[3]  # tasks/video_id/video-analyze/task_id/...
+            task_id = path_parts[4]  # tasks/video_id/video-analyze/tlabs/task_id/...
             
         except Exception as ex:
             print(f"Error parsing S3 trigger: {ex}")
@@ -77,8 +78,34 @@ def lambda_handler(event, context):
         
         print(f"Processing TwelveLabs output: bucket={s3_bucket}, key={s3_key}, task_id={task_id}")
         
-        # Get task details from DynamoDB
-        task_doc = utils.dynamodb_get_by_id(DYNAMO_VIDEO_ANALYZE_TABLE, id=task_id)
+        # Extract video_id from path: tasks/{video_id}/video-analyze/tlabs/{task_id}/...
+        path_parts = s3_key.split('/')
+        if len(path_parts) >= 2:
+            video_id = path_parts[1]
+        else:
+            print(f"Cannot extract video_id from S3 key: {s3_key}")
+            return {
+                'statusCode': 400,
+                'body': 'Invalid S3 key format - cannot extract video_id'
+            }
+        
+        print(f"Querying analyze table for VideoId: {video_id}, TaskId: {task_id}")
+        
+        # Query by VideoId to get tasks (needed because table has composite key: Id + Type)
+        tasks = utils.dynamodb_query_by_index(
+            DYNAMO_VIDEO_ANALYZE_TABLE,
+            'VideoId-index',
+            'VideoId',
+            video_id
+        )
+        
+        # Find the specific task by Id
+        task_doc = None
+        for t in tasks:
+            if t.get('Id') == task_id:
+                task_doc = t
+                break
+        
         if not task_doc:
             print(f"Task not found in DynamoDB: {task_id}")
             return {
@@ -86,7 +113,6 @@ def lambda_handler(event, context):
                 'body': f'Task not found: {task_id}'
             }
         
-        video_id = task_doc.get('VideoId')
         model_id = task_doc.get('ModelId', '')
         
         # Get embedding result from S3
@@ -104,13 +130,35 @@ def lambda_handler(event, context):
         
         print(f"Found {len(output_data)} embeddings to process")
         
-        # Determine which vector index to use based on model version
+        # Determine embedding dimension and which vector index to use based on model version
+        embedding_dim = 1024  # Default dimension
+        if output_data and len(output_data) > 0 and "embedding" in output_data[0]:
+            embedding_dim = len(output_data[0]["embedding"])
+        
+        # Create unique index name for this task using a hash to keep it short
+        # S3 Vector index names must be 3-63 characters
+        task_hash = hashlib.md5(task_id.encode()).hexdigest()[:12]  # Use first 12 chars of hash
+        
         if "3-0" in model_id or "3.0" in model_id:
-            index_name = TLABS_S3_VECTOR_INDEX_30
-            print(f"Using Marengo 3.0 vector index: {index_name}")
+            # Marengo 3.0 - dimension can vary
+            index_name = f"tlabs-mme-30-{embedding_dim}-{task_hash}"
+            print(f"Using Marengo 3.0 vector index: {index_name} with dimension {embedding_dim}")
         else:
-            index_name = TLABS_S3_VECTOR_INDEX
-            print(f"Using Marengo 2.7 vector index: {index_name}")
+            # Marengo 2.7 - typically 1024 dimension
+            index_name = f"tlabs-mme-27-{embedding_dim}-{task_hash}"
+            print(f"Using Marengo 2.7 vector index: {index_name} with dimension {embedding_dim}")
+        
+        print(f"Using task-specific vector index: {index_name} (length: {len(index_name)}) for task: {task_id}")
+        
+        # Ensure the index exists for this task
+        try:
+            ensure_vector_index_exists(TLABS_S3_VECTOR_BUCKET, index_name, embedding_dim)
+        except Exception as ex:
+            print(f"Error ensuring vector index exists: {ex}")
+            return {
+                'statusCode': 500,
+                'body': f'Error creating vector index: {ex}'
+            }
         
         # Add embeddings to S3 Vector: batch size 200
         embeddings = []
@@ -193,3 +241,33 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
         }
+
+
+def ensure_vector_index_exists(bucket_name, index_name, dimension):
+    """
+    Ensure S3 Vector index exists, create if it doesn't
+    
+    Args:
+        bucket_name: S3 Vector bucket name
+        index_name: Index name to create
+        dimension: Embedding dimension (e.g., 1024, 512)
+    """
+    try:
+        # Try to create the index - if it already exists, it will raise ConflictException
+        print(f"Attempting to create vector index: {index_name} with dimension {dimension}")
+        s3vectors.create_index(
+            vectorBucketName=bucket_name,
+            indexName=index_name,
+            dataType='float32',
+            dimension=int(dimension),
+            distanceMetric='cosine'
+        )
+        print(f"Successfully created new vector index: {index_name}")
+        return True
+    except s3vectors.exceptions.ConflictException:
+        # Index already exists - this is fine
+        print(f"Vector index already exists: {index_name}")
+        return True
+    except Exception as ex:
+        print(f"Error creating/checking vector index: {ex}")
+        raise ex

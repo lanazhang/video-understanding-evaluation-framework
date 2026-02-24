@@ -47,9 +47,9 @@ def lambda_handler(event, context):
     try:
         s3_bucket = event["detail"]["bucket"]["name"]
         s3_key = event["detail"]["object"]["key"]
-        # Extract video_id from path: tasks/{video_id}/video-analyze/{task_id}/*.jsonl
+        # Extract video_id from path: tasks/{video_id}/video-analyze/nova-mme/{task_id}/*.jsonl
         video_id = s3_key.split('/')[1]
-        task_id = s3_key.split('/')[3]
+        task_id = s3_key.split('/')[4]
     except Exception as ex:
         print(f"Error parsing S3 trigger: {ex}")
         return {
@@ -145,17 +145,45 @@ def lambda_handler(event, context):
             'body': 'No valid embeddings found'
         }
     
+    # Get task details to determine embedding dimension
+    analyze_table_name = DYNAMO_VIDEO_ANALYZE_TABLE
+    if not analyze_table_name:
+        analyze_table_name = DYNAMO_VIDEO_TABLE.replace('_video', '_analyze_table')
+    
+    # Query by VideoId to get the task
+    tasks = utils.dynamodb_query_by_index(
+        analyze_table_name,
+        'VideoId-index',
+        'VideoId',
+        video_id
+    )
+    
+    # Find the specific task by Id
+    task = None
+    for t in tasks:
+        if t.get('Id') == task_id:
+            task = t
+            break
+    
+    # Get embedding dimension from task request, default to 1024
+    embedding_dim = 1024
+    if task and task.get('Request') and task['Request'].get('EmbeddingDim'):
+        embedding_dim = int(task['Request']['EmbeddingDim'])
+        print(f"Using embedding dimension from task request: {embedding_dim}")
+    else:
+        print(f"Task not found or no EmbeddingDim in request, using default dimension: {embedding_dim}")
+    
     # Add embeddings to S3 Vector: batch size 200
     # Create unique index name for this video using a hash to keep it short
     # S3 Vector index names must be 3-63 characters
     video_hash = hashlib.md5(task_id.encode()).hexdigest()[:12]  # Use first 12 chars of hash
-    video_index_name = f"nova-mme-1024-{video_hash}"  # Format: nova-mme-1024-{12-char-hash} = ~28 chars
+    video_index_name = f"nova-mme-{embedding_dim}-{video_hash}"  # Format: nova-mme-{dim}-{12-char-hash}
     
-    print(f"Using video index name: {video_index_name} (length: {len(video_index_name)}) for video task: {task_id}")
+    print(f"Using video index name: {video_index_name} (length: {len(video_index_name)}, dimension: {embedding_dim}) for video task: {task_id}")
     
     # Ensure the index exists for this video
     try:
-        ensure_vector_index_exists(S3_VECTOR_BUCKET, video_index_name, 1024)
+        ensure_vector_index_exists(S3_VECTOR_BUCKET, video_index_name, embedding_dim)
     except Exception as ex:
         print(f"Error ensuring vector index exists: {ex}")
         return {
@@ -240,7 +268,9 @@ def lambda_handler(event, context):
             analyze_table_name = DYNAMO_VIDEO_TABLE.replace('_video', '_analyze_table')
             print(f"Warning: DYNAMO_VIDEO_ANALYZE_TABLE not set, using derived name: {analyze_table_name}")
         
-        print(f"Querying analyze table: {analyze_table_name} for VideoId: {video_id}")
+        print(f"Querying analyze table: {analyze_table_name} for VideoId: {video_id}, TaskId: {task_id}")
+        
+        # Query by VideoId to get tasks (needed because table has composite key: Id + Type)
         tasks = utils.dynamodb_query_by_index(
             analyze_table_name,
             'VideoId-index',
@@ -248,11 +278,24 @@ def lambda_handler(event, context):
             video_id
         )
         
-        print(f"Found {len(tasks)} tasks for video {video_id}")
+        # Find the specific task by Id
+        task = None
+        for t in tasks:
+            if t.get('Id') == task_id:
+                task = t
+                break
         
-        # Update the most recent processing task
-        for task in tasks:
-            print(f"Updating task {task.get('Id')} to completed status")
+        if task:
+            print(f"Updating task {task_id} to completed status")
+            
+            # Get embedding dimension from task request (already retrieved earlier, but get again for consistency)
+            embedding_dim = 1024  # Default
+            if task.get('Request') and task['Request'].get('EmbeddingDim'):
+                embedding_dim = int(task['Request']['EmbeddingDim'])
+            
+            # Use the same index name format as created earlier
+            video_hash = hashlib.md5(task_id.encode()).hexdigest()[:12]
+            video_index_name = f"nova-mme-{embedding_dim}-{video_hash}"
             
             # Update status and completion timestamp
             task['Status'] = 'completed'
@@ -286,10 +329,9 @@ def lambda_handler(event, context):
             
             # Save updated task
             utils.dynamodb_table_upsert(analyze_table_name, task)
-            print(f"Successfully updated task {task['Id']} - Status: completed, EmbeddingCount: {len(data)}, S3VectorBucket: {S3_VECTOR_BUCKET}, S3VectorIndex: {video_index_name}")
-            break
+            print(f"Successfully updated task {task_id} - Status: completed, EmbeddingCount: {len(data)}, S3VectorBucket: {S3_VECTOR_BUCKET}, S3VectorIndex: {video_index_name}")
         else:
-            print(f"No processing tasks found for video {video_id}")
+            print(f"Task not found with ID: {task_id} for video: {video_id}")
     except Exception as ex:
         print(f'Error updating task status: {ex}')
         import traceback

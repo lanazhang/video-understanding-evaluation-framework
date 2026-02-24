@@ -159,6 +159,58 @@
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/video-analyze-table/Resource"
    }
   },
+  "groundtruthtable203AA6C6": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "Id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "VideoId",
+      "AttributeType": "S"
+     }
+    ],
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "VideoId-index",
+      "KeySchema": [
+       {
+        "AttributeName": "VideoId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+       "ReadCapacityUnits": 5,
+       "WriteCapacityUnits": 5
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "Id",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "ProvisionedThroughput": {
+     "ReadCapacityUnits": 5,
+     "WriteCapacityUnits": 5
+    },
+    "TableName": "bedrock_video_eval_ground_truth"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/ground-truth-table/Resource"
+   }
+  },
   "SceneLayerA9796E41": {
    "Type": "AWS::Lambda::LayerVersion",
    "Properties": {
@@ -411,7 +463,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
-     "S3Key": "d4b3cbe0952d84d424a51a24bb5dcd330cff5aff748c5b34b5b63dcd247ce822.zip"
+     "S3Key": "dfa80cd3358d442fd1df031afeeaaa5567ee72b6b0f3c684b31c878de4ddce74.zip"
     },
     "Environment": {
      "Variables": {
@@ -446,7 +498,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval_srv_s3_listener_function/Resource",
-    "aws:asset:path": "asset.d4b3cbe0952d84d424a51a24bb5dcd330cff5aff748c5b34b5b63dcd247ce822",
+    "aws:asset:path": "asset.dfa80cd3358d442fd1df031afeeaaa5567ee72b6b0f3c684b31c878de4ddce74",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -489,7 +541,7 @@
       "object": {
        "key": [
         {
-         "wildcard": "tasks/*/video-analyze/*.jsonl"
+         "wildcard": "tasks/*/video-analyze/nova-mme/*/*.jsonl"
         }
        ]
       }
@@ -710,7 +762,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
-     "S3Key": "4109b55828346134709414b91c023a5f0dc4ea2ac9ab7683c01f444d7d62bf4a.zip"
+     "S3Key": "a188cd828a8762bea2131db59a2908a685190648efaa2140a44c98855446cfa7.zip"
     },
     "Environment": {
      "Variables": {
@@ -743,7 +795,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval_srv_s3_listener_tlabs_function/Resource",
-    "aws:asset:path": "asset.4109b55828346134709414b91c023a5f0dc4ea2ac9ab7683c01f444d7d62bf4a",
+    "aws:asset:path": "asset.a188cd828a8762bea2131db59a2908a685190648efaa2140a44c98855446cfa7",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -786,7 +838,7 @@
       "object": {
        "key": [
         {
-         "wildcard": "tasks/*/video-analyze/*/output.json"
+         "wildcard": "tasks/*/video-analyze/tlabs/*/output.json"
         }
        ]
       }
@@ -939,7 +991,7 @@
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Account"
    }
   },
-  "bedrockvideoevalapiSericeDeployment3510978750f1ca78451c6d3b5737b1ffe5195629": {
+  "bedrockvideoevalapiSericeDeployment35109787f8d6bbea2684922211ad9f695ffcbab8": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Automatically created by the RestApi construct",
@@ -955,12 +1007,18 @@
     "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskOPTIONSC7092323",
     "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskPOSTDD0E03D5",
     "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskB198AF01",
+    "bedrockvideoevalapiSericev1evalvideodeletegroundtruthOPTIONSB73D4EB7",
+    "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOST5122A6E5",
+    "bedrockvideoevalapiSericev1evalvideodeletegroundtruth3223366F",
     "bedrockvideoevalapiSericev1evalvideodeletevideoOPTIONS05BCF5D2",
     "bedrockvideoevalapiSericev1evalvideodeletevideoPOST827802F0",
     "bedrockvideoevalapiSericev1evalvideodeletevideoBADDAADB",
     "bedrockvideoevalapiSericev1evalvideogetanalyzetasksOPTIONS9B55B227",
     "bedrockvideoevalapiSericev1evalvideogetanalyzetasksPOST980D6A53",
     "bedrockvideoevalapiSericev1evalvideogetanalyzetasksBFCD9D6E",
+    "bedrockvideoevalapiSericev1evalvideogetgroundtruthsOPTIONSD3ED5298",
+    "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOST41600D9A",
+    "bedrockvideoevalapiSericev1evalvideogetgroundtruthsB2BF6FAC",
     "bedrockvideoevalapiSericev1evalvideogetvideosOPTIONSED1B7EED",
     "bedrockvideoevalapiSericev1evalvideogetvideosPOST9A2E4C05",
     "bedrockvideoevalapiSericev1evalvideogetvideos62114745",
@@ -977,6 +1035,12 @@
     "bedrockvideoevalapiSericev1evalvideostarttlabsmmeOPTIONSD455D28C",
     "bedrockvideoevalapiSericev1evalvideostarttlabsmmePOST36C3A266",
     "bedrockvideoevalapiSericev1evalvideostarttlabsmme83F85AE7",
+    "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorOPTIONS17632C10",
+    "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTF9566A0D",
+    "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvector54E1501A",
+    "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthOPTIONS69F0B4CA",
+    "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTFED29D88",
+    "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthF3572A00",
     "bedrockvideoevalapiSericev199912E5F"
    ],
    "Metadata": {
@@ -997,7 +1061,7 @@
      "Format": "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
     },
     "DeploymentId": {
-     "Ref": "bedrockvideoevalapiSericeDeployment3510978750f1ca78451c6d3b5737b1ffe5195629"
+     "Ref": "bedrockvideoevalapiSericeDeployment35109787f8d6bbea2684922211ad9f695ffcbab8"
     },
     "MethodSettings": [
      {
@@ -2472,6 +2536,630 @@
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/nova-mme-search-vector/POST/Resource"
    }
   },
+  "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvector54E1501A": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideoBAF46079"
+    },
+    "PathPart": "tlabs-mme-search-vector",
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorOPTIONS17632C10": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvector54E1501A"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/OPTIONS/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideotlabsmmesearchvectorFA8FA627": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvapitlabsmmesearchvectorlambdaB337D5A6",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/",
+       {
+        "Ref": "bedrockvideoevalapiSericeDeploymentStageprod6EE6A03B"
+       },
+       "/POST/v1/eval/video/tlabs-mme-search-vector"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.tlabs-mme-search-vector"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideotlabsmmesearchvectorF0B8764C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvapitlabsmmesearchvectorlambdaB337D5A6",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/test-invoke-stage/POST/v1/eval/video/tlabs-mme-search-vector"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.tlabs-mme-search-vector"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTF9566A0D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "ExtrSrvWebAuth10D58BB3"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "evalsrvapitlabsmmesearchvectorlambdaB337D5A6",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvector54E1501A"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/POST/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthF3572A00": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideoBAF46079"
+    },
+    "PathPart": "upsert-ground-truth",
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthOPTIONS69F0B4CA": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthF3572A00"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/OPTIONS/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideoupsertgroundtruthADCDDE8F": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvupsertgroundtruthlambdaF0324C02",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/",
+       {
+        "Ref": "bedrockvideoevalapiSericeDeploymentStageprod6EE6A03B"
+       },
+       "/POST/v1/eval/video/upsert-ground-truth"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.upsert-ground-truth"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideoupsertgroundtruthE73E9E61": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvupsertgroundtruthlambdaF0324C02",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/test-invoke-stage/POST/v1/eval/video/upsert-ground-truth"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.upsert-ground-truth"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTFED29D88": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "ExtrSrvWebAuth10D58BB3"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "evalsrvupsertgroundtruthlambdaF0324C02",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthF3572A00"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/POST/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideogetgroundtruthsB2BF6FAC": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideoBAF46079"
+    },
+    "PathPart": "get-ground-truths",
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideogetgroundtruthsOPTIONSD3ED5298": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsB2BF6FAC"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/OPTIONS/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetgroundtruthsEAC9058D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvgetgroundtruthslambdaE11F299A",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/",
+       {
+        "Ref": "bedrockvideoevalapiSericeDeploymentStageprod6EE6A03B"
+       },
+       "/POST/v1/eval/video/get-ground-truths"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-ground-truths"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetgroundtruthsCCF35CC9": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvgetgroundtruthslambdaE11F299A",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/test-invoke-stage/POST/v1/eval/video/get-ground-truths"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-ground-truths"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOST41600D9A": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "ExtrSrvWebAuth10D58BB3"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "evalsrvgetgroundtruthslambdaE11F299A",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsB2BF6FAC"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/POST/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideodeletegroundtruth3223366F": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideoBAF46079"
+    },
+    "PathPart": "delete-ground-truth",
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideodeletegroundtruthOPTIONSB73D4EB7": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideodeletegroundtruth3223366F"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/OPTIONS/Resource"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeletegroundtruth98AEB037": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvdeletegroundtruthlambda58ED3E31",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/",
+       {
+        "Ref": "bedrockvideoevalapiSericeDeploymentStageprod6EE6A03B"
+       },
+       "/POST/v1/eval/video/delete-ground-truth"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-ground-truth"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeletegroundtruth6AE29B1D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "evalsrvdeletegroundtruthlambda58ED3E31",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:307857433580:",
+       {
+        "Ref": "bedrockvideoevalapiSerice0C395D5A"
+       },
+       "/test-invoke-stage/POST/v1/eval/video/delete-ground-truth"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-ground-truth"
+   }
+  },
+  "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOST5122A6E5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "ExtrSrvWebAuth10D58BB3"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "evalsrvdeletegroundtruthlambda58ED3E31",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "bedrockvideoevalapiSericev1evalvideodeletegroundtruth3223366F"
+    },
+    "RestApiId": {
+     "Ref": "bedrockvideoevalapiSerice0C395D5A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/POST/Resource"
+   }
+  },
   "evalsrvapimanages3presignedurlrole99B9EFB1": {
    "Type": "AWS::IAM::Role",
    "Properties": {
@@ -2637,6 +3325,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -2744,6 +3434,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -2930,6 +3622,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3070,6 +3764,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3229,6 +3925,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3272,7 +3970,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
-     "S3Key": "c021b73bfab8413a8056c99e32d9fed3ec213d10ca1cce3e94478d70a9cb65dd.zip"
+     "S3Key": "95870dcf6ef4392214e19b4191bbf53345128977db8bc186c4ee361a9acf0175.zip"
     },
     "Environment": {
      "Variables": {
@@ -3300,7 +3998,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-delete-analyze-task-lambda/Resource",
-    "aws:asset:path": "asset.c021b73bfab8413a8056c99e32d9fed3ec213d10ca1cce3e94478d70a9cb65dd",
+    "aws:asset:path": "asset.95870dcf6ef4392214e19b4191bbf53345128977db8bc186c4ee361a9acf0175",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -3352,6 +4050,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3491,6 +4191,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3537,7 +4239,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
-     "S3Key": "f1c5074eed159c260068a33cc2052f40b0dcb9c645c8db9d197def4530164372.zip"
+     "S3Key": "8cee7393c7a52003298e394905e1baaa71cd9481625882a7223849364c46993e.zip"
     },
     "Environment": {
      "Variables": {
@@ -3567,7 +4269,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-api-start-nova-mme-lambda/Resource",
-    "aws:asset:path": "asset.f1c5074eed159c260068a33cc2052f40b0dcb9c645c8db9d197def4530164372",
+    "aws:asset:path": "asset.8cee7393c7a52003298e394905e1baaa71cd9481625882a7223849364c46993e",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -3653,6 +4355,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3699,7 +4403,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
-     "S3Key": "ffc0c8227577db076d39ced6e3dd9029aed7ab3595dad86f35cac36b30d8d630.zip"
+     "S3Key": "f6819e8ff784741377c77000d0ebf81977cd9b6b23bece0d4a25819c1c8f82e2.zip"
     },
     "Environment": {
      "Variables": {
@@ -3728,7 +4432,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-api-start-tlabs-mme-lambda/Resource",
-    "aws:asset:path": "asset.ffc0c8227577db076d39ced6e3dd9029aed7ab3595dad86f35cac36b30d8d630",
+    "aws:asset:path": "asset.f6819e8ff784741377c77000d0ebf81977cd9b6b23bece0d4a25819c1c8f82e2",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -3814,6 +4518,8 @@
          "Resource": [
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
           "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
           "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
@@ -3918,6 +4624,518 @@
    "Metadata": {
     "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-api-nova-mme-search-vector-lambda/Resource",
     "aws:asset:path": "asset.eddd7c1c368917dd57cc1ec0bef724dc46db5d4fb4ad2b140b671620bd041918",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "evalsrvapitlabsmmesearchvectorroleFEB3C461": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "logs:CreateLogGroup",
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:*"
+        },
+        {
+         "Action": [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:log-group:/aws/lambda/bedrock-video-eval-srv-api-tlabs-mme-search-vector:*"
+        },
+        {
+         "Action": [
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:s3:::",
+             {
+              "Ref": "referencetoBedrockEvalRootStackEvalServicePreStackNestedStackEvalServicePreStackNestedStackResource3F24E853OutputsBedrockEvalRootStackEvalServicePreStackDataBucket8ABA3BE8Ref"
+             },
+             "/*"
+            ]
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:s3:::",
+             {
+              "Ref": "referencetoBedrockEvalRootStackEvalServicePreStackNestedStackEvalServicePreStackNestedStackResource3F24E853OutputsBedrockEvalRootStackEvalServicePreStackDataBucket8ABA3BE8Ref"
+             }
+            ]
+           ]
+          }
+         ]
+        },
+        {
+         "Action": [
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage/index/*"
+         ]
+        },
+        {
+         "Action": [
+          "bedrock:GetAsyncInvoke",
+          "bedrock:InvokeModel"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:bedrock:*:*:async-invoke/*",
+          "arn:aws:bedrock:*:*:foundation-model/*",
+          "arn:aws:bedrock:*:*:inference-profile/*"
+         ]
+        },
+        {
+         "Action": [
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:ViewSubscriptions"
+         ],
+         "Effect": "Allow",
+         "Resource": "*"
+        },
+        {
+         "Action": [
+          "s3vectors:CreateIndex",
+          "s3vectors:DeleteIndex",
+          "s3vectors:DeleteVectors",
+          "s3vectors:DescribeIndex",
+          "s3vectors:GetVectors",
+          "s3vectors:ListIndexes",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:s3vectors:us-east-1:307857433580:bucket/bedrock-video-eval-vector-bucket",
+          "arn:aws:s3vectors:us-east-1:307857433580:bucket/bedrock-video-eval-vector-bucket/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "eval-srv-api-tlabs-mme-search-vector-poliy"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-api-tlabs-mme-search-vector-role/Resource"
+   }
+  },
+  "evalsrvapitlabsmmesearchvectorlambdaB337D5A6": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
+     "S3Key": "251b8dc3accecff5a9b4acbc70f5cdb08e73030e165d5ae39503af6a9b300cdd.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_PRESIGNED_URL_EXPIRY_S": "3600",
+      "S3_BUCKET_DATA": {
+       "Ref": "referencetoBedrockEvalRootStackEvalServicePreStackNestedStackEvalServicePreStackNestedStackResource3F24E853OutputsBedrockEvalRootStackEvalServicePreStackDataBucket8ABA3BE8Ref"
+      },
+      "DYNAMO_VIDEO_ANALYZE_TABLE": "bedrock_video_eval_analyze_table",
+      "DYNAMO_VIDEO_TABLE": "bedrock_video_eval_video",
+      "MODEL_ID_TLAB_27": "twelvelabs.marengo-embed-2-7-v1:0",
+      "MODEL_ID_TLAB_30": "twelvelabs.marengo-embed-3-0-v1:0",
+      "TLABS_S3_VECTOR_BUCKET": "bedrock-video-eval-vector-bucket"
+     }
+    },
+    "EphemeralStorage": {
+     "Size": 512
+    },
+    "FunctionName": "bedrock-video-eval-srv-api-tlabs-mme-search-vector",
+    "Handler": "eval-srv-api-tlabs-mme-search-vector.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "Boto3PyLayer76D5EEBB"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "evalsrvapitlabsmmesearchvectorroleFEB3C461",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.13",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "evalsrvapitlabsmmesearchvectorroleFEB3C461"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-api-tlabs-mme-search-vector-lambda/Resource",
+    "aws:asset:path": "asset.251b8dc3accecff5a9b4acbc70f5cdb08e73030e165d5ae39503af6a9b300cdd",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "evalsrvupsertgroundtruthroleF19BE8AE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "logs:CreateLogGroup",
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:*"
+        },
+        {
+         "Action": [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:log-group:/aws/lambda/bedrock-video-eval-srv-upsert-ground-truth:*"
+        },
+        {
+         "Action": [
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage/index/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "eval-srv-upsert-ground-truth-poliy"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-upsert-ground-truth-role/Resource"
+   }
+  },
+  "evalsrvupsertgroundtruthlambdaF0324C02": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
+     "S3Key": "85ea8b061af6736c3e289e50f071126dc20f7dea95b1c2214f5dad73d3a62178.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "DYNAMO_GROUND_TRUTH_TABLE": "bedrock_video_eval_ground_truth"
+     }
+    },
+    "EphemeralStorage": {
+     "Size": 512
+    },
+    "FunctionName": "bedrock-video-eval-srv-upsert-ground-truth",
+    "Handler": "eval-srv-upsert-ground-truth.lambda_handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "evalsrvupsertgroundtruthroleF19BE8AE",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.13",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "evalsrvupsertgroundtruthroleF19BE8AE"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-upsert-ground-truth-lambda/Resource",
+    "aws:asset:path": "asset.85ea8b061af6736c3e289e50f071126dc20f7dea95b1c2214f5dad73d3a62178",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "evalsrvgetgroundtruthsrole52A5DD3B": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "logs:CreateLogGroup",
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:*"
+        },
+        {
+         "Action": [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:log-group:/aws/lambda/bedrock-video-eval-srv-get-ground-truths:*"
+        },
+        {
+         "Action": [
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage/index/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "eval-srv-get-ground-truths-poliy"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-get-ground-truths-role/Resource"
+   }
+  },
+  "evalsrvgetgroundtruthslambdaE11F299A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
+     "S3Key": "9bc7ed16d5d7db5894dabfd008d2d1fda3057ccc9260bb3deed17e8616020e5b.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "DYNAMO_GROUND_TRUTH_TABLE": "bedrock_video_eval_ground_truth"
+     }
+    },
+    "EphemeralStorage": {
+     "Size": 512
+    },
+    "FunctionName": "bedrock-video-eval-srv-get-ground-truths",
+    "Handler": "eval-srv-get-ground-truths.lambda_handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "evalsrvgetgroundtruthsrole52A5DD3B",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.13",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "evalsrvgetgroundtruthsrole52A5DD3B"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-get-ground-truths-lambda/Resource",
+    "aws:asset:path": "asset.9bc7ed16d5d7db5894dabfd008d2d1fda3057ccc9260bb3deed17e8616020e5b",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "evalsrvdeletegroundtruthrole97A9E670": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "logs:CreateLogGroup",
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:*"
+        },
+        {
+         "Action": [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": "arn:aws:logs:us-east-1:307857433580:log-group:/aws/lambda/bedrock-video-eval-srv-delete-ground-truth:*"
+        },
+        {
+         "Action": [
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_analyze_table/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_ground_truth/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/bedrock_video_eval_video/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_frame/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_extr_srv_video_shot/index/*",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage",
+          "arn:aws:dynamodb:us-east-1:307857433580:table/video_eval_usage/index/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "eval-srv-delete-ground-truth-poliy"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-delete-ground-truth-role/Resource"
+   }
+  },
+  "evalsrvdeletegroundtruthlambda58ED3E31": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-307857433580-us-east-1",
+     "S3Key": "bb3784cd1f9bfa38659bb9f6aca0bc3cece1dfd4b5b085e975b7eed799e69e98.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "DYNAMO_GROUND_TRUTH_TABLE": "bedrock_video_eval_ground_truth"
+     }
+    },
+    "EphemeralStorage": {
+     "Size": 512
+    },
+    "FunctionName": "bedrock-video-eval-srv-delete-ground-truth",
+    "Handler": "eval-srv-delete-ground-truth.lambda_handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "evalsrvdeletegroundtruthrole97A9E670",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.13",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "evalsrvdeletegroundtruthrole97A9E670"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "BedrockEvalRootStack/EvalServiceStack/eval-srv-delete-ground-truth-lambda/Resource",
+    "aws:asset:path": "asset.bb3784cd1f9bfa38659bb9f6aca0bc3cece1dfd4b5b085e975b7eed799e69e98",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

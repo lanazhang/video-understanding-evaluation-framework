@@ -6,10 +6,10 @@ import { signOut } from 'aws-amplify/auth'
 import CreateGroundTruthTask from './components/CreateGroundTruthTask'
 import CreateEvaluationTask from './components/CreateEvaluationTask'
 import VideoManagement from './components/VideoManagement'
+import GroundTruthManagement from './components/GroundTruthManagement'
 import GroundTruthTaskDetail from './components/GroundTruthTaskDetail'
 import EvaluationTaskDetail from './components/EvaluationTaskDetail'
-import groundTruthTasksData from './static/groundTruthTasks.json'
-import evaluationTasksData from './static/evaluationTasks.json'
+import { FetchPost } from './utils/apiHelper'
 import logoIcon from './assets/icons/logo.svg'
 import videoIcon from './assets/icons/video.svg'
 import documentIcon from './assets/icons/document.svg'
@@ -25,27 +25,103 @@ function App() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [videoKey, setVideoKey] = useState(0) // Key to force VideoManagement remount
+  const [groundTruthKey, setGroundTruthKey] = useState(0) // Key to force GroundTruthManagement remount
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
-    fetchTasks(activeMenu)
-  }, [activeMenu])
+    if (currentUser) {
+      fetchTasks(activeMenu, currentUser)
+    }
+  }, [activeMenu, currentUser])
 
-  const fetchTasks = async (menuType) => {
+  const fetchTasks = async (menuType, user) => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API endpoints
-      // const endpoint = menuType === 'ground-truth' 
-      //   ? '/api/ground-truth/tasks'
-      //   : '/api/evaluation/tasks'
-      // const response = await fetch(endpoint)
-      // const data = await response.json()
-      // setTasks(data)
-      
-      // Load from JSON files
-      const data = menuType === 'ground-truth' ? groundTruthTasksData : evaluationTasksData
-      setTasks(data)
+      if (menuType === 'ground-truth') {
+        // Call the API to get ground truths filtered by current user
+        const username = user?.username || user?.signInDetails?.loginId || ''
+        const data = await FetchPost('/video/get-ground-truths', {
+          createdBy: username
+        }, 'EvalService')
+        
+        console.log('Ground truth API response:', data)
+        
+        // Handle both direct response and wrapped response
+        let groundTruths = []
+        
+        if (data.statusCode === 200) {
+          // Response has statusCode wrapper
+          const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+          groundTruths = responseBody.groundTruths || []
+        } else if (data.groundTruths) {
+          // Direct response without statusCode wrapper
+          groundTruths = data.groundTruths || []
+        } else {
+          console.error('Unexpected response format:', data)
+          setTasks([])
+          return
+        }
+        
+        // Transform API response to match the expected format
+        const transformedTasks = groundTruths.map(gt => {
+          // Extract model info from Description field as fallback
+          let modelId = null
+          let taskType = null
+          
+          if (gt.Description) {
+            // Try to extract model and type from description
+            // Example: "Generated from tlabs-mme task with model twelvelabs.marengo-embed-3-0-v1:0"
+            const modelMatch = gt.Description.match(/from\s+(\S+)\s+task\s+with\s+model\s+(\S+)/i)
+            if (modelMatch) {
+              taskType = modelMatch[1] // e.g., "tlabs-mme" or "nova-mme"
+              modelId = modelMatch[2] // e.g., "twelvelabs.marengo-embed-3-0-v1:0"
+            }
+          }
+          
+          // If analyzeTasks are available, use them instead
+          if (gt.analyzeTasks && gt.analyzeTasks.length > 0) {
+            const task = gt.analyzeTasks[0]
+            modelId = task.ModelId
+            taskType = task.Type
+          }
+          
+          return {
+            id: gt.Id,
+            taskName: gt.Name,
+            description: gt.Description || '',
+            createdBy: gt.CreatedBy,
+            createdDate: gt.CreatedAt ? new Date(gt.CreatedAt).toLocaleDateString() : 'N/A',
+            createdAt: gt.CreatedAt,
+            videoId: gt.VideoId,
+            videoAnalyzeTaskIds: gt.VideoAnalyzeTaskIds || [],
+            labels: gt.Labels || [],
+            status: gt.Status || 'created',
+            // Enriched data from API
+            video: gt.video || null,
+            analyzeTasks: gt.analyzeTasks || [],
+            // UI-specific fields
+            modelId: modelId || 'Manual',
+            taskType: taskType,
+            videoName: gt.video?.Name || 'N/A',
+            baseModel: gt.VideoAnalyzeTaskIds && gt.VideoAnalyzeTaskIds.length > 0 
+              ? `${gt.VideoAnalyzeTaskIds.length} task(s)` 
+              : 'Manual',
+            selectedVideos: [gt.VideoId],
+            eventTypes: gt.Labels && gt.Labels.length > 0
+              ? [...new Set(gt.Labels.map(l => l.Label).filter(Boolean))].join(', ')
+              : 'N/A'
+          }
+        })
+        
+        console.log('Transformed tasks:', transformedTasks)
+        setTasks(transformedTasks)
+      } else {
+        // Evaluation tasks not yet implemented - show empty list
+        setTasks([])
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error)
+      setTasks([])
     } finally {
       setLoading(false)
     }
@@ -66,6 +142,8 @@ function App() {
     setSearchQuery('') // Reset search when changing menu
     if (menu === 'videos') {
       setVideoKey(prev => prev + 1) // Force VideoManagement to remount
+    } else if (menu === 'ground-truth') {
+      setGroundTruthKey(prev => prev + 1) // Force GroundTruthManagement to remount
     }
   }
 
@@ -73,7 +151,7 @@ function App() {
     // TODO: Implement API call to create task
     console.log('Task created:', formData)
     setShowCreateTask(false)
-    fetchTasks(activeMenu)
+    fetchTasks(activeMenu, currentUser)
   }
 
   const handleCreateEvaluationTask = async (formData) => {
@@ -85,7 +163,7 @@ function App() {
     // which would invoke the model and compare against ground truth
     
     setShowCreateTask(false)
-    fetchTasks(activeMenu)
+    fetchTasks(activeMenu, currentUser)
   }
 
   const handleTaskClick = (task) => {
@@ -112,7 +190,13 @@ function App() {
 
   return (
     <Authenticator>
-      {({ signOut, user }) => (
+      {({ signOut, user }) => {
+        // Set current user when authenticated
+        if (user && !currentUser) {
+          setCurrentUser(user)
+        }
+        
+        return (
         <div className="App">
       <div className="main-content">
         <div className={`sidebar ${sidebarExpanded ? 'expanded' : ''}`}>
@@ -183,17 +267,15 @@ function App() {
         </div>
         <div className="content">
           {activeMenu === 'videos' ? (
-            <VideoManagement key={videoKey} />
+            <VideoManagement key={videoKey} currentUser={currentUser} />
+          ) : activeMenu === 'ground-truth' ? (
+            <GroundTruthManagement key={groundTruthKey} currentUser={currentUser} />
           ) : selectedTask ? (
-            activeMenu === 'ground-truth' ? (
-              <GroundTruthTaskDetail task={selectedTask} onBack={handleBackToList} />
-            ) : (
-              <EvaluationTaskDetail task={selectedTask} onBack={handleBackToList} />
-            )
+            <EvaluationTaskDetail task={selectedTask} onBack={handleBackToList} />
           ) : (
             <>
               <div className="content-header">
-                <h1>{activeMenu === 'ground-truth' ? 'Ground Truth' : 'Evaluation'}</h1>
+                <h1>Evaluation</h1>
                 <button className="btn-create" onClick={() => setShowCreateTask(true)}>
                   + Create Task
                 </button>
@@ -230,11 +312,11 @@ function App() {
                       onClick={() => handleTaskClick(task)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className="task-item-header">
-                        <h3>{task.taskName}</h3>
-                        <span className={`status ${task.status}`}>{task.status}</span>
-                      </div>
-                      {activeMenu === 'evaluation' && (
+                      <div className="task-item-content">
+                        <div className="task-item-header">
+                          <h3>{task.taskName}</h3>
+                          <span className={`status ${task.status}`}>{task.status}</span>
+                        </div>
                         <div className="task-item-details">
                           <div className="task-detail-row">
                             <span className="detail-label">Model:</span>
@@ -258,23 +340,7 @@ function App() {
                             </div>
                           )}
                         </div>
-                      )}
-                      {activeMenu === 'ground-truth' && (
-                        <div className="task-item-details">
-                          <div className="task-detail-row">
-                            <span className="detail-label">Base Model:</span>
-                            <span className="detail-value">{task.baseModel}</span>
-                          </div>
-                          <div className="task-detail-row">
-                            <span className="detail-label">Videos:</span>
-                            <span className="detail-value">{task.selectedVideos?.length || 0}</span>
-                          </div>
-                          <div className="task-detail-row">
-                            <span className="detail-label">Created:</span>
-                            <span className="detail-value">{task.createdDate}</span>
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   ))
                   )}
@@ -284,12 +350,6 @@ function App() {
           )}
         </div>
       </div>
-      {showCreateTask && activeMenu === 'ground-truth' && (
-        <CreateGroundTruthTask 
-          onClose={() => setShowCreateTask(false)}
-          onSubmit={handleCreateTask}
-        />
-      )}
       {showCreateTask && activeMenu === 'evaluation' && (
         <CreateEvaluationTask 
           onClose={() => setShowCreateTask(false)}
@@ -297,7 +357,8 @@ function App() {
         />
       )}
         </div>
-      )}
+        )
+      }}
     </Authenticator>
   )
 }

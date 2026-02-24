@@ -1,0 +1,62 @@
+.video-thumbnail {
+  width: 160px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+tbody tr:hover .video-thumbnail {
+  transform: scale(1.05);
+}
+
+.video-link {
+  color: #f97316;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.video-link:hover {
+  color: #ea580c;
+}
+
+.btn-action {
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.btn-analyze {
+  background-color: #fff;
+  color: #f97316;
+  border-color: #f97316;
+}
+
+.btn-analyze:hover {
+  background-color: #f97316;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.btn-delete {
+  background-color: #fff;
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-delete:hover {
+  background-color: #dc3545;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}

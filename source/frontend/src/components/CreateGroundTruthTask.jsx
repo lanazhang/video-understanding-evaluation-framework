@@ -3,7 +3,7 @@ import './CreateGroundTruthTask.css'
 import { modelGroups } from '../static/modelConfig'
 import { FetchPost } from '../utils/apiHelper'
 
-function CreateGroundTruthTask({ onClose, onSubmit }) {
+function CreateGroundTruthTask({ onClose, onSubmit, currentUser }) {
   const [formData, setFormData] = useState({
     taskName: '',
     selectedVideos: [],
@@ -130,9 +130,14 @@ function CreateGroundTruthTask({ onClose, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // TODO: Implement API call to create task
-    console.log('Creating task:', formData)
-    onSubmit(formData)
+    // Add createdBy from current user
+    const username = currentUser?.username || currentUser?.signInDetails?.loginId || ''
+    const taskData = {
+      ...formData,
+      createdBy: username
+    }
+    console.log('Creating task:', taskData)
+    onSubmit(taskData)
   }
 
   return (

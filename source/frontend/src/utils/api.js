@@ -32,7 +32,7 @@ export const evalAPI = {
 
   getPresignedUrl: async (videoId, operation = 'getObject') => {
     try {
-      return await FetchGet(`/videos/${videoId}/presigned-url?operation=${operation}`, null, 'EvalService')
+      return await FetchGet(`/videos/${videoId}/presigned-url`, null, 'EvalService', { operation })
     } catch (error) {
       console.error('Error getting presigned URL:', error)
       throw error
@@ -108,8 +108,9 @@ export const evalAPI = {
   // Analyze Tasks
   getAnalyzeTasks: async (videoId, type = null) => {
     try {
-      const queryParams = type ? `?VideoId=${videoId}&Type=${type}` : `?VideoId=${videoId}`
-      return await FetchGet(`/video/get-analyze-tasks${queryParams}`, null, 'EvalService')
+      const payload = { VideoId: videoId }
+      if (type) payload.Type = type
+      return await FetchPost('/video/get-analyze-tasks', payload, 'EvalService')
     } catch (error) {
       console.error('Error fetching analyze tasks:', error)
       throw error
@@ -131,6 +132,46 @@ export const evalAPI = {
       return await FetchPost('/video/nova-mme-search-vector', payload, 'EvalService')
     } catch (error) {
       console.error('Error searching vector embeddings:', error)
+      throw error
+    }
+  },
+
+  searchTlabsVectorEmbeddings: async (payload) => {
+    try {
+      return await FetchPost('/video/tlabs-mme-search-vector', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error searching TwelveLabs vector embeddings:', error)
+      throw error
+    }
+  },
+
+  // Ground Truth
+  upsertGroundTruth: async (payload) => {
+    try {
+      return await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error upserting ground truth:', error)
+      throw error
+    }
+  },
+
+  getGroundTruths: async (videoId = null, createdBy = null) => {
+    try {
+      const payload = {}
+      if (videoId) payload.VideoId = videoId
+      if (createdBy) payload.CreatedBy = createdBy
+      return await FetchPost('/video/get-ground-truths', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error fetching ground truths:', error)
+      throw error
+    }
+  },
+
+  deleteGroundTruth: async (groundTruthId) => {
+    try {
+      return await FetchPost('/video/delete-ground-truth', { Id: groundTruthId }, 'EvalService')
+    } catch (error) {
+      console.error('Error deleting ground truth:', error)
       throw error
     }
   }

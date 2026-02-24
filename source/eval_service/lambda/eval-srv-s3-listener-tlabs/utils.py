@@ -29,6 +29,28 @@ def dynamodb_get_by_id(table_name, id):
         return None
 
 
+def dynamodb_get_by_composite_key(table_name, partition_key, sort_key):
+    """
+    Get item from DynamoDB by composite key (partition key + sort key)
+    
+    Args:
+        table_name: Name of the DynamoDB table
+        partition_key: Dict with partition key name and value, e.g., {'Id': 'task-123'}
+        sort_key: Dict with sort key name and value, e.g., {'Type': 'nova-mme'}
+        
+    Returns:
+        Item dict if found, None otherwise
+    """
+    try:
+        table = dynamodb.Table(table_name)
+        key = {**partition_key, **sort_key}
+        response = table.get_item(Key=key)
+        return response.get('Item', None)
+    except Exception as ex:
+        print(f"Error getting item from DynamoDB: {ex}")
+        return None
+
+
 def dynamodb_table_upsert(table_name, item):
     """
     Insert or update item in DynamoDB table

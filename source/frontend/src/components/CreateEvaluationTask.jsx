@@ -2,7 +2,6 @@ import { useState } from 'react'
 import './CreateEvaluationTask.css'
 import { modelGroups } from '../static/modelConfig'
 import videosData from '../static/videos.json'
-import groundTruthTasksData from '../static/groundTruthTasks.json'
 
 function CreateEvaluationTask({ onClose, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -74,11 +73,8 @@ function CreateEvaluationTask({ onClose, onSubmit }) {
               required
             >
               <option value="">-- Select a ground truth task --</option>
-              {groundTruthTasksData.map(task => (
-                <option key={task.id} value={task.id}>
-                  {task.taskName} - {task.baseModel}
-                </option>
-              ))}
+              {/* Ground truth tasks will be loaded from API in future */}
+              <option value="" disabled>No ground truth tasks available</option>
             </select>
           </div>
 

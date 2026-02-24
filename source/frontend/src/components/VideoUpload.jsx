@@ -424,24 +424,26 @@ function VideoUpload({ onSuccess, onCancel }) {
             
             {/* Nova MME Configuration */}
             {selectedEmbeddings.some(m => m.displayName.includes('Nova')) && (
-              <div className="nova-mme-config">
-                <h4>Nova MME Configuration</h4>
-                <div className="config-row">
+              <div className="mme-config-panel nova-mme-config">
+                <h4 className="config-title">Nova MME Configuration</h4>
+                <div className="config-grid">
                   <div className="config-field">
-                    <label htmlFor="durationS">Segment Duration (seconds)</label>
-                    <input
-                      type="number"
-                      id="durationS"
-                      min="1"
-                      max="600"
-                      value={novaMmeConfig.durationS}
-                      onChange={(e) => setNovaMmeConfig(prev => ({
-                        ...prev,
-                        durationS: parseInt(e.target.value) || 5
-                      }))}
-                      disabled={isUploading}
-                    />
-                    <p className="help-text-small">Duration of each video segment (1-600 seconds)</p>
+                    <label htmlFor="durationS">Segment Duration</label>
+                    <div className="input-with-unit">
+                      <input
+                        type="number"
+                        id="durationS"
+                        min="1"
+                        max="600"
+                        value={novaMmeConfig.durationS}
+                        onChange={(e) => setNovaMmeConfig(prev => ({
+                          ...prev,
+                          durationS: parseInt(e.target.value) || 5
+                        }))}
+                        disabled={isUploading}
+                      />
+                      <span className="unit">sec</span>
+                    </div>
                   </div>
                   
                   <div className="config-field">
@@ -455,16 +457,15 @@ function VideoUpload({ onSuccess, onCancel }) {
                       }))}
                       disabled={isUploading}
                     >
-                      <option value="AUDIO_VIDEO_COMBINED">Audio + Video Combined</option>
-                      <option value="AUDIO_VIDEO_SEPARATE">Audio + Video Separate</option>
+                      <option value="AUDIO_VIDEO_COMBINED">Combined</option>
+                      <option value="AUDIO_VIDEO_SEPARATE">Separate</option>
                       <option value="VIDEO_ONLY">Video Only</option>
                       <option value="AUDIO_ONLY">Audio Only</option>
                     </select>
-                    <p className="help-text-small">How to process audio and video streams</p>
                   </div>
                   
                   <div className="config-field">
-                    <label htmlFor="embeddingDim">Embedding Dimension</label>
+                    <label htmlFor="embeddingDim">Dimension</label>
                     <select
                       id="embeddingDim"
                       value={novaMmeConfig.embeddingDim}
@@ -479,7 +480,6 @@ function VideoUpload({ onSuccess, onCancel }) {
                       <option value={384}>384</option>
                       <option value={256}>256</option>
                     </select>
-                    <p className="help-text-small">Dimension of the embedding vectors</p>
                   </div>
                 </div>
               </div>
@@ -487,32 +487,32 @@ function VideoUpload({ onSuccess, onCancel }) {
             
             {/* TwelveLabs Configuration */}
             {selectedEmbeddings.some(m => m.displayName.toLowerCase().includes('twelve')) && (
-              <div className="twelvelabs-config">
-                <h4>TwelveLabs Configuration</h4>
+              <div className="mme-config-panel twelvelabs-config">
+                <h4 className="config-title">TwelveLabs Configuration</h4>
                 
-                <div className="config-section">
-                  <label>Segmentation Method</label>
-                  <div className="config-row">
+                <div className="config-grid-tlabs">
+                  <div className="config-field">
+                    <label>Segmentation</label>
+                    <select
+                      value={twelveLabsConfig.Segmentation.Method}
+                      onChange={(e) => setTwelveLabsConfig(prev => ({
+                        ...prev,
+                        Segmentation: {
+                          ...prev.Segmentation,
+                          Method: e.target.value
+                        }
+                      }))}
+                      disabled={isUploading}
+                    >
+                      <option value="dynamic">Dynamic</option>
+                      <option value="fixed">Fixed</option>
+                    </select>
+                  </div>
+                  
+                  {twelveLabsConfig.Segmentation.Method === 'dynamic' && (
                     <div className="config-field">
-                      <select
-                        value={twelveLabsConfig.Segmentation.Method}
-                        onChange={(e) => setTwelveLabsConfig(prev => ({
-                          ...prev,
-                          Segmentation: {
-                            ...prev.Segmentation,
-                            Method: e.target.value
-                          }
-                        }))}
-                        disabled={isUploading}
-                      >
-                        <option value="dynamic">Dynamic</option>
-                        <option value="fixed">Fixed</option>
-                      </select>
-                    </div>
-                    
-                    {twelveLabsConfig.Segmentation.Method === 'dynamic' && (
-                      <div className="config-field">
-                        <label htmlFor="minDurationSec">Min Duration (seconds)</label>
+                      <label htmlFor="minDurationSec">Min Duration</label>
+                      <div className="input-with-unit">
                         <input
                           type="number"
                           id="minDurationSec"
@@ -530,56 +530,57 @@ function VideoUpload({ onSuccess, onCancel }) {
                           }))}
                           disabled={isUploading}
                         />
+                        <span className="unit">sec</span>
                       </div>
-                    )}
+                    </div>
+                  )}
+                  
+                  <div className="config-field-inline">
+                    <label>Scope:</label>
+                    <div className="checkbox-group-inline">
+                      {['clip', 'asset'].map(scope => (
+                        <label key={scope} className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={twelveLabsConfig.EmbeddingScope.includes(scope)}
+                            onChange={(e) => {
+                              setTwelveLabsConfig(prev => ({
+                                ...prev,
+                                EmbeddingScope: e.target.checked
+                                  ? [...prev.EmbeddingScope, scope]
+                                  : prev.EmbeddingScope.filter(s => s !== scope)
+                              }))
+                            }}
+                            disabled={isUploading}
+                          />
+                          <span>{scope.charAt(0).toUpperCase() + scope.slice(1)}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="config-section">
-                  <label>Embedding Scope</label>
-                  <div className="checkbox-group">
-                    {['clip', 'video'].map(scope => (
-                      <label key={scope} className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={twelveLabsConfig.EmbeddingScope.includes(scope)}
-                          onChange={(e) => {
-                            setTwelveLabsConfig(prev => ({
-                              ...prev,
-                              EmbeddingScope: e.target.checked
-                                ? [...prev.EmbeddingScope, scope]
-                                : prev.EmbeddingScope.filter(s => s !== scope)
-                            }))
-                          }}
-                          disabled={isUploading}
-                        />
-                        <span>{scope.charAt(0).toUpperCase() + scope.slice(1)}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="config-section">
-                  <label>Embedding Options</label>
-                  <div className="checkbox-group">
-                    {['visual', 'audio', 'transcription'].map(option => (
-                      <label key={option} className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={twelveLabsConfig.EmbeddingOption.includes(option)}
-                          onChange={(e) => {
-                            setTwelveLabsConfig(prev => ({
-                              ...prev,
-                              EmbeddingOption: e.target.checked
-                                ? [...prev.EmbeddingOption, option]
-                                : prev.EmbeddingOption.filter(o => o !== option)
-                            }))
-                          }}
-                          disabled={isUploading}
-                        />
-                        <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
-                      </label>
-                    ))}
+                  
+                  <div className="config-field-inline">
+                    <label>Options:</label>
+                    <div className="checkbox-group-inline">
+                      {['visual', 'audio', 'transcription'].map(option => (
+                        <label key={option} className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={twelveLabsConfig.EmbeddingOption.includes(option)}
+                            onChange={(e) => {
+                              setTwelveLabsConfig(prev => ({
+                                ...prev,
+                                EmbeddingOption: e.target.checked
+                                  ? [...prev.EmbeddingOption, option]
+                                  : prev.EmbeddingOption.filter(o => o !== option)
+                              }))
+                            }}
+                            disabled={isUploading}
+                          />
+                          <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

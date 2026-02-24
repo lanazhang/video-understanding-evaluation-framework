@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ground Truth Schema",
+  "description": "DynamoDB table schema for ground truth labels and annotations",
+  "type": "object",
+  "required": [
+    "Id",
+    "Name",
+    "CreatedBy",
+    "CreatedAt",
+    "VideoId",
+    "VideoAnalyzeTaskIds",
+    "Status"
+  ],
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Primary key - Unique identifier for the ground truth record (UUID)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "example": "d4e5f6a7-b8c9-0123-def4-567890abcdef"
+    },
+    "Name": {
+      "type": "string",
+      "description": "Name or title of the ground truth annotation set",
+      "maxLength": 500,
+      "example": "Product Demo - Action Detection Ground Truth"
+    },
+    "Description": {
+      "type": "string",
+      "description": "Description of the ground truth task, including MME search keywords, labeling instructions, or task context (e.g., 'all the pets', 'all the vehicles', 'sport score events')",
+      "maxLength": 2000,
+      "example": "MME search keyword: 'person playing basketball'. Label all segments showing basketball gameplay and scoring events."
+    },
+    "CreatedBy": {
+      "type": "string",
+      "description": "User who created the ground truth (from Cognito)",
+      "example": "annotator@example.com"
+    },
+    "CreatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the ground truth was created",
+      "example": "2024-02-22T14:30:00.000Z"
+    },
+    "VideoId": {
+      "type": "string",
+      "description": "Foreign key reference to the video table",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "VideoAnalyzeTaskIds": {
+      "type": "array",
+      "description": "List of foreign key references to video analyze tasks",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "example": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890", "b2c3d4e5-f6a7-8901-bcde-f12345678901"]
+    },
+    "Status": {
+      "type": "string",
+      "description": "Current status of the ground truth record",
+      "enum": [
+        "created",
+        "in_review",
+        "reviewed",
+        "approved"
+      ],
+      "default": "created",
+      "example": "created"
+    },
+    "Labels": {
+      "type": "array",
+      "description": "Array of labeled segments with timestamps and scores",
+      "items": {
+        "type": "object",
+        "required": ["StartTs", "EndTs", "Score", "Source"],
+        "properties": {
+          "StartTs": {
+            "type": "number",
+            "description": "Start timestamp in seconds",
+            "minimum": 0,
+            "example": 12.5
+          },
+          "EndTs": {
+            "type": "number",
+            "description": "End timestamp in seconds",
+            "minimum": 0,
+            "example": 17.5
+          },
+          "Score": {
+            "type": "number",
+            "description": "Score value (MME search distance, confidence score, or similarity metric)",
+            "example": 0.85
+          },
+          "Label": {
+            "type": "string",
+            "description": "Optional label or category for the segment",
+            "maxLength": 200,
+            "example": "product_demonstration"
+          },
+          "Source": {
+            "type": "string",
+            "description": "Source of the label",
+            "enum": [
+              "manual",
+              "video_analyze_task",
+              "model_generated"
+            ],
+            "example": "manual"
+          },
+          "ReviewResult": {
+            "type": "string",
+            "description": "Review result classification for the label",
+            "enum": [
+              "true_positive",
+              "false_positive",
+              "false_negative",
+              "true_negative",
+              "unreviewed"
+            ],
+            "default": "unreviewed",
+            "example": "true_positive"
+          }
+        }
+      }
+    }
+  },
+  "indexes": {
+    "video_id-index": {
+      "type": "global_secondary_index",
+      "description": "GSI for querying ground truth by video ID",
+      "partition_key": "VideoId",
+      "projection": "ALL"
+    },
+    "video_analyze_task_ids-index": {
+      "type": "global_secondary_index",
+      "description": "GSI for querying ground truth by video analyze task IDs",
+      "partition_key": "VideoAnalyzeTaskIds",
+      "projection": "ALL"
+    }
+  },
+  "examples": [
+    {
+      "Id": "d4e5f6a7-b8c9-0123-def4-567890abcdef",
+      "Name": "Product Demo - Action Detection Ground Truth",
+      "Description": "MME search keyword: 'product demonstration'. Label all segments showing product features and demonstrations.",
+      "CreatedBy": "annotator@example.com",
+      "CreatedAt": "2024-02-22T14:30:00.000Z",
+      "VideoId": "550e8400-e29b-41d4-a716-446655440000",
+      "VideoAnalyzeTaskIds": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"],
+      "Status": "created",
+      "Labels": [
+        {
+          "StartTs": 12.5,
+          "EndTs": 17.5,
+          "Score": 0.85,
+          "Label": "product_demonstration",
+          "Source": "manual",
+          "ReviewResult": "true_positive"
+        },
+        {
+          "StartTs": 25.0,
+          "EndTs": 32.0,
+          "Score": 0.92,
+          "Label": "feature_highlight",
+          "Source": "video_analyze_task",
+          "ReviewResult": "true_positive"
+        },
+        {
+          "StartTs": 45.5,
+          "EndTs": 50.0,
+          "Score": 0.78,
+          "Label": "call_to_action",
+          "Source": "model_generated",
+          "ReviewResult": "false_positive"
+        }
+      ]
+    },
+    {
+      "Id": "e5f6a7b8-c9d0-1234-ef56-7890abcdef01",
+      "Name": "Training Video - Scene Segmentation",
+      "Description": "Manual labeling instruction: Identify all scene transitions and label introduction segments. Focus on clear visual breaks between scenes.",
+      "CreatedBy": "admin@example.com",
+      "CreatedAt": "2024-02-23T09:15:00.000Z",
+      "VideoId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "VideoAnalyzeTaskIds": ["b2c3d4e5-f6a7-8901-bcde-f12345678901", "c3d4e5f6-a7b8-9012-cdef-123456789012"],
+      "Status": "in_review",
+      "Labels": [
+        {
+          "StartTs": 0.0,
+          "EndTs": 10.0,
+          "Score": 0.95,
+          "Source": "video_analyze_task",
+          "ReviewResult": "unreviewed"
+        },
+        {
+          "StartTs": 10.0,
+          "EndTs": 25.5,
+          "Score": 0.88,
+          "Label": "introduction",
+          "Source": "manual",
+          "ReviewResult": "true_positive"
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "table_name": "video_eval_ground_truth",
+    "dynamodb_specifics": [
+      "Primary key: Id (partition key)",
+      "VideoId-index GSI enables efficient queries for all ground truth records for a video",
+      "VideoAnalyzeTaskIds-index GSI enables queries for ground truth related to specific analysis tasks",
+      "All field names use PascalCase convention for consistency"
+    ],
+    "usage": [
+      "Ground truth records are used for evaluation and validation of model predictions",
+      "Labels array contains manually annotated segments with timestamps",
+      "Score can represent confidence, similarity, or distance metrics depending on use case",
+      "Label field is optional to support both labeled and unlabeled annotations"
+    ],
+    "related_tables": [
+      "video_eval_video - Parent video table",
+      "video_eval_analyze_table - Related analysis task table"
+    ]
+  }
+}

@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react'
 import './EvaluationTaskDetail.css'
 import videosData from '../static/videos.json'
-import groundTruthTasksData from '../static/groundTruthTasks.json'
-import groundTruthResultsData from '../static/groundTruthResults.json'
 
 function EvaluationTaskDetail({ task, onBack }) {
   const [selectedLabel, setSelectedLabel] = useState(null)
@@ -10,15 +8,11 @@ function EvaluationTaskDetail({ task, onBack }) {
   const [labelVerifications, setLabelVerifications] = useState({})
   const videoRef = useRef(null)
 
-  // Get video and ground truth data
+  // Get video data
   const video = videosData.find(v => v.id === task.videoId)
-  const groundTruthTask = groundTruthTasksData.find(gt => gt.id === task.groundTruthTaskId)
   
-  // Get ground truth labels for this video from groundTruthResults
-  const groundTruthResult = groundTruthResultsData.find(
-    result => result.groundTruthTaskId === task.groundTruthTaskId && result.videoId === task.videoId
-  )
-  const groundTruthLabels = groundTruthResult?.labels || []
+  // Ground truth data is now embedded in the task object
+  const groundTruthLabels = task.labels || []
   const predictedLabels = task.results?.predictedLabels || []
 
   const handleLabelClick = (label) => {
@@ -78,12 +72,12 @@ function EvaluationTaskDetail({ task, onBack }) {
     return badges[verification]
   }
 
-  if (!video || !groundTruthTask) {
+  if (!video) {
     return (
       <div className="task-detail">
         <div className="task-detail-header">
           <button className="btn-back" onClick={onBack}>← Back</button>
-          <h1>Error: Video or Ground Truth not found</h1>
+          <h1>Error: Video not found</h1>
         </div>
       </div>
     )
@@ -107,7 +101,7 @@ function EvaluationTaskDetail({ task, onBack }) {
             </div>
             <div className="info-item">
               <span className="info-label">Ground Truth:</span>
-              <span className="info-value">{groundTruthTask.taskName}</span>
+              <span className="info-value">{task.taskName || 'N/A'}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Model:</span>

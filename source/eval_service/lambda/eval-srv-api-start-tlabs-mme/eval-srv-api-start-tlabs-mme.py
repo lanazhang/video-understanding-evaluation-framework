@@ -65,12 +65,13 @@ def lambda_handler(event, context):
         account_id = sts.get_caller_identity()["Account"]
         
         # Define S3 output prefix
-        s3_prefix_output = f'tasks/{video_id}/video-analyze/{task_id}/'
+        s3_prefix_output = f'tasks/{video_id}/video-analyze/tlabs/{task_id}/'
         
         # Build TwelveLabs request based on model version
         if "twelvelabs.marengo-embed-3-0-v1:0" in model_id:
             # Marengo 3.0 format
             tlabs_request = {
+                "inputType": "video",
                 "video": {
                     "mediaSource": {
                         "s3Location": {
@@ -84,7 +85,39 @@ def lambda_handler(event, context):
             # Add segmentation config
             segmentation = request_params.get("segmentation", {})
             if segmentation:
-                tlabs_request["video"]["segmentation"] = segmentation
+                print(f"Original segmentation: {json.dumps(segmentation)}")
+                # Ensure proper types for segmentation parameters
+                converted_segmentation = {}
+                
+                # Copy the method field if present
+                if "method" in segmentation:
+                    converted_segmentation["method"] = segmentation["method"]
+                
+                # Handle dynamic segmentation
+                if "dynamic" in segmentation:
+                    converted_segmentation["dynamic"] = {}
+                    dynamic_config = segmentation["dynamic"]
+                    if "minDurationSec" in dynamic_config:
+                        min_dur = int(dynamic_config["minDurationSec"])
+                        converted_segmentation["dynamic"]["minDurationSec"] = min_dur
+                        print(f"Converted minDurationSec: {min_dur} (type: {type(min_dur)})")
+                    if "maxDurationSec" in dynamic_config:
+                        max_dur = int(dynamic_config["maxDurationSec"])
+                        converted_segmentation["dynamic"]["maxDurationSec"] = max_dur
+                        print(f"Converted maxDurationSec: {max_dur} (type: {type(max_dur)})")
+                
+                # Handle fixed segmentation
+                if "fixed" in segmentation:
+                    converted_segmentation["fixed"] = {}
+                    fixed_config = segmentation["fixed"]
+                    if "durationSec" in fixed_config:
+                        dur = int(fixed_config["durationSec"])
+                        converted_segmentation["fixed"]["durationSec"] = dur
+                        print(f"Converted durationSec: {dur} (type: {type(dur)})")
+                
+                if converted_segmentation:
+                    tlabs_request["video"]["segmentation"] = converted_segmentation
+                    print(f"Final segmentation: {json.dumps(converted_segmentation)}")
             
             # Add embedding scope
             embedding_scope = request_params.get("embeddingScope", ["clip"])

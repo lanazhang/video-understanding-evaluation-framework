@@ -97,6 +97,23 @@ class EvalServiceStack(NestedStack):
             projection_type=_dynamodb.ProjectionType.ALL
         )
 
+        # Ground truth table
+        ground_truth_table = _dynamodb.Table(self,
+            id='ground-truth-table',
+            table_name=DYNAMO_GROUND_TRUTH_TABLE,
+            partition_key=_dynamodb.Attribute(name='Id', type=_dynamodb.AttributeType.STRING),
+            point_in_time_recovery=True,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        ground_truth_table.add_global_secondary_index(
+            index_name="VideoId-index",
+            partition_key=_dynamodb.Attribute(
+                name="VideoId",
+                type=_dynamodb.AttributeType.STRING
+            ),
+            projection_type=_dynamodb.ProjectionType.ALL
+        )
+
     def deploy_cognito(self):
         user_pool = _cognito.UserPool.from_user_pool_id(
             self, "WebUserPool",
@@ -242,7 +259,7 @@ class EvalServiceStack(NestedStack):
                 detail_type=["Object Created"],
                 detail={
                     "bucket": {"name": [self.s3_bucket_name_eval]},
-                    "object": {"key": [{"wildcard": "tasks/*/video-analyze/*.jsonl"}]}
+                    "object": {"key": [{"wildcard": "tasks/*/video-analyze/nova-mme/*/*.jsonl"}]}
                 }
             )
         )
@@ -341,7 +358,7 @@ class EvalServiceStack(NestedStack):
                 detail_type=["Object Created"],
                 detail={
                     "bucket": {"name": [self.s3_bucket_name_eval]},
-                    "object": {"key": [{"wildcard": "tasks/*/video-analyze/*/output.json"}]}
+                    "object": {"key": [{"wildcard": "tasks/*/video-analyze/tlabs/*/output.json"}]}
                 }
             )
         )
@@ -896,6 +913,64 @@ class EvalServiceStack(NestedStack):
                 layers=[self.boto3_layer]
             )
 
+        # POST /v1/eval/video/tlabs-mme-search-vector
+        lambda_key='eval-srv-api-tlabs-mme-search-vector'
+        lambda_tlabs_search_vector_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock","s3vectors"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="tlabs-mme-search-vector", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_tlabs_search_vector_role,
+                lambda_file_name=lambda_key,
+                memory_m=512, timeout_s=60, ephemeral_storage_size=512,
+                evns={
+                    'S3_PRESIGNED_URL_EXPIRY_S': S3_PRESIGNED_URL_EXPIRY_S,
+                    'S3_BUCKET_DATA': self.s3_bucket_name_eval,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'MODEL_ID_TLAB_27': MODEL_ID_TLABS_27,
+                    'MODEL_ID_TLAB_30': MODEL_ID_TLABS_30,
+                    'TLABS_S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME
+                },
+                layers=[self.boto3_layer]
+            )
+
+        # POST /v1/eval/video/upsert-ground-truth
+        lambda_key='eval-srv-upsert-ground-truth'
+        lambda_upsert_ground_truth_role = self.create_role(lambda_key, ["dynamodb"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="upsert-ground-truth", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_upsert_ground_truth_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_GROUND_TRUTH_TABLE': DYNAMO_GROUND_TRUTH_TABLE
+                },
+            )
+
+        # POST /v1/eval/video/get-ground-truths
+        lambda_key='eval-srv-get-ground-truths'
+        lambda_get_ground_truths_role = self.create_role(lambda_key, ["dynamodb", "s3"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="get-ground-truths", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_get_ground_truths_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_GROUND_TRUTH_TABLE': DYNAMO_GROUND_TRUTH_TABLE,
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'S3_PRESIGNED_URL_EXPIRY_S': S3_PRESIGNED_URL_EXPIRY_S
+                },
+            )
+
+        # POST /v1/eval/video/delete-ground-truth
+        lambda_key='eval-srv-delete-ground-truth'
+        lambda_delete_ground_truth_role = self.create_role(lambda_key, ["dynamodb"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="delete-ground-truth", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_delete_ground_truth_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_GROUND_TRUTH_TABLE': DYNAMO_GROUND_TRUTH_TABLE
+                },
+            )
+
         # API Gateway - end
 
     def create_role(self, function_name, policies):
@@ -929,11 +1004,13 @@ class EvalServiceStack(NestedStack):
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_FRAME_TABLE}/index/*",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_SHOT_TABLE}/index/*",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_USAGE_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_GROUND_TRUTH_TABLE}/index/*",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_ANALYZE_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_FRAME_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_SHOT_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_USAGE_TABLE}",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_GROUND_TRUTH_TABLE}",
                         ]
                     ))
         if "bedrock" in policies:

@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import './VideoManagement.css'
 import VideoUpload from './VideoUpload'
 import { FetchPost } from '../utils/apiHelper'
+import { evalAPI } from '../utils/api'
 import refreshIcon from '../assets/icons/refresh.svg'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import { modelGroups } from '../static/modelConfig'
 
-function VideoManagement() {
+function VideoManagement({ currentUser }) {
   const [videos, setVideos] = useState([])
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showAnalyze, setShowAnalyze] = useState(false)
@@ -17,12 +18,8 @@ function VideoManagement() {
   const [sortField, setSortField] = useState('uploaded_ts')
   const [sortDirection, setSortDirection] = useState('desc')
   
-  // Task expansion and search state
+  // Task expansion state
   const [expandedTaskId, setExpandedTaskId] = useState(null)
-  const [searchText, setSearchText] = useState('')
-  const [searchResults, setSearchResults] = useState(null)
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [searchError, setSearchError] = useState(null)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -405,15 +402,16 @@ function AnalyzeView({ video, onBack }) {
   
   // Task expansion and search state
   const [expandedTaskId, setExpandedTaskId] = useState(null)
-  const [searchText, setSearchText] = useState({})
-  const [topK, setTopK] = useState({})
-  const [searchResults, setSearchResults] = useState({})
-  const [searchLoading, setSearchLoading] = useState({})
-  const [searchError, setSearchError] = useState({})
-  const [showResultsModal, setShowResultsModal] = useState(false)
-  const [currentSearchResults, setCurrentSearchResults] = useState(null)
-  const [currentTaskId, setCurrentTaskId] = useState(null)
-  const [currentVectorIndex, setCurrentVectorIndex] = useState(null)
+  const [selectedTasks, setSelectedTasks] = useState([]) // For comparison
+  const [showCompareModal, setShowCompareModal] = useState(false)
+  const [compareSearchText, setCompareSearchText] = useState('')
+  const [compareTopK, setCompareTopK] = useState(10)
+  const [compareResults, setCompareResults] = useState({})
+  const [compareLoading, setCompareLoading] = useState(false)
+  const [compareError, setCompareError] = useState(null)
+  const [groundTruths, setGroundTruths] = useState([])
+  const [selectedGroundTruthId, setSelectedGroundTruthId] = useState('')
+  const [appendingToGt, setAppendingToGt] = useState(false)
   const [createParams, setCreateParams] = useState({
     modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
     // Nova MME parameters
@@ -470,9 +468,7 @@ function AnalyzeView({ video, onBack }) {
       if (data.statusCode === 200) {
         const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
         const allTasks = responseBody.Tasks || []
-        // Filter for nova-mme type tasks
-        const mmeTasks = allTasks.filter(task => task.Type === 'nova-mme')
-        setAnalyzeTasks(mmeTasks)
+        setAnalyzeTasks(allTasks)
       } else {
         const errorMessage = typeof data.body === 'object' && data.body.error 
           ? data.body.error 
@@ -487,12 +483,172 @@ function AnalyzeView({ video, onBack }) {
     }
   }
 
-  const handleOpenSearchModal = (taskId, vectorIndex) => {
-    setCurrentTaskId(taskId)
-    setCurrentVectorIndex(vectorIndex)
-    setShowResultsModal(true)
-    // Clear previous results
-    setCurrentSearchResults(null)
+  const fetchGroundTruths = async () => {
+    try {
+      console.log('Fetching ground truths for video:', video.Id || video.id)
+      const response = await evalAPI.getGroundTruths(video.Id || video.id)
+      console.log('Ground truths response:', response)
+      setGroundTruths(response.groundTruths || [])
+      console.log('Ground truths set:', response.groundTruths || [])
+    } catch (err) {
+      console.error('Error fetching ground truths:', err)
+    }
+  }
+
+  const handleOpenSearchModal = (taskId, vectorIndex, task) => {
+    // Use the compare modal for single task search
+    setSelectedTasks([task])
+    setShowCompareModal(true)
+    setCompareResults({})
+    setCompareSearchText('')
+    setCompareError(null)
+    setSelectedGroundTruthId('')
+    // Fetch ground truths for the video
+    fetchGroundTruths()
+  }
+
+  const handleAppendToGroundTruth = async (task, results) => {
+    if (!selectedGroundTruthId) {
+      alert('Please select a ground truth')
+      return
+    }
+    
+    if (!results || results.length === 0) {
+      alert('No search results to append')
+      return
+    }
+    
+    setAppendingToGt(true)
+    try {
+      // Find the selected ground truth
+      const gt = groundTruths.find(g => g.Id === selectedGroundTruthId)
+      if (!gt) {
+        throw new Error('Ground truth not found')
+      }
+      
+      // Convert search results to labels
+      const newLabels = results.map(result => ({
+        StartTs: result.StartSec,
+        EndTs: result.EndSec,
+        Score: result.Distance || 0,
+        Label: compareSearchText,
+        Source: 'model_generated',
+        ReviewResult: 'unreviewed'
+      }))
+      
+      // Merge with existing labels
+      const existingLabels = gt.Labels || []
+      const allLabels = [...existingLabels, ...newLabels]
+      
+      // Prepare payload
+      const payload = {
+        Id: gt.Id,
+        Name: gt.Name,
+        Description: gt.Description,
+        CreatedBy: gt.CreatedBy,
+        VideoId: gt.VideoId,
+        VideoAnalyzeTaskIds: gt.VideoAnalyzeTaskIds || [],
+        Status: gt.Status || 'created',
+        Labels: allLabels
+      }
+      
+      await evalAPI.upsertGroundTruth(payload)
+      
+      alert(`Successfully appended ${newLabels.length} labels to ground truth "${gt.Name}"`)
+      
+      // Refresh ground truths
+      await fetchGroundTruths()
+    } catch (err) {
+      console.error('Error appending to ground truth:', err)
+      alert('Failed to append to ground truth: ' + err.message)
+    } finally {
+      setAppendingToGt(false)
+    }
+  }
+
+  const handleToggleTaskSelection = (task) => {
+    setSelectedTasks(prev => {
+      const isSelected = prev.some(t => t.Id === task.Id)
+      if (isSelected) {
+        return prev.filter(t => t.Id !== task.Id)
+      } else {
+        return [...prev, task]
+      }
+    })
+  }
+
+  const handleOpenCompareModal = () => {
+    if (selectedTasks.length === 0) {
+      alert('Please select at least one task to compare')
+      return
+    }
+    setShowCompareModal(true)
+    setCompareResults({})
+    setCompareSearchText('')
+    setCompareError(null)
+    setSelectedGroundTruthId('')
+    // Fetch ground truths for the video
+    fetchGroundTruths()
+  }
+
+  const handleCompareSearch = async () => {
+    if (!compareSearchText.trim()) {
+      setCompareError('Please enter a search query')
+      return
+    }
+
+    setCompareLoading(true)
+    setCompareError(null)
+    const results = {}
+
+    try {
+      // Search each selected task's vector index
+      for (const task of selectedTasks) {
+        const payload = {
+          TaskId: task.Id,
+          SearchText: compareSearchText,
+          InputType: 'text',
+          TopK: parseInt(compareTopK) || 10,
+          PageSize: 1000,
+          FromIndex: 0,
+          IncludeVideoUrl: true,
+          EmbeddingOptions: ['audio-video', 'video', 'audio']
+        }
+
+        // Determine which API to call based on task type
+        let endpoint = '/video/nova-mme-search-vector'
+        if (task.Type === 'tlabs-mme') {
+          endpoint = '/video/tlabs-mme-search-vector'
+        }
+
+        const data = await FetchPost(endpoint, payload, 'EvalService')
+        
+        if (data.statusCode === 200) {
+          const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+          results[task.Id] = {
+            task: task,
+            results: responseBody || [],
+            error: null
+          }
+        } else {
+          const errorMessage = typeof data.body === 'object' && data.body.error 
+            ? data.body.error 
+            : data.body
+          results[task.Id] = {
+            task: task,
+            results: [],
+            error: errorMessage || 'Search failed'
+          }
+        }
+      }
+
+      setCompareResults(results)
+    } catch (err) {
+      console.error('Error comparing embeddings:', err)
+      setCompareError('Comparison failed: ' + err.message)
+    } finally {
+      setCompareLoading(false)
+    }
   }
 
   const handleDeleteTask = async (taskId) => {
@@ -503,69 +659,32 @@ function AnalyzeView({ video, onBack }) {
     try {
       const data = await FetchPost('/video/delete-analyze-task', { TaskId: taskId }, 'EvalService')
       
+      console.log('Delete task response:', data)
+      
       if (data.statusCode === 200) {
+        // Parse body if it's a string
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        
         // Remove from local state
         setAnalyzeTasks(prev => prev.filter(t => t.Id !== taskId))
-        alert('Task deleted successfully')
+        
+        // Check if there were any errors during deletion
+        if (responseBody?.errors && responseBody.errors.length > 0) {
+          const errorList = responseBody.errors.join('; ')
+          alert(`Task deleted, but some cleanup operations failed:\n${errorList}`)
+        } else {
+          const message = responseBody?.message || 'Task deleted successfully'
+          console.log('Task deleted successfully:', taskId)
+        }
       } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
+        // Parse error from body
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        const errorMessage = responseBody?.error || data.body || 'Failed to delete task'
         alert(`Failed to delete task: ${errorMessage}`)
       }
     } catch (err) {
       console.error('Error deleting task:', err)
-      alert(`Failed to delete task: ${err.message}`)
-    }
-  }
-
-  const handleSearch = async (taskId, vectorIndex) => {
-    const searchKey = `search_${taskId}`
-    const textKey = `text_${taskId}`
-    const topKKey = `topK_${taskId}`
-    
-    const currentSearchText = searchText[textKey] || ''
-    const currentTopK = topK[topKKey] || 10
-    
-    if (!currentSearchText.trim()) {
-      setSearchError(prev => ({ ...prev, [searchKey]: 'Please enter a search query' }))
-      return
-    }
-
-    setSearchLoading(prev => ({ ...prev, [searchKey]: true }))
-    setSearchError(prev => ({ ...prev, [searchKey]: null }))
-    setSearchResults(prev => ({ ...prev, [searchKey]: null }))
-
-    try {
-      const payload = {
-        TaskId: taskId,
-        SearchText: currentSearchText,
-        InputType: 'text',
-        TopK: parseInt(currentTopK) || 10,
-        PageSize: 1000,  // Large page size to get all results
-        FromIndex: 0,
-        IncludeVideoUrl: true,
-        EmbeddingOptions: ['audio-video', 'video', 'audio']
-      }
-
-      const data = await FetchPost('/video/nova-mme-search-vector', payload, 'EvalService')
-      
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        setSearchResults(prev => ({ ...prev, [searchKey]: responseBody || [] }))
-        // Update modal results
-        setCurrentSearchResults(responseBody || [])
-      } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setSearchError(prev => ({ ...prev, [searchKey]: errorMessage || 'Search failed' }))
-      }
-    } catch (err) {
-      console.error('Error searching embeddings:', err)
-      setSearchError(prev => ({ ...prev, [searchKey]: 'Search failed: ' + err.message }))
-    } finally {
-      setSearchLoading(prev => ({ ...prev, [searchKey]: false }))
+      alert(`Error deleting task: ${err.message}`)
     }
   }
 
@@ -601,6 +720,63 @@ function AnalyzeView({ video, onBack }) {
       video.play().catch(err => {
         console.log('Auto-play prevented:', err)
       })
+    }
+  }
+
+  const handleSaveAsGroundTruth = async (task, results) => {
+    if (!results || results.length === 0) {
+      alert('No results to save')
+      return
+    }
+
+    const groundTruthName = prompt(
+      `Enter a name for this ground truth:\n\nSearch query: "${compareSearchText}"\nModel: ${task.ModelId}\nResults: ${results.length} segments`,
+      `Ground Truth - ${compareSearchText.substring(0, 30)}`
+    )
+
+    if (!groundTruthName) {
+      return // User cancelled
+    }
+
+    try {
+      // Generate UUID for ground truth
+      const groundTruthId = crypto.randomUUID()
+
+      // Convert search results to ground truth labels
+      const labels = results.map(result => ({
+        StartTs: parseFloat(parseFloat(result.StartSec || 0).toFixed(3)),
+        EndTs: parseFloat(parseFloat(result.EndSec || 0).toFixed(3)),
+        Score: parseFloat(result.Distance || 0),
+        Label: compareSearchText, // Use search text as label
+        Source: 'video_analyze_task',
+        ReviewResult: 'unreviewed'
+      }))
+
+      const username = currentUser?.username || currentUser?.signInDetails?.loginId || 'user'
+      const payload = {
+        Id: groundTruthId,
+        Name: groundTruthName,
+        Description: `MME search keyword: "${compareSearchText}". Generated from ${task.Type} task with model ${task.ModelId}.`,
+        CreatedBy: username,
+        VideoId: video.Id || video.id,
+        VideoAnalyzeTaskIds: [task.Id],
+        Labels: labels
+      }
+
+      console.log('Saving ground truth payload:', payload)
+      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+      console.log('Ground truth save response:', data)
+
+      if (data.statusCode === 200) {
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        console.log(`Ground truth "${groundTruthName}" saved successfully with ${labels.length} labels`)
+      } else {
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        const errorMessage = responseBody?.error || data.body || 'Failed to save ground truth'
+        console.error('Ground truth save failed:', errorMessage)
+      }
+    } catch (err) {
+      console.error('Error saving ground truth:', err)
     }
   }
 
@@ -652,17 +828,27 @@ function AnalyzeView({ video, onBack }) {
         }
       } else if (selectedModel?.parameterType === 'twelvelabs') {
         // TwelveLabs payload
+        const segmentationConfig = {
+          method: createParams.segmentationMethod
+        }
+        
+        // Add the appropriate config based on method
+        if (createParams.segmentationMethod === 'dynamic') {
+          segmentationConfig.dynamic = {
+            minDurationSec: createParams.minDurationSec.toString()
+          }
+        } else if (createParams.segmentationMethod === 'fixed') {
+          segmentationConfig.fixed = {
+            durationSec: createParams.minDurationSec.toString()  // Use durationSec for fixed
+          }
+        }
+        
         payload = {
           VideoId: video.Id || video.id,
           ModelId: createParams.modelId,
           Description: createParams.description,
           Request: {
-            segmentation: {
-              method: createParams.segmentationMethod,
-              [createParams.segmentationMethod]: {
-                minDurationSec: createParams.minDurationSec.toString()
-              }
-            },
+            segmentation: segmentationConfig,
             embeddingScope: createParams.embeddingScope,
             embeddingOption: createParams.embeddingOption
           }
@@ -841,14 +1027,25 @@ function AnalyzeView({ video, onBack }) {
               <div className="tasks-display-section">
                 <div className="section-header-with-action">
                   <h3>Multimodal Embedding Tasks</h3>
-                  <button 
-                    className="btn-refresh" 
-                    onClick={loadAnalyzeTasks}
-                    disabled={loadingTasks}
-                    title="Refresh task list"
-                  >
-                    <img src={refreshIcon} alt="Refresh" />
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {selectedTasks.length > 0 && (
+                      <button 
+                        className="btn-compare"
+                        onClick={handleOpenCompareModal}
+                        title="Compare selected embeddings"
+                      >
+                        Compare ({selectedTasks.length})
+                      </button>
+                    )}
+                    <button 
+                      className="btn-refresh" 
+                      onClick={loadAnalyzeTasks}
+                      disabled={loadingTasks}
+                      title="Refresh task list"
+                    >
+                      <img src={refreshIcon} alt="Refresh" />
+                    </button>
+                  </div>
                 </div>
                 {tasksError && (
                   <div className="alert alert-error">{tasksError}</div>
@@ -858,12 +1055,46 @@ function AnalyzeView({ video, onBack }) {
                   <div className="loading-message">Loading tasks...</div>
                 ) : analyzeTasks.length > 0 ? (
                   <div className="analyze-tasks-list">
+                    {analyzeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex).length > 0 && (
+                      <div className="select-all-row">
+                        <label className="select-all-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedTasks.length > 0 && selectedTasks.length === analyzeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex).length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                // Select all completed tasks
+                                const completedTasks = analyzeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
+                                setSelectedTasks(completedTasks)
+                              } else {
+                                // Deselect all
+                                setSelectedTasks([])
+                              }
+                            }}
+                            title="Select all completed tasks"
+                          />
+                          <span>Select All</span>
+                        </label>
+                      </div>
+                    )}
                     {analyzeTasks.map((task) => {
                       const isExpanded = expandedTaskId === task.Id
+                      const isSelected = selectedTasks.some(t => t.Id === task.Id)
+                      const canCompare = task.Status === 'completed' && task.Result && task.Result.S3VectorIndex
+                      
                       return (
                         <div key={task.Id} className="analyze-task-item compact">
                           <div className="task-compact-header">
                             <div className="task-compact-info">
+                              {canCompare && (
+                                <input
+                                  type="checkbox"
+                                  className="task-checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleTaskSelection(task)}
+                                  title="Select for comparison"
+                                />
+                              )}
                               <span className={`task-status ${task.Status}`}>{task.Status}</span>
                               <span className="task-compact-detail">
                                 {task.ModelId || 'N/A'}
@@ -876,7 +1107,7 @@ function AnalyzeView({ video, onBack }) {
                               {task.Status === 'completed' && task.Result && task.Result.S3VectorIndex && (
                                 <button 
                                   className="btn-search-icon"
-                                  onClick={() => handleOpenSearchModal(task.Id, task.Result.S3VectorIndex)}
+                                  onClick={() => handleOpenSearchModal(task.Id, task.Result.S3VectorIndex, task)}
                                   title="Search embeddings"
                                 >
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -942,18 +1173,81 @@ function AnalyzeView({ video, onBack }) {
                                   <span className="detail-label">Created:</span>
                                   <span className="detail-value">{formatDate(task.StartedTs)}</span>
                                 </div>
-                                <div className="task-detail-row">
-                                  <span className="detail-label">Duration:</span>
-                                  <span className="detail-value">{task.Request?.DurationS || 'N/A'}s</span>
-                                </div>
-                                <div className="task-detail-row">
-                                  <span className="detail-label">Embed Mode:</span>
-                                  <span className="detail-value">{task.Request?.EmbedMode || 'N/A'}</span>
-                                </div>
-                                <div className="task-detail-row">
-                                  <span className="detail-label">Embedding Dimension:</span>
-                                  <span className="detail-value">{task.Request?.EmbeddingDim || 'N/A'}</span>
-                                </div>
+                                
+                                {task.Type === 'tlabs-mme' ? (
+                                  <>
+                                    {(task.Request?.Segmentation || task.Request?.segmentation) && (
+                                      <>
+                                        <div className="task-detail-row">
+                                          <span className="detail-label">Segmentation Method:</span>
+                                          <span className="detail-value">
+                                            {task.Request.Segmentation?.Method || task.Request.segmentation?.method || 'N/A'}
+                                          </span>
+                                        </div>
+                                        {(task.Request.Segmentation?.Dynamic || task.Request.segmentation?.dynamic) && (
+                                          <>
+                                            {(task.Request.Segmentation?.Dynamic?.MinDurationSec || task.Request.segmentation?.dynamic?.minDurationSec) && (
+                                              <div className="task-detail-row">
+                                                <span className="detail-label">Min Duration:</span>
+                                                <span className="detail-value">
+                                                  {task.Request.Segmentation?.Dynamic?.MinDurationSec || task.Request.segmentation?.dynamic?.minDurationSec}s
+                                                </span>
+                                              </div>
+                                            )}
+                                            {(task.Request.Segmentation?.Dynamic?.MaxDurationSec || task.Request.segmentation?.dynamic?.maxDurationSec) && (
+                                              <div className="task-detail-row">
+                                                <span className="detail-label">Max Duration:</span>
+                                                <span className="detail-value">
+                                                  {task.Request.Segmentation?.Dynamic?.MaxDurationSec || task.Request.segmentation?.dynamic?.maxDurationSec}s
+                                                </span>
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
+                                        {(task.Request.Segmentation?.Fixed?.DurationSec || task.Request.segmentation?.fixed?.durationSec) && (
+                                          <div className="task-detail-row">
+                                            <span className="detail-label">Fixed Duration:</span>
+                                            <span className="detail-value">
+                                              {task.Request.Segmentation?.Fixed?.DurationSec || task.Request.segmentation?.fixed?.durationSec}s
+                                            </span>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                    {(task.Request?.EmbeddingScope || task.Request?.embeddingScope) && (
+                                      <div className="task-detail-row">
+                                        <span className="detail-label">Embedding Scope:</span>
+                                        <span className="detail-value">
+                                          {(task.Request.EmbeddingScope || task.Request.embeddingScope)?.join(', ') || 'N/A'}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {(task.Request?.EmbeddingOption || task.Request?.embeddingOption) && (
+                                      <div className="task-detail-row">
+                                        <span className="detail-label">Embedding Options:</span>
+                                        <span className="detail-value">
+                                          {(task.Request.EmbeddingOption || task.Request.embeddingOption)?.join(', ') || 'N/A'}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="task-detail-row">
+                                      <span className="detail-label">Duration:</span>
+                                      <span className="detail-value">{task.Request?.DurationS || 'N/A'}s</span>
+                                    </div>
+                                    <div className="task-detail-row">
+                                      <span className="detail-label">Embed Mode:</span>
+                                      <span className="detail-value">{task.Request?.EmbedMode || 'N/A'}</span>
+                                    </div>
+                                    <div className="task-detail-row">
+                                      <span className="detail-label">Embedding Dimension:</span>
+                                      <span className="detail-value">{task.Request?.EmbeddingDim || 'N/A'}</span>
+                                    </div>
+                                  </>
+                                )}
+                                
                                 {task.Status === 'completed' && task.Result && (
                                   <>
                                     <div className="task-detail-row">
@@ -1134,7 +1428,7 @@ function AnalyzeView({ video, onBack }) {
                           }}
                         >
                           <option value="clip">Clip</option>
-                          <option value="video">Video</option>
+                          <option value="asset">Asset</option>
                         </select>
                       </div>
 
@@ -1193,88 +1487,190 @@ function AnalyzeView({ video, onBack }) {
         </div>
       </div>
 
-      {/* Search Results Modal */}
-      {showResultsModal && currentTaskId && (
-        <div className="modal-overlay" onClick={() => setShowResultsModal(false)}>
-          <div className="modal-content search-results-modal" onClick={(e) => e.stopPropagation()}>
+      {/* Compare Embeddings Modal */}
+      {showCompareModal && (
+        <div className="modal-overlay" onClick={() => setShowCompareModal(false)}>
+          <div className="modal-content compare-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Search Embeddings</h2>
-              <button className="close-button" onClick={() => setShowResultsModal(false)}>&times;</button>
+              <h2>{selectedTasks.length === 1 ? 'Search Embeddings' : `Compare Embeddings (${selectedTasks.length} tasks)`}</h2>
+              <button className="close-button" onClick={() => setShowCompareModal(false)}>&times;</button>
             </div>
-            <div className="modal-body-split">
-              <div className="modal-video-section">
-                <video 
-                  ref={modalVideoPlayerRef}
-                  src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
-                  controls
-                  muted
-                  className="modal-video-player"
-                >
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-              <div className="modal-results-section">
-                <div className="search-controls-modal">
-                  <input
-                    type="text"
-                    className="search-text-input"
-                    placeholder="Enter search query..."
-                    value={searchText[`text_${currentTaskId}`] || ''}
-                    onChange={(e) => setSearchText(prev => ({ ...prev, [`text_${currentTaskId}`]: e.target.value }))}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch(currentTaskId, currentVectorIndex)}
-                    disabled={searchLoading[`search_${currentTaskId}`]}
-                  />
-                  <input
-                    type="number"
-                    className="search-topk-input"
-                    placeholder="Top K"
-                    min="1"
-                    max="100"
-                    value={topK[`topK_${currentTaskId}`] || 10}
-                    onChange={(e) => setTopK(prev => ({ ...prev, [`topK_${currentTaskId}`]: e.target.value }))}
-                    disabled={searchLoading[`search_${currentTaskId}`]}
-                    title="Number of results to return (1-100)"
-                  />
-                  <button 
-                    className="btn-search"
-                    onClick={() => handleSearch(currentTaskId, currentVectorIndex)}
-                    disabled={searchLoading[`search_${currentTaskId}`] || !(searchText[`text_${currentTaskId}`] || '').trim()}
+            <div className="modal-body-compare">
+              {/* Top Section: Video and Metadata */}
+              <div className="compare-top-section">
+                <div className="compare-video-container">
+                  <video 
+                    ref={modalVideoPlayerRef}
+                    src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
+                    controls
+                    muted
+                    className="compare-video-player"
                   >
-                    {searchLoading[`search_${currentTaskId}`] ? 'Searching...' : 'Search'}
-                  </button>
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
-                
-                {searchError[`search_${currentTaskId}`] && (
-                  <div className="alert alert-error">{searchError[`search_${currentTaskId}`]}</div>
-                )}
-                
-                {currentSearchResults && currentSearchResults.length > 0 && (
-                  <div className="search-results-header">
-                    <h3>Results ({currentSearchResults.length})</h3>
+                <div className="compare-metadata-container">
+                  <h3>{video.Name}</h3>
+                  <p className="video-id-small">ID: {video.Id || video.id}</p>
+                  {video.Description && <p className="video-description-small">{video.Description}</p>}
+                  <div className="metadata-grid-compact">
+                    <div className="metadata-item-compact">
+                      <span className="metadata-label-compact">Duration:</span>
+                      <span className="metadata-value-compact">{formatDuration(video.Duration)}</span>
+                    </div>
+                    <div className="metadata-item-compact">
+                      <span className="metadata-label-compact">Resolution:</span>
+                      <span className="metadata-value-compact">{formatResolution(video.Resolution)}</span>
+                    </div>
+                    <div className="metadata-item-compact">
+                      <span className="metadata-label-compact">Frame Rate:</span>
+                      <span className="metadata-value-compact">{formatFps(video.Fps)}</span>
+                    </div>
+                    <div className="metadata-item-compact">
+                      <span className="metadata-label-compact">File Size:</span>
+                      <span className="metadata-value-compact">{formatFileSize(video.Size)}</span>
+                    </div>
                   </div>
-                )}
-                
-                {currentSearchResults && (
-                  <div className="results-list-modal">
-                    {currentSearchResults.length > 0 ? (
-                      currentSearchResults.map((result, index) => (
-                        <div key={index} className="result-item-compact">
-                          <span className="result-rank">#{index + 1}</span>
-                          <button 
-                            className="time-range-link"
-                            onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
-                            title="Click to navigate video to this timestamp"
-                          >
-                            {parseFloat(result.StartSec || 0).toFixed(2)}s-{parseFloat(result.EndSec || 0).toFixed(2)}s
-                          </button>
-                          <span className="result-distance">Distance: {result.Distance?.toFixed(4) || 'N/A'}</span>
+                </div>
+              </div>
+
+              {/* Search Controls */}
+              <div className="search-controls-compare">
+                <input
+                  type="text"
+                  className="search-text-input"
+                  placeholder="Enter search query..."
+                  value={compareSearchText}
+                  onChange={(e) => setCompareSearchText(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleCompareSearch()}
+                  disabled={compareLoading}
+                />
+                <input
+                  type="number"
+                  className="search-topk-input"
+                  placeholder="Top K"
+                  min="1"
+                  max="100"
+                  value={compareTopK}
+                  onChange={(e) => setCompareTopK(e.target.value)}
+                  disabled={compareLoading}
+                  title="Number of results to return (1-100)"
+                />
+                <button 
+                  className="btn-search"
+                  onClick={handleCompareSearch}
+                  disabled={compareLoading || !compareSearchText.trim()}
+                >
+                  {compareLoading ? 'Searching...' : (selectedTasks.length === 1 ? 'Search' : 'Search All')}
+                </button>
+              </div>
+              
+              {compareError && (
+                <div className="alert alert-error">{compareError}</div>
+              )}
+              
+              {/* Bottom Section: Results in Parallel Columns */}
+              <div className="compare-results-container">
+                <div className="compare-results-grid">
+                  {selectedTasks.map((task) => {
+                    const hasResults = compareResults[task.Id]
+                    const resultData = hasResults ? compareResults[task.Id] : null
+                    
+                    // Build tooltip content with task parameters
+                    let tooltipContent = ''
+                    if (task.Type === 'nova-mme') {
+                      tooltipContent = `Duration: ${task.Request?.DurationS || 'N/A'}s\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
+                    } else if (task.Type === 'tlabs-mme') {
+                      const segMethod = task.Request?.Segmentation?.Method || task.Request?.segmentation?.method || 'N/A'
+                      const minDur = task.Request?.Segmentation?.Dynamic?.MinDurationSec || 
+                                     task.Request?.segmentation?.dynamic?.minDurationSec || 
+                                     task.Request?.Segmentation?.Fixed?.DurationSec || 
+                                     task.Request?.segmentation?.fixed?.durationSec || 'N/A'
+                      const scope = (task.Request?.EmbeddingScope || task.Request?.embeddingScope)?.join(', ') || 'N/A'
+                      const options = (task.Request?.EmbeddingOption || task.Request?.embeddingOption)?.join(', ') || 'N/A'
+                      tooltipContent = `Segmentation: ${segMethod}\nDuration: ${minDur}s\nScope: ${scope}\nOptions: ${options}`
+                    }
+                    
+                    return (
+                      <div key={task.Id} className="compare-result-column">
+                        <div className="compare-result-header" title={tooltipContent}>
+                          <h4>
+                            {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}
+                            <span className="info-icon" title={tooltipContent}>ⓘ</span>
+                          </h4>
+                          <div className="compare-model-id">{task.ModelId}</div>
+                          {resultData && resultData.results.length > 0 && (
+                            <span className="compare-result-count">{resultData.results.length} results</span>
+                          )}
                         </div>
-                      ))
-                    ) : (
-                      <div className="no-results-message">No results found</div>
-                    )}
-                  </div>
-                )}
+                        
+                        {!hasResults ? (
+                          <div className="no-results-message">Waiting for search...</div>
+                        ) : resultData.error ? (
+                          <div className="alert alert-error">{resultData.error}</div>
+                        ) : resultData.results.length > 0 ? (
+                          <>
+                            <div className="results-list-modal">
+                              {resultData.results.map((result, index) => (
+                                <div key={index} className="result-item-compact">
+                                  <span className="result-rank">#{index + 1}</span>
+                                  <button 
+                                    className="time-range-link"
+                                    onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
+                                    title="Click to navigate video to this timestamp"
+                                  >
+                                    {parseFloat(result.StartSec || 0).toFixed(2)}s-{parseFloat(result.EndSec || 0).toFixed(2)}s
+                                  </button>
+                                  <span className="result-distance">Dist: {result.Distance?.toFixed(4) || 'N/A'}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="compare-result-actions">
+                              <div className="append-controls-inline">
+                                <select
+                                  value={selectedGroundTruthId}
+                                  onChange={(e) => {
+                                    console.log('Selected ground truth:', e.target.value)
+                                    setSelectedGroundTruthId(e.target.value)
+                                  }}
+                                  className="gt-select-inline"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    console.log('Ground truths available:', groundTruths)
+                                  }}
+                                >
+                                  <option value="">Select ground truth... ({groundTruths.length} available)</option>
+                                  {groundTruths.map(gt => (
+                                    <option key={gt.Id} value={gt.Id}>
+                                      {gt.Name} ({gt.Labels?.length || 0} labels)
+                                    </option>
+                                  ))}
+                                </select>
+                                <button 
+                                  className="btn-append-inline"
+                                  onClick={() => handleAppendToGroundTruth(task, resultData.results)}
+                                  disabled={!selectedGroundTruthId || appendingToGt}
+                                  title="Append results to selected ground truth"
+                                >
+                                  {appendingToGt ? 'Appending...' : 'Append'}
+                                </button>
+                              </div>
+                              <button 
+                                className="btn-save-ground-truth"
+                                onClick={() => handleSaveAsGroundTruth(task, resultData.results)}
+                                title="Save these results as new ground truth"
+                              >
+                                Save as New Ground Truth
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="no-results-message">No results found</div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>

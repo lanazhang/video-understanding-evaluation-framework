@@ -1,721 +1,549 @@
+import { useState, useEffect, useRef } from 'react'
 import './GroundTruthTaskDetail.css'
-import { useEffect, useState, useRef } from 'react'
+import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import { FetchPost } from '../utils/apiHelper'
+import EmbeddingSearch from './GroundTruth/EmbeddingSearch'
+import GroundTruthReview from './GroundTruth/GroundTruthReview'
 
-function GroundTruthTaskDetail({ task, onBack }) {
-  const [activeTab, setActiveTab] = useState('pending')
-  const [reviewMode, setReviewMode] = useState(false)
+function GroundTruthTaskDetail({ task, onBack, currentUser }) {
   const [selectedLabel, setSelectedLabel] = useState(null)
-  const [editMode, setEditMode] = useState(false)
-  const [editedLabel, setEditedLabel] = useState(null)
+  const [isEditMode, setIsEditMode] = useState(task.openInEditMode || false)
+  const [editStep, setEditStep] = useState('search') // 'search' or 'review'
+  const [allSearches, setAllSearches] = useState([])
+  const [allResults, setAllResults] = useState([])
+  const [editingSegment, setEditingSegment] = useState(null)
+  const [activeTab, setActiveTab] = useState('unreviewed')
+  const [segments, setSegments] = useState([])
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [tempName, setTempName] = useState('')
   const videoRef = useRef(null)
-  
-  // Ground truth name editing state
-  const [editingName, setEditingName] = useState(false)
-  const [editedName, setEditedName] = useState(task.Name || task.taskName || '')
-  
-  // New label capture state
-  const [captureMode, setCaptureMode] = useState(false)
-  const [newLabel, setNewLabel] = useState({
-    startTs: null,
-    endTs: null,
-    label: ''
-  })
 
+  // Initialize segments from task labels
   useEffect(() => {
-    console.log('GroundTruthTaskDetail - Full task data:', task)
-    console.log('GroundTruthTaskDetail - Video data:', task?.video)
-    console.log('GroundTruthTaskDetail - Video URL:', task?.video?.video_url)
-  }, [task])
-
-  // Handle video time update to auto-stop at end timestamp
-  useEffect(() => {
-    if (!videoRef.current || !selectedLabel || editMode) return
-
-    const handleTimeUpdate = () => {
-      if (videoRef.current.currentTime >= selectedLabel.EndTs) {
-        videoRef.current.pause()
-      }
+    if (task.Labels) {
+      const initialSegments = [...task.Labels]
+        .sort((a, b) => a.StartTs - b.StartTs)
+        .map(label => ({
+          StartSec: label.StartTs,
+          EndSec: label.EndTs,
+          query: label.Label || '',
+          Distance: label.Score,
+          reviewStatus: label.ReviewResult || 'unreviewed'
+        }))
+      setSegments(initialSegments)
     }
+    setEditName(task.Name || task.taskName || '')
+    setEditDescription(task.Description || task.description || '')
+  }, [task.Labels, task.Name, task.taskName, task.Description, task.description])
 
-    videoRef.current.addEventListener('timeupdate', handleTimeUpdate)
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.removeEventListener('timeupdate', handleTimeUpdate)
-      }
-    }
-  }, [selectedLabel, editMode])
-
-  const formatTimestamp = (ts) => {
-    const minutes = Math.floor(ts / 60)
-    const seconds = (ts % 60).toFixed(2)
-    return `${minutes}:${seconds.padStart(5, '0')}`
+  const formatTime = (seconds) => {
+    if (!seconds && seconds !== 0) return '0:00'
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    return new Date(dateStr).toLocaleString()
+  const formatDuration = (seconds) => {
+    if (!seconds && seconds !== 0) return '0s'
+    if (seconds < 60) return `${Math.floor(seconds)}s`
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`
   }
 
-  const getReviewBadgeClass = (reviewResult) => {
-    // Handle both short codes and full API values
-    const normalizedResult = reviewResult?.toLowerCase()
-    if (normalizedResult === 'tp' || normalizedResult === 'true_positive') return 'review-badge-tp'
-    if (normalizedResult === 'fp' || normalizedResult === 'false_positive') return 'review-badge-fp'
-    if (normalizedResult === 'unreviewed') return 'review-badge-unreviewed'
-    return 'review-badge-default'
-  }
-
-  const getReviewBadgeText = (reviewResult) => {
-    // Display short codes for UI
-    const normalizedResult = reviewResult?.toLowerCase()
-    if (normalizedResult === 'true_positive') return 'tp'
-    if (normalizedResult === 'false_positive') return 'fp'
-    return reviewResult || 'unreviewed'
+  const formatFileSize = (bytes) => {
+    if (!bytes) return 'N/A'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
   }
 
   const handleLabelClick = (label) => {
     setSelectedLabel(label)
-    setEditMode(false)
-    
-    // Navigate video to start timestamp and play
     if (videoRef.current) {
       videoRef.current.currentTime = label.StartTs
-      videoRef.current.play().catch(err => {
-        console.log('Video play failed:', err)
+      videoRef.current.play()
+    }
+  }
+
+  const handleTimeRangeClick = (startSec, endSec) => {
+    if (videoRef.current) {
+      const videoEl = videoRef.current
+      const endTime = parseFloat(endSec || 0)
+      
+      videoEl.currentTime = parseFloat(startSec || 0)
+      videoEl.muted = true
+      
+      const existingListener = videoEl._stopAtEndListener
+      if (existingListener) {
+        videoEl.removeEventListener('timeupdate', existingListener)
+      }
+      
+      const stopAtEndListener = () => {
+        if (videoEl.currentTime >= endTime) {
+          videoEl.pause()
+          videoEl.removeEventListener('timeupdate', stopAtEndListener)
+          delete videoEl._stopAtEndListener
+        }
+      }
+      
+      videoEl._stopAtEndListener = stopAtEndListener
+      videoEl.addEventListener('timeupdate', stopAtEndListener)
+      
+      videoEl.play().catch(err => {
+        console.log('Auto-play prevented:', err)
       })
     }
   }
 
-  const selectNextLabel = () => {
-    if (!selectedLabel || activeTab !== 'pending') return
-    
-    const currentIndex = pendingLabels.findIndex(l => l === selectedLabel)
-    if (currentIndex >= 0 && currentIndex < pendingLabels.length - 1) {
-      const nextLabel = pendingLabels[currentIndex + 1]
-      setSelectedLabel(nextLabel)
-      setEditMode(false)
-      
-      // Navigate video to next label's start timestamp and play
-      if (videoRef.current) {
-        videoRef.current.currentTime = nextLabel.StartTs
-        videoRef.current.play()
-      }
-    } else {
-      // No more labels to review
-      setSelectedLabel(null)
-      setEditMode(false)
-    }
+  const handleEditName = () => {
+    setTempName(task.Name || task.taskName || '')
+    setIsEditingName(true)
   }
 
-  const saveGroundTruth = async () => {
-    try {
-      const labels = task.Labels || task.labels || []
-      
-      // Determine status based on review completion
-      const allReviewed = labels.every(label => 
-        label.ReviewResult && label.ReviewResult !== 'unreviewed'
-      )
-      const anyReviewed = labels.some(label => 
-        label.ReviewResult && label.ReviewResult !== 'unreviewed'
-      )
-      
-      let status = 'created'
-      if (allReviewed) {
-        status = 'reviewed'
-      } else if (anyReviewed) {
-        status = 'in_review'
-      }
-      
-      // Prepare payload for upsert API
-      const payload = {
-        Id: task.Id || task.id,
-        Name: task.Name || task.taskName,
-        Description: task.Description || task.description,
-        CreatedBy: task.CreatedBy || task.createdBy,
-        VideoId: task.VideoId || task.videoId,
-        VideoAnalyzeTaskIds: task.VideoAnalyzeTaskIds || task.videoAnalyzeTaskIds || [],
-        Status: status,
-        Labels: labels.map(label => ({
-          StartTs: label.StartTs,
-          EndTs: label.EndTs,
-          Score: label.Score,
-          Label: label.Label,
-          Source: label.Source,
-          ReviewResult: label.ReviewResult || 'unreviewed'
-        }))
-      }
-      
-      console.log('Auto-saving ground truth:', payload)
-      
-      const response = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
-      
-      console.log('Save response:', response)
-      
-      return response
-    } catch (error) {
-      console.error('Error saving ground truth:', error)
-      throw error
-    }
-  }
-
-  const handleReview = async (reviewResult) => {
-    if (!selectedLabel) return
-    
-    // Map short codes to full API values
-    const reviewResultMap = {
-      'tp': 'true_positive',
-      'fp': 'false_positive',
-      'unreviewed': 'unreviewed'
-    }
-    
-    const apiReviewResult = reviewResultMap[reviewResult] || reviewResult
-    
-    console.log('Review label:', selectedLabel, 'Result:', apiReviewResult)
-    
-    // Update local state
-    selectedLabel.ReviewResult = apiReviewResult
-    
-    // Auto-save to backend
-    try {
-      await saveGroundTruth()
-    } catch (error) {
-      alert('Failed to save review: ' + error.message)
-      return
-    }
-    
-    // If marking as unreviewed from reviewed tab, just clear selection
-    if (reviewResult === 'unreviewed' && activeTab === 'reviewed') {
-      setSelectedLabel(null)
-      return
-    }
-    
-    // Auto-select next label for pending tab
-    if (activeTab === 'pending') {
-      selectNextLabel()
-    }
-  }
-
-  const handleModify = () => {
-    setEditMode(true)
-    setEditedLabel({
-      Label: selectedLabel.Label,
-      StartTs: selectedLabel.StartTs,
-      EndTs: selectedLabel.EndTs
-    })
-  }
-
-  const handleSaveModification = async () => {
-    if (!editedLabel || !selectedLabel) return
-    
-    console.log('Update label:', selectedLabel, 'New values:', editedLabel)
-    
-    // Update local state
-    selectedLabel.Label = editedLabel.Label
-    selectedLabel.StartTs = editedLabel.StartTs
-    selectedLabel.EndTs = editedLabel.EndTs
-    selectedLabel.ReviewResult = 'true_positive' // Mark as reviewed after modification
-    
-    setEditedLabel(null)
-    
-    // Auto-save to backend
-    try {
-      await saveGroundTruth()
-    } catch (error) {
-      alert('Failed to save modification: ' + error.message)
-      return
-    }
-    
-    // Auto-select next label
-    selectNextLabel()
-  }
-
-  const handleCancelEdit = () => {
-    setEditMode(false)
-    setEditedLabel(null)
-  }
-  
-  const handleMarkStart = () => {
-    if (videoRef.current) {
-      const currentTime = videoRef.current.currentTime
-      setNewLabel(prev => ({ ...prev, startTs: currentTime }))
-    }
-  }
-  
-  const handleMarkEnd = () => {
-    if (videoRef.current) {
-      const currentTime = videoRef.current.currentTime
-      setNewLabel(prev => ({ ...prev, endTs: currentTime }))
-    }
-  }
-  
-  const handleAddNewLabel = async () => {
-    if (!newLabel.startTs || !newLabel.endTs || !newLabel.label.trim()) {
-      alert('Please mark start/end timestamps and enter a label')
-      return
-    }
-    
-    if (newLabel.startTs >= newLabel.endTs) {
-      alert('End timestamp must be greater than start timestamp')
-      return
-    }
-    
-    // Add new label to the task
-    const labels = task.Labels || task.labels || []
-    const newLabelObj = {
-      StartTs: newLabel.startTs,
-      EndTs: newLabel.endTs,
-      Score: 1.0,
-      Label: newLabel.label,
-      Source: 'manual',
-      ReviewResult: 'unreviewed'
-    }
-    
-    labels.push(newLabelObj)
-    
-    // Update task labels
-    if (task.Labels) {
-      task.Labels = labels
-    } else {
-      task.labels = labels
-    }
-    
-    // Auto-save to backend
-    try {
-      await saveGroundTruth()
-      alert('New label added successfully!')
-    } catch (error) {
-      alert('Failed to add label: ' + error.message)
-      // Remove the label from local state if save failed
-      labels.pop()
-      return
-    }
-    
-    // Reset capture state
-    setNewLabel({ startTs: null, endTs: null, label: '' })
-    setCaptureMode(false)
-  }
-  
-  const handleCancelCapture = () => {
-    setNewLabel({ startTs: null, endTs: null, label: '' })
-    setCaptureMode(false)
-  }
-
-  const handleSaveNameEdit = async () => {
-    if (!editedName.trim()) {
+  const handleSaveName = async () => {
+    if (!tempName.trim()) {
       alert('Name cannot be empty')
       return
     }
-    
-    // Update task name
-    if (task.Name) {
-      task.Name = editedName
-    } else {
-      task.taskName = editedName
-    }
-    
-    // Auto-save to backend
+
     try {
-      await saveGroundTruth()
-      setEditingName(false)
-    } catch (error) {
-      alert('Failed to save name: ' + error.message)
+      const labels = (task.Labels || []).map(label => ({
+        StartTs: label.StartTs,
+        EndTs: label.EndTs,
+        Score: label.Score,
+        Label: label.Label,
+        ReviewResult: label.ReviewResult
+      }))
+
+      const payload = {
+        Id: task.Id || task.id,
+        Name: tempName.trim(),
+        Description: task.Description || task.description || '',
+        CreatedBy: task.CreatedBy || task.createdBy,
+        VideoId: task.VideoId || task.videoId,
+        Labels: labels
+      }
+
+      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+
+      if (data.statusCode === 200 || data.message) {
+        task.Name = tempName.trim()
+        task.taskName = tempName.trim()
+        setIsEditingName(false)
+      } else {
+        alert('Failed to update name')
+      }
+    } catch (err) {
+      console.error('Error updating name:', err)
+      alert('Error updating name: ' + err.message)
     }
   }
 
   const handleCancelNameEdit = () => {
-    setEditedName(task.Name || task.taskName || '')
-    setEditingName(false)
+    setIsEditingName(false)
+    setTempName('')
   }
 
-  const video = task.video || {}
-  const labels = task.Labels || task.labels || []
-  
-  // Filter labels based on review status
-  const reviewedLabels = labels.filter(label => {
-    const result = label.ReviewResult?.toLowerCase()
-    return result && result !== 'unreviewed'
-  })
-  const pendingLabels = labels.filter(label => {
-    const result = label.ReviewResult?.toLowerCase()
-    return !result || result === 'unreviewed'
-  })
-  
-  const displayedLabels = activeTab === 'reviewed' ? reviewedLabels : pendingLabels
+  const handleEditLabels = () => {
+    setIsEditMode(true)
+    setEditStep('search')
+    setEditName(task.Name || task.taskName || '')
+    setEditDescription(task.Description || task.description || '')
+    // Initialize allResults with existing labels
+    if (task.Labels) {
+      const existingResults = task.Labels.map(label => ({
+        StartSec: label.StartTs,
+        EndSec: label.EndTs,
+        query: label.Label || '',
+        Distance: label.Score || 0,
+        reviewStatus: label.ReviewResult || 'reviewed', // Mark existing labels as reviewed
+        source: 'manual' // Mark as manual since they're existing labels
+      }))
+      setAllResults(existingResults)
+      setAllSearches([]) // No searches initially
+    }
+  }
 
+  const handleCancelEdit = () => {
+    setIsEditMode(false)
+    setEditStep('search')
+    setEditingSegment(null)
+    setAllSearches([])
+    setAllResults([])
+    setEditName(task.Name || task.taskName || '')
+    setEditDescription(task.Description || task.description || '')
+  }
+
+  const handleNextToReview = (searches, results) => {
+    setAllSearches(searches)
+    setAllResults(results)
+    setEditStep('review')
+  }
+
+  const handleBackToSearch = () => {
+    setEditStep('search')
+  }
+
+  const handleSaveFromReview = async () => {
+    // This will be called from GroundTruthReview component
+    // The save logic is handled there, we just need to exit edit mode
+    setIsEditMode(false)
+    setEditStep('search')
+    // Refresh the task data
+    if (onBack) {
+      onBack() // Go back to list to refresh
+    }
+  }
+
+  const handleConfirmSegment = (segment) => {
+    setSegments(segments.map(seg => 
+      seg === segment ? { ...seg, reviewStatus: 'reviewed' } : seg
+    ))
+    setEditingSegment(null)
+  }
+
+  const handleDeclineSegment = (segment) => {
+    setSegments(segments.filter(seg => seg !== segment))
+    setEditingSegment(null)
+  }
+
+  const handleEditSegment = (segment) => {
+    setEditingSegment(segment)
+  }
+
+  const handleSaveSegmentEdit = (originalSegment, updates) => {
+    setSegments(segments.map(seg => 
+      seg === originalSegment ? { ...seg, ...updates } : seg
+    ))
+    setEditingSegment(null)
+  }
+
+  const handleCancelSegmentEdit = () => {
+    setEditingSegment(null)
+  }
+
+  const handleSaveChanges = async () => {
+    if (!editName.trim()) {
+      setError('Please enter a name for the ground truth')
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      // Convert segments back to labels format
+      const labels = segments.map(seg => ({
+        StartTs: parseFloat(parseFloat(seg.StartSec || 0).toFixed(3)),
+        EndTs: parseFloat(parseFloat(seg.EndSec || 0).toFixed(3)),
+        Score: parseFloat(seg.Distance || 0),
+        Label: seg.query,
+        ReviewResult: seg.reviewStatus || 'unreviewed'
+      }))
+
+      const payload = {
+        Id: task.Id || task.id,
+        Name: editName.trim(),
+        Description: editDescription.trim(),
+        CreatedBy: task.CreatedBy || task.createdBy,
+        VideoId: task.VideoId || task.videoId,
+        Labels: labels
+      }
+
+      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+
+      console.log('Ground truth update response:', data)
+
+      if (data.statusCode === 200 || data.message) {
+        setIsEditMode(false)
+        setEditingSegment(null)
+        // Update task properties
+        task.Labels = labels
+        task.Name = editName.trim()
+        task.taskName = editName.trim()
+        task.Description = editDescription.trim()
+        task.description = editDescription.trim()
+        alert('Ground truth updated successfully!')
+      } else {
+        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        const errorMessage = responseBody?.error || data.error || data.body || 'Failed to update ground truth'
+        setError('Failed to update ground truth: ' + errorMessage)
+      }
+    } catch (err) {
+      console.error('Error updating ground truth:', err)
+      setError('Error updating ground truth: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const unreviewedSegments = segments.filter(seg => seg.reviewStatus === 'unreviewed')
+  const reviewedSegments = segments.filter(seg => seg.reviewStatus === 'reviewed')
+
+  const sortedLabels = [...(task.Labels || [])].sort((a, b) => a.StartTs - b.StartTs)
+
+  const getReviewBadgeClass = (reviewResult) => {
+    switch (reviewResult) {
+      case 'true_positive':
+        return 'review-badge-tp'
+      case 'false_positive':
+        return 'review-badge-fp'
+      case 'unreviewed':
+        return 'review-badge-unreviewed'
+      default:
+        return 'review-badge-default'
+    }
+  }
+
+  const getReviewBadgeText = (reviewResult) => {
+    switch (reviewResult) {
+      case 'true_positive':
+        return 'TP'
+      case 'false_positive':
+        return 'FP'
+      case 'false_negative':
+        return 'FN'
+      case 'true_negative':
+        return 'TN'
+      case 'unreviewed':
+        return 'Unreviewed'
+      default:
+        return reviewResult || 'N/A'
+    }
+  }
+
+  // Render edit mode
+  if (isEditMode) {
+    if (editStep === 'search') {
+      return (
+        <div className="edit-ground-truth-container">
+          <div className="edit-header">
+            <button className="btn-back" onClick={handleCancelEdit}>
+              <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+              Cancel
+            </button>
+            <h1>Edit Ground Truth - Add/Search Labels</h1>
+          </div>
+          <EmbeddingSearch 
+            video={task.video}
+            onNext={handleNextToReview}
+            currentUser={currentUser}
+            initialSearches={allSearches}
+            initialResults={allResults}
+          />
+        </div>
+      )
+    } else {
+      return (
+        <div className="edit-ground-truth-container">
+          <div className="edit-header">
+            <button className="btn-back" onClick={handleBackToSearch}>
+              <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+              Back to Search
+            </button>
+            <h1>Edit Ground Truth - Review & Save</h1>
+          </div>
+          <GroundTruthReview
+            video={task.video}
+            allSearches={allSearches}
+            allResults={allResults}
+            onPrevious={handleBackToSearch}
+            onUpdate={(updatedSearches, updatedResults) => {
+              setAllSearches(updatedSearches)
+              setAllResults(updatedResults)
+            }}
+            onSave={handleSaveFromReview}
+            currentUser={currentUser}
+            existingGroundTruth={task}
+          />
+        </div>
+      )
+    }
+  }
+
+  // Render readonly mode
   return (
     <div className="task-detail">
       <div className="task-detail-header">
         <button className="btn-back" onClick={onBack}>
-          ← Back
+          <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+          Back to List
         </button>
-        {editingName ? (
+        {isEditingName ? (
           <div className="name-edit-container">
-            <input 
+            <input
               type="text"
-              value={editedName}
-              onChange={(e) => setEditedName(e.target.value)}
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
               className="name-edit-input"
               autoFocus
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
-                  handleSaveNameEdit()
+                  handleSaveName()
                 } else if (e.key === 'Escape') {
                   handleCancelNameEdit()
                 }
               }}
             />
-            <button 
-              className="btn-save-name"
-              onClick={handleSaveNameEdit}
-              title="Save"
-            >
+            <button className="btn-save-name" onClick={handleSaveName}>
               ✓
             </button>
-            <button 
-              className="btn-cancel-name"
-              onClick={handleCancelNameEdit}
-              title="Cancel"
-            >
+            <button className="btn-cancel-name" onClick={handleCancelNameEdit}>
               ✕
             </button>
           </div>
         ) : (
           <div className="name-display-container">
-            <h1>{task.Name || task.taskName || 'Ground Truth Detail'}</h1>
-            <button 
-              className="btn-edit-name"
-              onClick={() => setEditingName(true)}
-              title="Edit name"
-            >
-              ✎
+            <h1>{task.Name || task.taskName}</h1>
+            <button className="btn-edit-name-icon" onClick={handleEditName} title="Edit name">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.3333 2.00004C11.5084 1.82494 11.716 1.68605 11.9441 1.59129C12.1722 1.49653 12.4165 1.44775 12.6633 1.44775C12.9101 1.44775 13.1544 1.49653 13.3825 1.59129C13.6106 1.68605 13.8183 1.82494 13.9933 2.00004C14.1684 2.17513 14.3073 2.38282 14.4021 2.61091C14.4968 2.839 14.5456 3.08334 14.5456 3.33004C14.5456 3.57674 14.4968 3.82107 14.4021 4.04916C14.3073 4.27725 14.1684 4.48494 13.9933 4.66004L5.00001 13.6534L1.33334 14.6667L2.34668 11L11.3333 2.00004Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           </div>
         )}
       </div>
 
       <div className="ground-truth-layout">
-        {/* Main Content - Two Columns */}
         <div className="ground-truth-main">
-          {/* Left Column: Video + Metadata */}
           <div className="ground-truth-left">
             {/* Video Player */}
             <div className="ground-truth-video">
-              {video.video_url ? (
+              {task.video?.video_url ? (
                 <video 
                   ref={videoRef}
-                  controls 
+                  className="video-player" 
+                  controls
                   muted
-                  src={video.video_url}
-                  className="video-player"
-                  crossOrigin="anonymous"
+                  src={task.video.video_url}
                 >
                   Your browser does not support the video tag.
                 </video>
               ) : (
-                <div className="video-placeholder">
-                  No video available
-                  {video && Object.keys(video).length > 0 && (
-                    <div style={{ fontSize: '0.8em', marginTop: '10px' }}>
-                      Video data exists but no URL found
-                    </div>
-                  )}
-                </div>
+                <div className="video-placeholder">No video available</div>
               )}
             </div>
 
-            {/* Metadata Below Video */}
-            <div className="ground-truth-metadata">
-              <div className="metadata-section-compact">
-                <div className="metadata-grid-compact">
-                  <div className="metadata-item-inline">
-                    <span className="metadata-value">{video.Name || 'N/A'}</span>
-                  </div>
-                  <div className="metadata-item-inline">
-                    <span className="metadata-value">{video.Duration ? `${video.Duration.toFixed(2)}s` : 'N/A'} • {video.Fps ? `${video.Fps.toFixed(2)} fps` : 'N/A'}</span>
-                  </div>
-                  <div className="metadata-item-inline">
-                    <span className="metadata-value">
-                      {video.Resolution ? `${video.Resolution[0]}x${video.Resolution[1]}` : 'N/A'} • {video.Size ? `${(video.Size / 1024 / 1024).toFixed(2)} MB` : 'N/A'}
-                    </span>
-                  </div>
+            {/* Video Metadata */}
+            <div className="metadata-section">
+              <h3>Video Information</h3>
+              <div className="metadata-grid">
+                <div className="metadata-item">
+                  <span className="metadata-label">Video Name</span>
+                  <span className="metadata-value">{task.video?.Name || 'N/A'}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Duration</span>
+                  <span className="metadata-value">{formatDuration(task.video?.Duration)}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Resolution</span>
+                  <span className="metadata-value">
+                    {task.video?.Width && task.video?.Height 
+                      ? `${task.video.Width}x${task.video.Height}` 
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">FPS</span>
+                  <span className="metadata-value">{task.video?.FrameRate || 'N/A'}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">File Size</span>
+                  <span className="metadata-value">{formatFileSize(task.video?.FileSize)}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Format</span>
+                  <span className="metadata-value">{task.video?.Format || 'N/A'}</span>
                 </div>
               </div>
+            </div>
 
-              <div className="metadata-section-compact">
-                <div className="metadata-grid-compact">
-                  <div className="metadata-item-inline">
-                    <span className="metadata-value-small">{task.Id || task.id || 'N/A'}</span>
-                  </div>
-                  <div className="metadata-item-inline">
-                    <span className="metadata-value">{task.CreatedBy || task.createdBy || 'N/A'} • {formatDate(task.CreatedAt || task.createdAt)}</span>
-                  </div>
-                  {(task.Description || task.description) && (
-                    <div className="metadata-item-inline">
-                      <span className="metadata-value">{task.Description || task.description}</span>
-                    </div>
-                  )}
+            {/* Ground Truth Metadata */}
+            <div className="metadata-section">
+              <h3>Ground Truth Information</h3>
+              <div className="metadata-grid">
+                <div className="metadata-item full-width">
+                  <span className="metadata-label">Description</span>
+                  <span className="metadata-value">{task.Description || task.description || 'No description'}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Created By</span>
+                  <span className="metadata-value">{task.CreatedBy || task.createdBy}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Created Date</span>
+                  <span className="metadata-value">
+                    {task.CreatedAt 
+                      ? new Date(task.CreatedAt).toLocaleString() 
+                      : task.createdDate || 'N/A'}
+                  </span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Total Labels</span>
+                  <span className="metadata-value">{sortedLabels.length}</span>
+                </div>
+                <div className="metadata-item">
+                  <span className="metadata-label">Ground Truth ID</span>
+                  <span className="metadata-value metadata-value-small">{task.Id || task.id}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Labels */}
+          {/* Labels Section */}
           <div className="ground-truth-right">
             <div className="ground-truth-labels">
-              <div className="labels-header-with-tabs">
-                <h3>Labels ({labels.length})</h3>
-                <div className="labels-controls">
-                  <button 
-                    className={`btn-capture-mode ${captureMode ? 'active' : ''}`}
-                    onClick={() => {
-                      setCaptureMode(!captureMode)
-                      setReviewMode(false)
-                      setSelectedLabel(null)
-                      setEditMode(false)
-                    }}
-                  >
-                    {captureMode ? 'Stop Capture' : 'Add New Label'}
-                  </button>
-                  {pendingLabels.length > 0 && (
-                    <button 
-                      className={`btn-review-mode ${reviewMode ? 'active' : ''}`}
-                      onClick={() => {
-                        const newReviewMode = !reviewMode
-                        setReviewMode(newReviewMode)
-                        setEditMode(false)
-                        setCaptureMode(false)
-                        
-                        if (newReviewMode) {
-                          // Auto-select first item when starting review
-                          const currentLabels = activeTab === 'reviewed' ? reviewedLabels : pendingLabels
-                          if (currentLabels.length > 0) {
-                            handleLabelClick(currentLabels[0])
-                          } else {
-                            setSelectedLabel(null)
-                          }
-                        } else {
-                          setSelectedLabel(null)
-                        }
-                      }}
-                      disabled={!reviewMode && displayedLabels.length === 0}
-                    >
-                      {reviewMode ? 'Stop Review' : 'Start Review'}
-                    </button>
-                  )}
-                  <div className="labels-tabs">
-                    <button 
-                      className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('pending')}
-                    >
-                      Pending ({pendingLabels.length})
-                    </button>
-                    <button 
-                      className={`tab-button ${activeTab === 'reviewed' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('reviewed')}
-                    >
-                      Reviewed ({reviewedLabels.length})
-                    </button>
-                  </div>
-                </div>
+              <div className="labels-header">
+                <h3>Labels ({sortedLabels.length})</h3>
+                <button className="btn-edit-name" onClick={handleEditLabels}>
+                  Edit Labels
+                </button>
               </div>
-
-              {captureMode && (
-                <div className="capture-panel">
-                  <div className="capture-panel-content">
-                    <div className="capture-info">
-                      <h4>Add New Label</h4>
-                      <p>Play the video and mark the start and end timestamps for the new label</p>
-                    </div>
-                    <div className="capture-form">
-                      <div className="capture-timestamps">
-                        <button 
-                          className="btn-mark-timestamp"
-                          onClick={handleMarkStart}
-                        >
-                          Mark Start
-                        </button>
-                        <span className="timestamp-display">
-                          {newLabel.startTs !== null ? formatTimestamp(newLabel.startTs) : '--:--'}
-                        </span>
-                        <button 
-                          className="btn-mark-timestamp"
-                          onClick={handleMarkEnd}
-                        >
-                          Mark End
-                        </button>
-                        <span className="timestamp-display">
-                          {newLabel.endTs !== null ? formatTimestamp(newLabel.endTs) : '--:--'}
-                        </span>
-                      </div>
-                      <div className="capture-label-input">
-                        <input 
-                          type="text"
-                          placeholder="Enter label name..."
-                          value={newLabel.label}
-                          onChange={(e) => setNewLabel(prev => ({ ...prev, label: e.target.value }))}
-                          className="label-input"
-                        />
-                      </div>
-                      <div className="capture-actions">
-                        <button 
-                          className="btn-add-label"
-                          onClick={handleAddNewLabel}
-                        >
-                          Add Label
-                        </button>
-                        <button 
-                          className="btn-cancel-capture"
-                          onClick={handleCancelCapture}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {reviewMode && selectedLabel && (
-                <div className="review-panel">
-                  <button 
-                    className="btn-close-review-panel"
-                    onClick={() => {
-                      setSelectedLabel(null)
-                      setEditMode(false)
-                    }}
-                    title="Close"
-                  >
-                    ✕
-                  </button>
-                  {editMode ? (
-                    <div className="review-panel-content edit-mode">
-                      <div className="edit-form">
-                        <div className="edit-form-row">
-                          <label>Label:</label>
-                          <input 
-                            type="text"
-                            value={editedLabel.Label}
-                            onChange={(e) => setEditedLabel({...editedLabel, Label: e.target.value})}
-                            className="edit-input"
-                          />
-                        </div>
-                        <div className="edit-form-row">
-                          <label>Start Time (s):</label>
-                          <input 
-                            type="number"
-                            step="0.01"
-                            value={editedLabel.StartTs}
-                            onChange={(e) => setEditedLabel({...editedLabel, StartTs: parseFloat(e.target.value)})}
-                            className="edit-input"
-                          />
-                        </div>
-                        <div className="edit-form-row">
-                          <label>End Time (s):</label>
-                          <input 
-                            type="number"
-                            step="0.01"
-                            value={editedLabel.EndTs}
-                            onChange={(e) => setEditedLabel({...editedLabel, EndTs: parseFloat(e.target.value)})}
-                            className="edit-input"
-                          />
-                        </div>
-                      </div>
-                      <div className="edit-actions">
-                        <button 
-                          className="btn-review-action btn-save-edit"
-                          onClick={handleSaveModification}
-                        >
-                          Save Changes
-                        </button>
-                        <button 
-                          className="btn-review-action btn-cancel-edit"
-                          onClick={handleCancelEdit}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="review-panel-content">
-                      <div className="review-label-info">
-                        <strong>{selectedLabel.Label}</strong>
-                        <span>{formatTimestamp(selectedLabel.StartTs)} - {formatTimestamp(selectedLabel.EndTs)}</span>
-                      </div>
-                      <div className="review-actions">
-                        <button 
-                          className="btn-review-action btn-true-positive"
-                          onClick={() => handleReview('tp')}
-                          title="True Positive"
-                        >
-                          ✓
-                        </button>
-                        <button 
-                          className="btn-review-action btn-false-positive"
-                          onClick={() => handleReview('fp')}
-                          title="False Positive"
-                        >
-                          ✗
-                        </button>
-                        <button 
-                          className="btn-review-action btn-modify"
-                          onClick={handleModify}
-                          title="Modify"
-                        >
-                          ✎
-                        </button>
-                        {activeTab === 'reviewed' && (
-                          <button 
-                            className="btn-review-action btn-mark-unreviewed"
-                            onClick={() => handleReview('unreviewed')}
-                            title="Mark as Unreviewed"
-                          >
-                            ↺
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
+              
               <div className="labels-list">
-                {displayedLabels.length === 0 ? (
-                  <div className="no-labels">
-                    No {activeTab === 'reviewed' ? 'reviewed' : 'pending'} labels
-                  </div>
+                {sortedLabels.length === 0 ? (
+                  <div className="no-labels">No labels available</div>
                 ) : (
-                  displayedLabels.map((label, index) => (
-                    <div 
-                      key={index} 
+                  sortedLabels.map((label, index) => (
+                    <div
+                      key={index}
                       className={`label-card clickable ${selectedLabel === label ? 'selected' : ''}`}
                       onClick={() => handleLabelClick(label)}
                     >
                       <div className="label-card-header">
-                        <span className="label-name">{label.Label}</span>
+                        <span className="label-name">
+                          {label.Label || `Segment ${index + 1}`}
+                        </span>
                         <span className={`review-badge ${getReviewBadgeClass(label.ReviewResult)}`}>
                           {getReviewBadgeText(label.ReviewResult)}
                         </span>
                       </div>
                       <div className="label-card-body">
-                        <div className="label-info-compact">
-                          {formatTimestamp(label.StartTs)} - {formatTimestamp(label.EndTs)}
+                        <div className="label-info-row">
+                          <span className="label-info-label">Time Range</span>
+                          <span className="label-info-value">
+                            {formatTime(label.StartTs)} - {formatTime(label.EndTs)}
+                          </span>
                         </div>
-                        <div className="label-info-compact">
-                          Score: {label.Score ? label.Score.toFixed(4) : 'N/A'} • {label.Source || 'N/A'}
+                        <div className="label-info-row">
+                          <span className="label-info-label">Duration</span>
+                          <span className="label-info-value">
+                            {formatDuration(label.EndTs - label.StartTs)}
+                          </span>
                         </div>
-                        {activeTab === 'reviewed' && (
-                          <div className="label-card-actions">
-                            <button 
-                              className="btn-edit-review"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setReviewMode(true)
-                                handleLabelClick(label)
-                              }}
-                            >
-                              Edit Review
-                            </button>
+                        {label.Score !== undefined && label.Score !== null && (
+                          <div className="label-info-row">
+                            <span className="label-info-label">Score</span>
+                            <span className="label-info-value">
+                              {typeof label.Score === 'number' ? label.Score.toFixed(3) : label.Score}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -726,6 +554,172 @@ function GroundTruthTaskDetail({ task, onBack }) {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function SegmentItem({ result, index, isEditing, onEdit, onSaveEdit, onCancelEdit, onTimeClick, onConfirm, onDecline, formatDuration, showConfirm, isReviewed, videoPlayerRef }) {
+  const [editStartSec, setEditStartSec] = useState(parseFloat(result.StartSec || 0).toFixed(2))
+  const [editEndSec, setEditEndSec] = useState(parseFloat(result.EndSec || 0).toFixed(2))
+  const [editQuery, setEditQuery] = useState(result.query)
+
+  const handleSave = () => {
+    onSaveEdit({
+      StartSec: parseFloat(editStartSec),
+      EndSec: parseFloat(editEndSec),
+      query: editQuery
+    })
+  }
+
+  const handleCaptureStart = () => {
+    if (videoPlayerRef.current) {
+      const currentTime = videoPlayerRef.current.currentTime
+      setEditStartSec(currentTime.toFixed(2))
+    }
+  }
+
+  const handleCaptureEnd = () => {
+    if (videoPlayerRef.current) {
+      const currentTime = videoPlayerRef.current.currentTime
+      setEditEndSec(currentTime.toFixed(2))
+    }
+  }
+
+  const handleCancel = () => {
+    onCancelEdit()
+  }
+
+  if (isEditing) {
+    return (
+      <div className={`review-result-item editing ${isReviewed ? 'reviewed' : ''}`}>
+        <span className="result-rank">#{index + 1}</span>
+        <div className="edit-time-inputs">
+          <div className="time-input-group">
+            <input
+              type="number"
+              step="0.01"
+              value={editStartSec}
+              onChange={(e) => setEditStartSec(e.target.value)}
+              className="edit-time-input"
+              placeholder="Start"
+            />
+            <button
+              className="btn-capture-time"
+              onClick={handleCaptureStart}
+              title="Capture current video time"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 1.16667V7L10.5 8.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <span>-</span>
+          <div className="time-input-group">
+            <input
+              type="number"
+              step="0.01"
+              value={editEndSec}
+              onChange={(e) => setEditEndSec(e.target.value)}
+              className="edit-time-input"
+              placeholder="End"
+            />
+            <button
+              className="btn-capture-time"
+              onClick={handleCaptureEnd}
+              title="Capture current video time"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 1.16667V7L10.5 8.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <input
+          type="text"
+          value={editQuery}
+          onChange={(e) => setEditQuery(e.target.value)}
+          className="edit-query-input"
+          placeholder="Label"
+        />
+        <span className="result-duration">
+          {formatDuration(parseFloat(editEndSec || 0) - parseFloat(editStartSec || 0))}
+        </span>
+        <span className="result-distance">
+          {result.Distance?.toFixed(4) || 'N/A'}
+        </span>
+        <div className="segment-actions">
+          <button 
+            className="btn-save-edit"
+            onClick={handleSave}
+            title="Save changes"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button 
+            className="btn-cancel-edit"
+            onClick={handleCancel}
+            title="Cancel"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`review-result-item ${isReviewed ? 'reviewed' : ''}`}>
+      <span className="result-rank">#{index + 1}</span>
+      <button 
+        className="result-time-link"
+        onClick={() => onTimeClick(result.StartSec, result.EndSec)}
+      >
+        {parseFloat(result.StartSec || 0).toFixed(2)}s - {parseFloat(result.EndSec || 0).toFixed(2)}s
+      </button>
+      <span className="result-query-tag">"{result.query}"</span>
+      <span className="result-duration">
+        {formatDuration(parseFloat(result.EndSec || 0) - parseFloat(result.StartSec || 0))}
+      </span>
+      <span className="result-distance">
+        {result.Distance?.toFixed(4) || 'N/A'}
+      </span>
+      <div className="segment-actions">
+        {showConfirm && (
+          <button 
+            className="btn-confirm-segment"
+            onClick={onConfirm}
+            title="Confirm segment"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+        <button 
+          className="btn-decline-segment"
+          onClick={onDecline}
+          title={isReviewed ? "Remove segment" : "Decline segment"}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <button 
+          className="btn-edit-segment"
+          onClick={onEdit}
+          title="Edit segment"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.3333 2.00004C11.5084 1.82494 11.716 1.68605 11.9441 1.59129C12.1722 1.49653 12.4165 1.44775 12.6633 1.44775C12.9101 1.44775 13.1544 1.49653 13.3825 1.59129C13.6106 1.68605 13.8183 1.82494 13.9933 2.00004C14.1684 2.17513 14.3073 2.38282 14.4021 2.61091C14.4968 2.839 14.5456 3.08334 14.5456 3.33004C14.5456 3.57674 14.4968 3.82107 14.4021 4.04916C14.3073 4.27725 14.1684 4.48494 13.9933 4.66004L5.00001 13.6534L1.33334 14.6667L2.34668 11L11.3333 2.00004Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
     </div>
   )

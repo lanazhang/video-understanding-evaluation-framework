@@ -1,20 +1,25 @@
 .create-ground-truth-inline {
-  padding: 24px;
+  padding: 20px;
   max-width: 1400px;
   margin: 0 auto;
+  background: #fafbfc;
+  min-height: 100vh;
 }
 
-.inline-header {
+.create-ground-truth-header {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e9ecef;
 }
 
-.inline-header h1 {
+.create-ground-truth-header h1 {
   margin: 0;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #333;
 }
 
 .btn-back {
@@ -22,20 +27,91 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .btn-back:hover {
-  background: #e8e8e8;
+  background: #f8f9fa;
+  border-color: #f97316;
+  transform: translateX(-2px);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.15);
 }
 
 .btn-back img {
   width: 16px;
   height: 16px;
+}
+
+/* Step Indicator */
+.step-indicator-container {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.step.active .step-label {
+  color: #f97316;
+}
+
+.step.completed .step-label {
+  color: #10b981;
+}
+
+.step-description {
+  font-size: 11px;
+  color: #6c757d;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-align: center;
+  width: 100%;
+}
+
+.step-line {
+  width: 80px;
+  height: 2px;
+  background: #e9ecef;
+  margin: 0 16px;
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+
+/* Wizard Step Content */
+.wizard-step-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .video-search {
@@ -59,8 +135,9 @@
 }
 
 .video-card:hover {
-  border-color: #0066cc;
-  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+  transform: translateY(-2px);
 }
 
 .video-card-thumbnail {
@@ -92,14 +169,18 @@
 
 .btn-page {
   padding: 8px 16px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
+  background: white;
+  border: 1px solid #dee2e6;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .btn-page:hover:not(:disabled) {
-  background: #e8e8e8;
+  background: #f8f9fa;
+  border-color: #f97316;
 }
 
 .btn-page:disabled {
@@ -110,30 +191,75 @@
 .page-info {
   font-size: 14px;
   color: #666;
+  font-weight: 500;
 }
 
 .alert {
-  padding: 12px;
+  padding: 12px 16px;
   border-radius: 6px;
-  margin-top: 12px;
+  margin-bottom: 16px;
 }
 
 .alert-error {
-  background: #fee;
-  color: #c33;
-  border: 1px solid #fcc;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .loading-message {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: #6c757d;
+  font-size: 0.95em;
 }
 
 .search-input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #dee2e6;
   border-radius: 8px;
   font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.step-number svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+.step.active .step-number {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+}
+
+.step.completed .step-number {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }

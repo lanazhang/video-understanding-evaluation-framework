@@ -32,6 +32,7 @@ function VideoUpload({ onSuccess, onCancel }) {
   const [numChunks, setNumChunks] = useState(null)
   const [uploadedChunks, setUploadedChunks] = useState(0)
   const [currentUploadingFileName, setCurrentUploadingFileName] = useState(null)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef(null)
 
   const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB chunks
@@ -69,11 +70,11 @@ function VideoUpload({ onSuccess, onCancel }) {
     setNumChunks(null)
     setUploadedChunks(0)
     setCurrentUploadingFileName(null)
+    setIsDragging(false)
   }
 
-  const handleFileSelect = (e) => {
+  const validateAndSetFiles = (files) => {
     const supportedFormats = ['avi', 'mov', 'mp4']
-    const files = Array.from(e.target.files)
     const filteredFiles = []
     const invalidFiles = []
 
@@ -95,6 +96,47 @@ function VideoUpload({ onSuccess, onCancel }) {
 
     if (filteredFiles.length > 0 && !taskName) {
       setTaskName(filteredFiles[0].name)
+    }
+  }
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files)
+    validateAndSetFiles(files)
+  }
+
+  const handleDragEnter = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isUploading) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    if (isUploading) return
+
+    const files = Array.from(e.dataTransfer.files)
+    validateAndSetFiles(files)
+  }
+
+  const handleDropZoneClick = () => {
+    if (!isUploading && fileInputRef.current) {
+      fileInputRef.current.click()
     }
   }
 
@@ -314,18 +356,9 @@ function VideoUpload({ onSuccess, onCancel }) {
   const isUploading = status !== null
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content video-upload-modal">
-        <div className="modal-header">
-          <h2>Upload Video</h2>
-          <button 
-            className="close-button" 
-            onClick={onCancel}
-            disabled={isUploading}
-          >
-            &times;
-          </button>
-        </div>
+    <div className="video-upload-inline">
+      <div className="upload-content">
+        <h3>Upload Video</h3>
 
         {alert && (
           <div className="alert alert-warning">
@@ -334,6 +367,69 @@ function VideoUpload({ onSuccess, onCancel }) {
         )}
 
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="files">Select Video *</label>
+            <div 
+              className={`drag-drop-zone ${isDragging ? 'dragging' : ''} ${uploadFiles.length > 0 ? 'has-files' : ''}`}
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleDropZoneClick}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                id="files"
+                accept=".mp4,.mov,.avi"
+                onChange={handleFileSelect}
+                disabled={isUploading}
+                style={{ display: 'none' }}
+              />
+              {uploadFiles.length === 0 ? (
+                <div className="drop-zone-content">
+                  <svg className="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <p className="drop-zone-text">
+                    <span className="drop-zone-primary">Click to browse</span> or drag and drop video files here
+                  </p>
+                  <p className="drop-zone-hint">Supported formats: .mp4, .mov, .avi</p>
+                </div>
+              ) : (
+                <div className="selected-files">
+                  {uploadFiles.map((file, index) => (
+                    <div key={index} className="file-item">
+                      <div className="file-info">
+                        <span className="file-name">{file.name}</span>
+                        <span className="file-size">
+                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                      </div>
+                      {currentUploadingFileName === file.name && (
+                        <div className="upload-progress">
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-fill" 
+                              style={{ width: `${getUploadProgress()}%` }}
+                            />
+                          </div>
+                          <span className="progress-text">
+                            {status === 'generateurl' && 'Generating upload URLs...'}
+                            {status === 'uploading' && `Uploading: ${Math.round(getUploadProgress())}%`}
+                            {status === 'loading' && 'Finalizing...'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="form-group">
             <label htmlFor="taskName">Video Name *</label>
             <input
@@ -357,48 +453,6 @@ function VideoUpload({ onSuccess, onCancel }) {
               rows="3"
               disabled={isUploading}
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="files">Select Video *</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              id="files"
-              accept=".mp4,.mov,.avi"
-              onChange={handleFileSelect}
-              disabled={isUploading}
-            />
-            <p className="help-text">Supported formats: .mp4, .mov, .avi</p>
-            {uploadFiles.length > 0 && (
-              <div className="selected-files">
-                {uploadFiles.map((file, index) => (
-                  <div key={index} className="file-item">
-                    <div className="file-info">
-                      <span className="file-name">{file.name}</span>
-                      <span className="file-size">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                    {currentUploadingFileName === file.name && (
-                      <div className="upload-progress">
-                        <div className="progress-bar">
-                          <div 
-                            className="progress-fill" 
-                            style={{ width: `${getUploadProgress()}%` }}
-                          />
-                        </div>
-                        <span className="progress-text">
-                          {status === 'generateurl' && 'Generating upload URLs...'}
-                          {status === 'uploading' && `Uploading: ${Math.round(getUploadProgress())}%`}
-                          {status === 'loading' && 'Finalizing...'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="form-group">

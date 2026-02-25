@@ -1,113 +1,214 @@
 .tasks-display-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  padding: 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.tasks-display-section:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
 }
 
 .section-header-with-action {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #e5e7eb;
 }
 
 .section-header-with-action h3 {
   margin: 0;
-  font-size: 1.1em;
-  color: #495057;
+  font-size: 1.4em;
+  color: #111827;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-header-with-action h3::before {
+  content: '📊';
+  font-size: 1.2em;
 }
 
 .section-header-with-action .btn-refresh {
-  padding: 6px;
-  width: 32px;
-  height: 32px;
+  padding: 10px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.section-header-with-action .btn-refresh:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  border-color: #f97316;
+  transform: rotate(90deg) scale(1.05);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.section-header-with-action .btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .section-header-with-action .btn-refresh img {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+  filter: brightness(0) saturate(100%) invert(45%) sepia(8%) saturate(400%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+.section-header-with-action .btn-refresh:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
+  transform: rotate(180deg);
 }
 
 .btn-compare {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 10px 20px;
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 0.9em;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  position: relative;
+  overflow: hidden;
 }
 
-.btn-compare:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
+.btn-compare::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-compare:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.btn-compare:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+}
+
+.btn-compare:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-compare:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .analyze-tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .select-all-row {
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  margin-bottom: 8px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 2px solid #fed7aa;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);
+  transition: all 0.2s ease;
+}
+
+.select-all-row:hover {
+  border-color: #fdba74;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+  transform: translateY(-1px);
 }
 
 .select-all-checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9em;
-  color: #495057;
+  gap: 12px;
+  font-size: 15px;
+  color: #111827;
   cursor: pointer;
   user-select: none;
 }
 
 .select-all-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
   margin: 0;
+  accent-color: #f97316;
+  border-radius: 4px;
 }
 
 .select-all-checkbox span {
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ea580c;
 }
 
 .no-tasks-message {
   text-align: center;
-  padding: 32px;
-  color: #9ca3af;
-  font-size: 14px;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px dashed #e5e7eb;
+  padding: 48px 32px;
+  color: #6b7280;
+  font-size: 15px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
   margin-bottom: 20px;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .loading-message {
   text-align: center;
-  padding: 40px 20px;
-  color: #666;
-  font-size: 14px;
+  padding: 48px 32px;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .alert {
@@ -121,4 +222,133 @@
   background-color: #fee;
   border: 1px solid #fcc;
   color: #c33;
+}
+
+/* Search Icon Button */
+.btn-search-icon {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  color: #f97316;
+  border: 2px solid #f97316;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.2);
+}
+
+.btn-search-icon:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+}
+
+.btn-search-icon:active {
+  transform: translateY(0);
+}
+
+/* Delete Task Button (compact version) */
+.btn-delete-task {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+  color: #dc2626;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.2);
+}
+
+.btn-delete-task:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+.btn-delete-task:active {
+  transform: translateY(0);
+}
+
+.btn-delete-task svg {
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.btn-delete-task:hover svg {
+  transform: scale(1.1);
+}
+
+.btn-delete-task:hover svg path {
+  stroke: white;
+}
+
+/* Icon animations and enhancements */
+.btn-compare svg,
+.btn-search-icon svg,
+.btn-delete-task svg {
+  transition: all 0.3s ease;
+}
+
+.btn-compare:hover svg {
+  transform: scale(1.15);
+}
+
+/* Add pulse animation to refresh button when loading */
+.btn-refresh:disabled img {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhance button group spacing */
+.section-header-with-action > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Add hover effect to all icon buttons */
+button[class*="btn-"] img {
+  transition: all 0.3s ease;
+}
+
+button[class*="btn-"]:hover:not(:disabled) img {
+  transform: scale(1.1);
+}
+
+/* Add focus states for accessibility */
+.btn-compare:focus,
+.btn-refresh:focus,
+.btn-search-icon:focus,
+.btn-delete-task:focus {
+  outline: 3px solid rgba(249, 115, 22, 0.3);
+  outline-offset: 2px;
+}
+
+/* Improve disabled state visibility */
+.btn-compare:disabled,
+.btn-search-icon:disabled,
+.btn-delete-task:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }

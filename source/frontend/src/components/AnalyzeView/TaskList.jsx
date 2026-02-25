@@ -17,6 +17,7 @@ function TaskList({
 }) {
   const [expandedTaskId, setExpandedTaskId] = useState(null)
 
+  // Only show completed tasks with vector indexes
   const completedTasks = tasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
 
   const handleSelectAll = (checked) => {
@@ -34,26 +35,15 @@ function TaskList({
   return (
     <div className="tasks-display-section">
       <div className="section-header-with-action">
-        <h3>Multimodal Embedding Tasks</h3>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {!isGroundTruthMode && selectedTasks.length > 0 && (
-            <button 
-              className="btn-compare"
-              onClick={onCompare}
-              title="Compare selected embeddings"
-            >
-              Compare ({selectedTasks.length})
-            </button>
-          )}
-          <button 
-            className="btn-refresh" 
-            onClick={onRefresh}
-            disabled={loading}
-            title="Refresh task list"
-          >
-            <img src={refreshIcon} alt="Refresh" />
-          </button>
-        </div>
+        <h3>Available Embedding Indexes</h3>
+        <button 
+          className="btn-refresh" 
+          onClick={onRefresh}
+          disabled={loading}
+          title="Refresh task list"
+        >
+          <img src={refreshIcon} alt="Refresh" />
+        </button>
       </div>
 
       {error && (
@@ -61,23 +51,23 @@ function TaskList({
       )}
       
       {loading ? (
-        <div className="loading-message">Loading tasks...</div>
-      ) : tasks.length > 0 ? (
+        <div className="loading-message">Loading embedding indexes...</div>
+      ) : completedTasks.length > 0 ? (
         <div className="analyze-tasks-list">
-          {!isGroundTruthMode && completedTasks.length > 0 && (
+          {!isGroundTruthMode && (
             <div className="select-all-row">
               <label className="select-all-checkbox">
                 <input
                   type="checkbox"
                   checked={selectedTasks.length > 0 && selectedTasks.length === completedTasks.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  title="Select all completed tasks"
+                  title="Select all indexes"
                 />
-                <span>Select All</span>
+                <span>Select indexes to search ({selectedTasks.length} selected)</span>
               </label>
             </div>
           )}
-          {tasks.map((task) => (
+          {completedTasks.map((task) => (
             <TaskItem
               key={task.Id}
               task={task}
@@ -93,7 +83,9 @@ function TaskList({
         </div>
       ) : (
         <div className="no-tasks-message">
-          No multimodal embedding tasks found for this video.
+          {tasks.length > 0 
+            ? 'No completed embedding indexes available. Please wait for tasks to complete or create a new embedding task below.'
+            : 'No embedding tasks found. Create a new embedding task below to get started.'}
         </div>
       )}
     </div>

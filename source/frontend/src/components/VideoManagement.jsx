@@ -5,6 +5,7 @@ import { FetchPost } from '../utils/apiHelper'
 import { evalAPI } from '../utils/api'
 import refreshIcon from '../assets/icons/refresh.svg'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
+import trashIcon from '../assets/icons/trash.svg'
 import { modelGroups } from '../static/modelConfig'
 
 function VideoManagement({ currentUser }) {
@@ -250,11 +251,18 @@ function VideoManagement({ currentUser }) {
           >
             <img src={refreshIcon} alt="Refresh" />
           </button>
-          <button className="btn-create" onClick={() => setShowUploadModal(true)}>
-            + Upload Videos
+          <button className="btn-create" onClick={() => setShowUploadModal(!showUploadModal)}>
+            {showUploadModal ? '✕ Cancel' : '+ Upload Videos'}
           </button>
         </div>
       </div>
+
+      {showUploadModal && (
+        <VideoUpload
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadModal(false)}
+        />
+      )}
 
       <div className="search-bar">
         <input
@@ -289,7 +297,7 @@ function VideoManagement({ currentUser }) {
             <table>
               <thead>
                 <tr>
-                  <th>Thumbnail</th>
+                  <th></th>
                   <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
                     Name {getSortIcon('name')}
                   </th>
@@ -308,8 +316,13 @@ function VideoManagement({ currentUser }) {
                   </tr>
                 ) : (
                   sortedAndFilteredVideos.map(video => (
-                  <tr key={video.Id || video.id}>
-                    <td>
+                  <tr 
+                    key={video.Id || video.id}
+                    onClick={() => handleAnalyze(video)}
+                    style={{ cursor: 'pointer' }}
+                    className="clickable-row"
+                  >
+                    <td onClick={(e) => e.stopPropagation()}>
                       <img 
                         src={getThumbnailUrl(video) || placeholderThumbnail} 
                         alt={video.Name}
@@ -325,27 +338,14 @@ function VideoManagement({ currentUser }) {
                       </span>
                     </td>
                     <td>{formatDate(video.UploadedTs)}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button 
-                          className="btn-action btn-analyze" 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAnalyze(video)
-                          }}
-                        >
-                          Analyze
-                        </button>
-                        <button 
-                          className="btn-action btn-delete" 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(video.Id || video.id)
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button 
+                        className="btn-icon-delete" 
+                        onClick={() => handleDelete(video.Id || video.id)}
+                        title="Delete video"
+                      >
+                        <img src={trashIcon} alt="Delete" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -382,13 +382,6 @@ function VideoManagement({ currentUser }) {
           )}
         </>
       )}
-
-      {showUploadModal && (
-        <VideoUpload
-          onSuccess={handleUploadSuccess}
-          onCancel={() => setShowUploadModal(false)}
-        />
-      )}
     </div>
   )
 }
@@ -409,9 +402,6 @@ function AnalyzeView({ video, onBack }) {
   const [compareResults, setCompareResults] = useState({})
   const [compareLoading, setCompareLoading] = useState(false)
   const [compareError, setCompareError] = useState(null)
-  const [groundTruths, setGroundTruths] = useState([])
-  const [selectedGroundTruthId, setSelectedGroundTruthId] = useState('')
-  const [appendingToGt, setAppendingToGt] = useState(false)
   const [createParams, setCreateParams] = useState({
     modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
     // Nova MME parameters
@@ -483,18 +473,6 @@ function AnalyzeView({ video, onBack }) {
     }
   }
 
-  const fetchGroundTruths = async () => {
-    try {
-      console.log('Fetching ground truths for video:', video.Id || video.id)
-      const response = await evalAPI.getGroundTruths(video.Id || video.id)
-      console.log('Ground truths response:', response)
-      setGroundTruths(response.groundTruths || [])
-      console.log('Ground truths set:', response.groundTruths || [])
-    } catch (err) {
-      console.error('Error fetching ground truths:', err)
-    }
-  }
-
   const handleOpenSearchModal = (taskId, vectorIndex, task) => {
     // Use the compare modal for single task search
     setSelectedTasks([task])
@@ -502,68 +480,6 @@ function AnalyzeView({ video, onBack }) {
     setCompareResults({})
     setCompareSearchText('')
     setCompareError(null)
-    setSelectedGroundTruthId('')
-    // Fetch ground truths for the video
-    fetchGroundTruths()
-  }
-
-  const handleAppendToGroundTruth = async (task, results) => {
-    if (!selectedGroundTruthId) {
-      alert('Please select a ground truth')
-      return
-    }
-    
-    if (!results || results.length === 0) {
-      alert('No search results to append')
-      return
-    }
-    
-    setAppendingToGt(true)
-    try {
-      // Find the selected ground truth
-      const gt = groundTruths.find(g => g.Id === selectedGroundTruthId)
-      if (!gt) {
-        throw new Error('Ground truth not found')
-      }
-      
-      // Convert search results to labels
-      const newLabels = results.map(result => ({
-        StartTs: result.StartSec,
-        EndTs: result.EndSec,
-        Score: result.Distance || 0,
-        Label: compareSearchText,
-        Source: 'model_generated',
-        ReviewResult: 'unreviewed'
-      }))
-      
-      // Merge with existing labels
-      const existingLabels = gt.Labels || []
-      const allLabels = [...existingLabels, ...newLabels]
-      
-      // Prepare payload
-      const payload = {
-        Id: gt.Id,
-        Name: gt.Name,
-        Description: gt.Description,
-        CreatedBy: gt.CreatedBy,
-        VideoId: gt.VideoId,
-        VideoAnalyzeTaskIds: gt.VideoAnalyzeTaskIds || [],
-        Status: gt.Status || 'created',
-        Labels: allLabels
-      }
-      
-      await evalAPI.upsertGroundTruth(payload)
-      
-      alert(`Successfully appended ${newLabels.length} labels to ground truth "${gt.Name}"`)
-      
-      // Refresh ground truths
-      await fetchGroundTruths()
-    } catch (err) {
-      console.error('Error appending to ground truth:', err)
-      alert('Failed to append to ground truth: ' + err.message)
-    } finally {
-      setAppendingToGt(false)
-    }
   }
 
   const handleToggleTaskSelection = (task) => {
@@ -586,9 +502,6 @@ function AnalyzeView({ video, onBack }) {
     setCompareResults({})
     setCompareSearchText('')
     setCompareError(null)
-    setSelectedGroundTruthId('')
-    // Fetch ground truths for the video
-    fetchGroundTruths()
   }
 
   const handleCompareSearch = async () => {
@@ -661,25 +574,22 @@ function AnalyzeView({ video, onBack }) {
       
       console.log('Delete task response:', data)
       
-      if (data.statusCode === 200) {
-        // Parse body if it's a string
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        
+      // Check if the response indicates success (has task_id and message, no error field)
+      if (data.task_id && !data.error) {
         // Remove from local state
         setAnalyzeTasks(prev => prev.filter(t => t.Id !== taskId))
         
         // Check if there were any errors during deletion
-        if (responseBody?.errors && responseBody.errors.length > 0) {
-          const errorList = responseBody.errors.join('; ')
-          alert(`Task deleted, but some cleanup operations failed:\n${errorList}`)
+        if (data.errors && data.errors.length > 0) {
+          const errorList = data.errors.join('; ')
+          alert(`Task deleted successfully, but some cleanup operations had issues:\n${errorList}`)
         } else {
-          const message = responseBody?.message || 'Task deleted successfully'
+          // Show success message
           console.log('Task deleted successfully:', taskId)
         }
       } else {
-        // Parse error from body
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const errorMessage = responseBody?.error || data.body || 'Failed to delete task'
+        // Handle error response
+        const errorMessage = data.error || data.message || 'Failed to delete task'
         alert(`Failed to delete task: ${errorMessage}`)
       }
     } catch (err) {
@@ -720,63 +630,6 @@ function AnalyzeView({ video, onBack }) {
       video.play().catch(err => {
         console.log('Auto-play prevented:', err)
       })
-    }
-  }
-
-  const handleSaveAsGroundTruth = async (task, results) => {
-    if (!results || results.length === 0) {
-      alert('No results to save')
-      return
-    }
-
-    const groundTruthName = prompt(
-      `Enter a name for this ground truth:\n\nSearch query: "${compareSearchText}"\nModel: ${task.ModelId}\nResults: ${results.length} segments`,
-      `Ground Truth - ${compareSearchText.substring(0, 30)}`
-    )
-
-    if (!groundTruthName) {
-      return // User cancelled
-    }
-
-    try {
-      // Generate UUID for ground truth
-      const groundTruthId = crypto.randomUUID()
-
-      // Convert search results to ground truth labels
-      const labels = results.map(result => ({
-        StartTs: parseFloat(parseFloat(result.StartSec || 0).toFixed(3)),
-        EndTs: parseFloat(parseFloat(result.EndSec || 0).toFixed(3)),
-        Score: parseFloat(result.Distance || 0),
-        Label: compareSearchText, // Use search text as label
-        Source: 'video_analyze_task',
-        ReviewResult: 'unreviewed'
-      }))
-
-      const username = currentUser?.username || currentUser?.signInDetails?.loginId || 'user'
-      const payload = {
-        Id: groundTruthId,
-        Name: groundTruthName,
-        Description: `MME search keyword: "${compareSearchText}". Generated from ${task.Type} task with model ${task.ModelId}.`,
-        CreatedBy: username,
-        VideoId: video.Id || video.id,
-        VideoAnalyzeTaskIds: [task.Id],
-        Labels: labels
-      }
-
-      console.log('Saving ground truth payload:', payload)
-      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
-      console.log('Ground truth save response:', data)
-
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        console.log(`Ground truth "${groundTruthName}" saved successfully with ${labels.length} labels`)
-      } else {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const errorMessage = responseBody?.error || data.body || 'Failed to save ground truth'
-        console.error('Ground truth save failed:', errorMessage)
-      }
-    } catch (err) {
-      console.error('Error saving ground truth:', err)
     }
   }
 
@@ -884,7 +737,6 @@ function AnalyzeView({ video, onBack }) {
         setCreateError(null)
         // Reload tasks
         loadAnalyzeTasks()
-        alert('Embedding task started successfully!')
       } else {
         const errorMessage = typeof data.body === 'object' && data.body.error 
           ? data.body.error 
@@ -1026,7 +878,7 @@ function AnalyzeView({ video, onBack }) {
             <div className="tab-content">
               <div className="tasks-display-section">
                 <div className="section-header-with-action">
-                  <h3>Multimodal Embedding Tasks</h3>
+                  <h3>Multimodal Embedding Indexes</h3>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {selectedTasks.length > 0 && (
                       <button 
@@ -1293,7 +1145,7 @@ function AnalyzeView({ video, onBack }) {
 
               {/* Create New Embedding Section */}
               <div className="create-embedding-section">
-                <h3>Create New Embedding</h3>
+                <h3>Create New Embedding Index</h3>
                 
                 {createError && (
                   <div className="alert alert-error">{createError}</div>
@@ -1624,44 +1476,6 @@ function AnalyzeView({ video, onBack }) {
                                   <span className="result-distance">Dist: {result.Distance?.toFixed(4) || 'N/A'}</span>
                                 </div>
                               ))}
-                            </div>
-                            <div className="compare-result-actions">
-                              <div className="append-controls-inline">
-                                <select
-                                  value={selectedGroundTruthId}
-                                  onChange={(e) => {
-                                    console.log('Selected ground truth:', e.target.value)
-                                    setSelectedGroundTruthId(e.target.value)
-                                  }}
-                                  className="gt-select-inline"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    console.log('Ground truths available:', groundTruths)
-                                  }}
-                                >
-                                  <option value="">Select ground truth... ({groundTruths.length} available)</option>
-                                  {groundTruths.map(gt => (
-                                    <option key={gt.Id} value={gt.Id}>
-                                      {gt.Name} ({gt.Labels?.length || 0} labels)
-                                    </option>
-                                  ))}
-                                </select>
-                                <button 
-                                  className="btn-append-inline"
-                                  onClick={() => handleAppendToGroundTruth(task, resultData.results)}
-                                  disabled={!selectedGroundTruthId || appendingToGt}
-                                  title="Append results to selected ground truth"
-                                >
-                                  {appendingToGt ? 'Appending...' : 'Append'}
-                                </button>
-                              </div>
-                              <button 
-                                className="btn-save-ground-truth"
-                                onClick={() => handleSaveAsGroundTruth(task, resultData.results)}
-                                title="Save these results as new ground truth"
-                              >
-                                Save as New Ground Truth
-                              </button>
                             </div>
                           </>
                         ) : (

@@ -1,7 +1,7 @@
 .ground-truth-management {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .content-header {
@@ -49,7 +49,7 @@
 
 .btn-create {
   padding: 10px 20px;
-  background: #0066cc;
+  background: #f97316;
   color: white;
   border: none;
   border-radius: 6px;
@@ -59,7 +59,7 @@
 }
 
 .btn-create:hover {
-  background: #0052a3;
+  background: #ea580c;
 }
 
 .search-bar {
@@ -256,38 +256,66 @@
 /* Table styles */
 .ground-truth-table {
   background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  overflow-x: auto;
+  box-shadow: none;
+  border: none;
+  width: 100%;
 }
 
 .ground-truth-table table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 1000px;
 }
 
+.ground-truth-table th, 
+.ground-truth-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ground-truth-table th:nth-child(1), 
+.ground-truth-table td:nth-child(1) { width: 180px; } /* Thumbnail */
+.ground-truth-table th:nth-child(2), 
+.ground-truth-table td:nth-child(2) { width: 320px; } /* Name */
+.ground-truth-table th:nth-child(3), 
+.ground-truth-table td:nth-child(3) { width: 240px; } /* Created Date */
+.ground-truth-table th:nth-child(4), 
+.ground-truth-table td:nth-child(4) { width: 120px; } /* Labels */
+.ground-truth-table th:nth-child(5), 
+.ground-truth-table td:nth-child(5) { width: 140px; } /* Status */
+.ground-truth-table th:nth-child(6), 
+.ground-truth-table td:nth-child(6) { width: 100px; } /* Actions */
+
 .ground-truth-table thead {
-  background: #f8f9fa;
-  border-bottom: 2px solid #e0e0e0;
+  background: white;
 }
 
 .ground-truth-table th {
-  padding: 12px 16px;
   text-align: left;
+  padding: 8px 16px;
   font-weight: 600;
-  font-size: 13px;
-  color: #374151;
-  white-space: nowrap;
+  font-size: 0.9em;
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
   user-select: none;
 }
 
 .ground-truth-table th[style*="cursor: pointer"]:hover {
-  background: #e9ecef;
+  background: #f8f9fa;
+  color: #f97316;
+}
+
+.ground-truth-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f1f3f5;
 }
 
 .ground-truth-table tbody tr {
-  border-bottom: 1px solid #e0e0e0;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .ground-truth-table tbody tr:last-child {
@@ -299,39 +327,41 @@
 }
 
 .ground-truth-row:hover {
-  background: #f8f9fa;
-}
-
-.ground-truth-table td {
-  padding: 12px 16px;
-  font-size: 14px;
-  color: #374151;
-  vertical-align: middle;
+  background-color: #f0f4ff;
+  transition: background-color 0.2s;
 }
 
 .ground-truth-thumbnail {
-  width: 120px;
-  height: 68px;
+  width: 160px;
+  height: 90px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 8px;
   display: block;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.ground-truth-row:hover .ground-truth-thumbnail {
+  transform: scale(1.05);
 }
 
 .thumbnail-placeholder {
-  width: 120px;
-  height: 68px;
+  width: 160px;
+  height: 90px;
   background: #f5f5f5;
-  border-radius: 4px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   color: #999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .ground-truth-name {
   font-weight: 500;
-  color: #0066cc;
+  color: #f97316;
 }
 
 .status-badge {

@@ -65,7 +65,7 @@ function CreateEmbeddingForm({ video, analyzeTasks, onCreate }) {
 
   return (
     <div className="create-embedding-section">
-      <h3>Create New Embedding</h3>
+      <h3>Create New Embedding Index</h3>
       
       {createError && (
         <div className="alert alert-error">{createError}</div>

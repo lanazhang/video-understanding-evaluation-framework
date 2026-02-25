@@ -11,7 +11,7 @@
   padding: 6px 16px;
   height: auto;
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--neutral-200);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -19,7 +19,7 @@
   margin: 0;
   font-size: 1.2em;
   font-weight: 600;
-  color: #4b5563;
+  color: var(--neutral-600);
 }
 
 .profile-button {
@@ -27,8 +27,8 @@
   align-items: center;
   gap: 8px;
   background: transparent;
-  border: 1px solid #e9ecef;
-  color: #495057;
+  border: 1px solid var(--neutral-200);
+  color: var(--neutral-700);
   cursor: pointer;
   padding: 4px;
   border-radius: 8px;
@@ -36,15 +36,15 @@
 }
 
 .profile-button:hover {
-  background-color: #f8f9fa;
-  border-color: #f97316;
+  background-color: var(--neutral-50);
+  border-color: var(--blue-primary);
 }
 
 .user-avatar {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: var(--orange-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -78,8 +78,8 @@
 
 .sidebar {
   width: 56px;
-  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
-  border-right: 1px solid #e9ecef;
+  background: linear-gradient(180deg, var(--neutral-50) 0%, #ffffff 100%);
+  border-right: 1px solid var(--neutral-200);
   transition: width 0.3s ease, padding 0.3s ease;
   position: relative;
   display: flex;
@@ -174,9 +174,9 @@
 }
 
 .btn-toggle:hover {
-  background-color: #e9ecef;
-  border-color: #f97316;
-  color: #f97316;
+  background-color: var(--blue-bg-lightest);
+  border-color: var(--blue-primary);
+  color: var(--blue-primary);
 }
 
 .sidebar nav {
@@ -266,8 +266,9 @@
 }
 
 .sidebar button.active {
-  background-color: #f97316;
+  background: var(--orange-gradient);
   color: white;
+  box-shadow: 0 4px 12px var(--orange-shadow);
 }
 
 .menu-icon {
@@ -322,7 +323,7 @@
 
 .btn-create {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: var(--orange-gradient);
   color: white;
   border: none;
   border-radius: 8px;
@@ -330,12 +331,13 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 4px 12px var(--orange-shadow);
 }
 
 .btn-create:hover {
+  background: var(--orange-gradient-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 6px 16px var(--orange-shadow-hover);
 }
 
 .search-bar {
@@ -354,8 +356,8 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  border-color: var(--blue-primary);
+  box-shadow: 0 0 0 3px var(--blue-bg-light);
 }
 
 .btn-clear-search {
@@ -404,7 +406,7 @@
 
 .task-item:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: #f97316;
+  border-color: var(--blue-primary);
 }
 
 .task-item-thumbnail {
@@ -489,7 +491,7 @@
 }
 
 .metric-preview strong {
-  color: #f97316;
+  color: var(--orange-primary);
   margin-right: 4px;
 }
 
@@ -547,14 +549,14 @@
 .user-email {
   margin: 0;
   font-size: 13px;
-  color: #6c757d;
+  color: var(--neutral-600);
   word-break: break-word;
 }
 
 .user-name-sidebar {
   font-size: 0.9em;
   font-weight: 500;
-  color: #495057;
+  color: var(--neutral-700);
 }
 
 .ground-truth-model-info {
@@ -575,11 +577,11 @@
 }
 
 .task-type-badge.nova-mme {
-  background-color: #f97316;
+  background: var(--orange-gradient);
 }
 
 .task-type-badge.tlabs-mme {
-  background-color: #3b82f6;
+  background: var(--blue-gradient);
 }
 
 .model-id {

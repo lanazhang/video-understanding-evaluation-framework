@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react'
 import './CreateGroundTruthInline.css'
 import { FetchPost } from '../utils/apiHelper'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
-import AnalyzeView from './AnalyzeView/AnalyzeView'
+import GroundTruthStepIndicator from './CreateGroundTruth/GroundTruthStepIndicator'
+import EmbeddingSearch from './GroundTruth/EmbeddingSearch'
+import GroundTruthReview from './GroundTruth/GroundTruthReview'
 
 function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
+  const [step, setStep] = useState(1)
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [videos, setVideos] = useState([])
   const [loadingVideos, setLoadingVideos] = useState(false)
@@ -14,6 +17,10 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
   const [pageSize] = useState(12)
   const [totalCount, setTotalCount] = useState(0)
   const [hasMore, setHasMore] = useState(false)
+  
+  // Step 2 data
+  const [allSearches, setAllSearches] = useState([])
+  const [allResults, setAllResults] = useState([])
 
   useEffect(() => {
     fetchVideos()
@@ -56,10 +63,33 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
 
   const handleVideoSelect = (video) => {
     setSelectedVideo(video)
+    setStep(2)
   }
 
   const handleBackToVideoList = () => {
     setSelectedVideo(null)
+    setStep(1)
+  }
+
+  const handleStep2Next = (searches, results) => {
+    setAllSearches(searches)
+    setAllResults(results)
+    setStep(3)
+  }
+
+  const handleStep3Previous = () => {
+    setStep(2)
+  }
+
+  const handleStep3Update = (updatedSearches, updatedResults) => {
+    setAllSearches(updatedSearches)
+    setAllResults(updatedResults)
+  }
+
+  const handleGroundTruthSaved = () => {
+    if (onSuccess) {
+      onSuccess()
+    }
   }
 
   const getThumbnailUrl = (video) => {
@@ -91,108 +121,175 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
     }
   }
 
-  // If no video selected, show video selection
-  if (!selectedVideo) {
+  // If no video selected, show video selection (Step 1)
+  if (step === 1) {
     return (
       <div className="create-ground-truth-inline">
-        <div className="inline-header">
+        <div className="create-ground-truth-header">
           <button className="btn-back" onClick={onCancel}>
             <img src={arrowLeftIcon} alt="Back" />
             Back to List
           </button>
-          <h1>Create Ground Truth - Select Video</h1>
+          <h1>Create Ground Truth</h1>
         </div>
 
-        <div className="video-search">
-          <input
-            type="text"
-            placeholder="Search videos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
+        <GroundTruthStepIndicator currentStep={step} />
 
-        {videoError && (
-          <div className="alert alert-error">{videoError}</div>
-        )}
+        <div className="wizard-step-content">
+          <div className="video-search">
+            <input
+              type="text"
+              placeholder="Search videos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
 
-        {loadingVideos ? (
-          <div className="loading-message">Loading videos...</div>
-        ) : (
-          <>
-            <div className="video-grid">
-              {filteredVideos.map(video => {
-                const videoId = video.Id || video.id
-                return (
-                  <div
-                    key={videoId}
-                    className="video-card"
-                    onClick={() => handleVideoSelect(video)}
-                  >
-                    <img
-                      src={getThumbnailUrl(video)}
-                      alt={video.Name}
-                      className="video-card-thumbnail"
-                      onError={(e) => {
-                        e.target.src = getThumbnailUrl({})
-                      }}
-                    />
-                    <div className="video-card-info">
-                      <div className="video-card-name">{video.Name}</div>
+          {videoError && (
+            <div className="alert alert-error">{videoError}</div>
+          )}
+
+          {loadingVideos ? (
+            <div className="loading-message">Loading videos...</div>
+          ) : (
+            <>
+              <div className="video-grid">
+                {filteredVideos.map(video => {
+                  const videoId = video.Id || video.id
+                  return (
+                    <div
+                      key={videoId}
+                      className="video-card"
+                      onClick={() => handleVideoSelect(video)}
+                    >
+                      <img
+                        src={getThumbnailUrl(video)}
+                        alt={video.Name}
+                        className="video-card-thumbnail"
+                        onError={(e) => {
+                          e.target.src = getThumbnailUrl({})
+                        }}
+                      />
+                      <div className="video-card-info">
+                        <div className="video-card-name">{video.Name}</div>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {totalCount > 0 && (
-              <div className="video-pagination">
-                <button
-                  type="button"
-                  className="btn-page"
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1 || loadingVideos}
-                >
-                  Previous
-                </button>
-                <span className="page-info">
-                  Page {currentPage} of {getTotalPages()}
-                </span>
-                <button
-                  type="button"
-                  className="btn-page"
-                  onClick={handleNextPage}
-                  disabled={!hasMore || loadingVideos}
-                >
-                  Next
-                </button>
+                  )
+                })}
               </div>
-            )}
-          </>
-        )}
+
+              {totalCount > 0 && (
+                <div className="video-pagination">
+                  <button
+                    type="button"
+                    className="btn-page"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1 || loadingVideos}
+                  >
+                    Previous
+                  </button>
+                  <span className="page-info">
+                    Page {currentPage} of {getTotalPages()}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-page"
+                    onClick={handleNextPage}
+                    disabled={!hasMore || loadingVideos}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     )
   }
 
-  // Video selected, show AnalyzeView component
+  // Step 2: Video selected, show EmbeddingSearch component
+  if (step === 2) {
+    return (
+      <div className="create-ground-truth-inline">
+        <div className="create-ground-truth-header">
+          <button className="btn-back" onClick={handleBackToVideoList}>
+            <img src={arrowLeftIcon} alt="Back" />
+            Back to Videos
+          </button>
+          <h1>Create Ground Truth</h1>
+        </div>
+
+        <GroundTruthStepIndicator currentStep={step} />
+
+        <div className="wizard-step-content">
+          <EmbeddingSearch 
+            video={selectedVideo} 
+            onNext={handleStep2Next}
+            currentUser={currentUser}
+            initialSearches={allSearches}
+            initialResults={allResults}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Step 3: Review and Save
+  if (step === 3) {
+    return (
+      <div className="create-ground-truth-inline">
+        <div className="create-ground-truth-header">
+          <button className="btn-back" onClick={onCancel}>
+            <img src={arrowLeftIcon} alt="Back" />
+            Back to List
+          </button>
+          <h1>Create Ground Truth</h1>
+        </div>
+
+        <GroundTruthStepIndicator currentStep={step} />
+
+        <div className="wizard-step-content">
+          <GroundTruthReview
+            video={selectedVideo}
+            allSearches={allSearches}
+            allResults={allResults}
+            onPrevious={handleStep3Previous}
+            onUpdate={handleStep3Update}
+            onSave={handleGroundTruthSaved}
+            currentUser={currentUser}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Step 1: Video selected, show EmbeddingSearch component
   return (
     <div className="create-ground-truth-inline">
-      <div className="inline-header">
+      <div className="create-ground-truth-header">
         <button className="btn-back" onClick={handleBackToVideoList}>
           <img src={arrowLeftIcon} alt="Back" />
           Back to Videos
         </button>
-        <h1>Create Ground Truth - Analyze & Search</h1>
+        <h1>Create Ground Truth</h1>
       </div>
 
-      <AnalyzeView 
-        video={selectedVideo} 
-        onBack={handleBackToVideoList}
-        onGroundTruthSaved={onSuccess}
-        isGroundTruthMode={true}
-        currentUser={currentUser}
-      />
+      <GroundTruthStepIndicator currentStep={step} />
+
+      <div className="wizard-step-content">
+        <div className="step-header">
+          <h2>Step 2: Search & Create Ground Truth</h2>
+          <p>Select an embedding index and search to generate ground truth labels</p>
+        </div>
+
+        <EmbeddingSearch 
+          video={selectedVideo} 
+          onGroundTruthSaved={handleGroundTruthSaved}
+          currentUser={currentUser}
+        />
+      </div>
     </div>
   )
 }

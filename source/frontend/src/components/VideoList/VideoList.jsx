@@ -97,7 +97,7 @@ function VideoList({
                   <th onClick={() => handleSort('uploaded_ts')} style={{ cursor: 'pointer' }}>
                     Upload Date {getSortIcon('uploaded_ts')}
                   </th>
-                  <th>Actions</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>

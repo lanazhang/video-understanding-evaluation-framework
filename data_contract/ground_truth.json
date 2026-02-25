@@ -8,9 +8,7 @@
     "Name",
     "CreatedBy",
     "CreatedAt",
-    "VideoId",
-    "VideoAnalyzeTaskIds",
-    "Status"
+    "VideoId"
   ],
   "properties": {
     "Id": {
@@ -48,33 +46,12 @@
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
       "example": "550e8400-e29b-41d4-a716-446655440000"
     },
-    "VideoAnalyzeTaskIds": {
-      "type": "array",
-      "description": "List of foreign key references to video analyze tasks",
-      "items": {
-        "type": "string",
-        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-      },
-      "example": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890", "b2c3d4e5-f6a7-8901-bcde-f12345678901"]
-    },
-    "Status": {
-      "type": "string",
-      "description": "Current status of the ground truth record",
-      "enum": [
-        "created",
-        "in_review",
-        "reviewed",
-        "approved"
-      ],
-      "default": "created",
-      "example": "created"
-    },
     "Labels": {
       "type": "array",
       "description": "Array of labeled segments with timestamps and scores",
       "items": {
         "type": "object",
-        "required": ["StartTs", "EndTs", "Score", "Source"],
+        "required": ["StartTs", "EndTs", "Score"],
         "properties": {
           "StartTs": {
             "type": "number",
@@ -99,16 +76,6 @@
             "maxLength": 200,
             "example": "product_demonstration"
           },
-          "Source": {
-            "type": "string",
-            "description": "Source of the label",
-            "enum": [
-              "manual",
-              "video_analyze_task",
-              "model_generated"
-            ],
-            "example": "manual"
-          },
           "ReviewResult": {
             "type": "string",
             "description": "Review result classification for the label",
@@ -132,12 +99,6 @@
       "description": "GSI for querying ground truth by video ID",
       "partition_key": "VideoId",
       "projection": "ALL"
-    },
-    "video_analyze_task_ids-index": {
-      "type": "global_secondary_index",
-      "description": "GSI for querying ground truth by video analyze task IDs",
-      "partition_key": "VideoAnalyzeTaskIds",
-      "projection": "ALL"
     }
   },
   "examples": [
@@ -148,15 +109,12 @@
       "CreatedBy": "annotator@example.com",
       "CreatedAt": "2024-02-22T14:30:00.000Z",
       "VideoId": "550e8400-e29b-41d4-a716-446655440000",
-      "VideoAnalyzeTaskIds": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"],
-      "Status": "created",
       "Labels": [
         {
           "StartTs": 12.5,
           "EndTs": 17.5,
           "Score": 0.85,
           "Label": "product_demonstration",
-          "Source": "manual",
           "ReviewResult": "true_positive"
         },
         {
@@ -164,7 +122,6 @@
           "EndTs": 32.0,
           "Score": 0.92,
           "Label": "feature_highlight",
-          "Source": "video_analyze_task",
           "ReviewResult": "true_positive"
         },
         {
@@ -172,7 +129,6 @@
           "EndTs": 50.0,
           "Score": 0.78,
           "Label": "call_to_action",
-          "Source": "model_generated",
           "ReviewResult": "false_positive"
         }
       ]
@@ -184,14 +140,11 @@
       "CreatedBy": "admin@example.com",
       "CreatedAt": "2024-02-23T09:15:00.000Z",
       "VideoId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-      "VideoAnalyzeTaskIds": ["b2c3d4e5-f6a7-8901-bcde-f12345678901", "c3d4e5f6-a7b8-9012-cdef-123456789012"],
-      "Status": "in_review",
       "Labels": [
         {
           "StartTs": 0.0,
           "EndTs": 10.0,
           "Score": 0.95,
-          "Source": "video_analyze_task",
           "ReviewResult": "unreviewed"
         },
         {
@@ -199,7 +152,6 @@
           "EndTs": 25.5,
           "Score": 0.88,
           "Label": "introduction",
-          "Source": "manual",
           "ReviewResult": "true_positive"
         }
       ]
@@ -210,7 +162,6 @@
     "dynamodb_specifics": [
       "Primary key: Id (partition key)",
       "VideoId-index GSI enables efficient queries for all ground truth records for a video",
-      "VideoAnalyzeTaskIds-index GSI enables queries for ground truth related to specific analysis tasks",
       "All field names use PascalCase convention for consistency"
     ],
     "usage": [

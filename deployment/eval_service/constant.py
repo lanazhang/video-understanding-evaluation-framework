@@ -23,6 +23,7 @@ LAMBDA_LAYER_SOURCE_S3_KEY_BOTO3="layer/boto3_layer.zip"
 DYNAMO_VIDEO_TABLE="bedrock_video_eval_video"
 DYNAMO_VIDEO_ANALYZE_TABLE="bedrock_video_eval_analyze_table"
 DYNAMO_GROUND_TRUTH_TABLE="bedrock_video_eval_ground_truth"
+DYNAMO_EVALUATION_TASK_TABLE="bedrock_video_eval_evaluation_task"
 
 DYNAMO_VIDEO_FRAME_TABLE="video_eval_extr_srv_video_frame"
 DYNAMO_VIDEO_SHOT_TABLE="video_eval_extr_srv_video_shot"

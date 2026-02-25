@@ -174,6 +174,38 @@ export const evalAPI = {
       console.error('Error deleting ground truth:', error)
       throw error
     }
+  },
+
+  // Evaluation Tasks
+  upsertEvaluationTask: async (payload) => {
+    try {
+      return await FetchPost('/eval/upsert-evaluation-task', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error upserting evaluation task:', error)
+      throw error
+    }
+  },
+
+  getEvaluationTasks: async (videoId = null, groundTruthId = null, createdBy = null) => {
+    try {
+      const payload = {}
+      if (videoId) payload.VideoId = videoId
+      if (groundTruthId) payload.GroundTruthId = groundTruthId
+      if (createdBy) payload.CreatedBy = createdBy
+      return await FetchPost('/eval/get-evaluation-tasks', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error fetching evaluation tasks:', error)
+      throw error
+    }
+  },
+
+  deleteEvaluationTask: async (evaluationTaskId) => {
+    try {
+      return await FetchPost('/eval/delete-evaluation-task', { Id: evaluationTaskId }, 'EvalService')
+    } catch (error) {
+      console.error('Error deleting evaluation task:', error)
+      throw error
+    }
   }
 }
 

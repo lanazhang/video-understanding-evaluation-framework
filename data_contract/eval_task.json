@@ -1,0 +1,233 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evaluation Task Schema",
+  "description": "DynamoDB table schema for evaluation tasks that compare model predictions against ground truth",
+  "type": "object",
+  "required": [
+    "Id",
+    "Name",
+    "VideoId",
+    "VideoAnalyzeTaskId",
+    "GroundTruthId",
+    "CreatedBy",
+    "CreatedAt",
+    "Status"
+  ],
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Primary key - Unique identifier for the evaluation task (UUID)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "example": "f1a2b3c4-d5e6-7890-abcd-ef1234567890"
+    },
+    "Name": {
+      "type": "string",
+      "description": "Name or title of the evaluation task",
+      "maxLength": 500,
+      "example": "Nova MME vs Ground Truth - Product Demo Evaluation"
+    },
+    "Description": {
+      "type": "string",
+      "description": "Description of the evaluation task, including evaluation criteria and objectives",
+      "maxLength": 2000,
+      "example": "Evaluate Nova MME model performance against manually labeled ground truth for product demonstration detection"
+    },
+    "VideoId": {
+      "type": "string",
+      "description": "Foreign key reference to the video table",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "VideoAnalyzeTaskId": {
+      "type": "string",
+      "description": "Foreign key reference to the video analyze task being evaluated",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    },
+    "GroundTruthId": {
+      "type": "string",
+      "description": "Foreign key reference to the ground truth table",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "example": "d4e5f6a7-b8c9-0123-def4-567890abcdef"
+    },
+    "CreatedBy": {
+      "type": "string",
+      "description": "User who created the evaluation task (from Cognito)",
+      "example": "evaluator@example.com"
+    },
+    "CreatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the evaluation task was created",
+      "example": "2024-02-22T15:00:00.000Z"
+    },
+    "CompletedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the evaluation task was completed",
+      "example": "2024-02-22T15:30:00.000Z"
+    },
+    "Status": {
+      "type": "string",
+      "description": "Current status of the evaluation task",
+      "enum": [
+        "created",
+        "running",
+        "completed",
+        "failed"
+      ],
+      "default": "created",
+      "example": "completed"
+    },
+    "EvaluationMetrics": {
+      "type": "object",
+      "description": "Evaluation result metrics comparing predictions against ground truth",
+      "properties": {
+        "Precision": {
+          "type": "number",
+          "description": "Precision score (TP / (TP + FP))",
+          "minimum": 0,
+          "maximum": 1,
+          "example": 0.85
+        },
+        "Recall": {
+          "type": "number",
+          "description": "Recall score (TP / (TP + FN))",
+          "minimum": 0,
+          "maximum": 1,
+          "example": 0.92
+        },
+        "F1Score": {
+          "type": "number",
+          "description": "F1 score (harmonic mean of precision and recall)",
+          "minimum": 0,
+          "maximum": 1,
+          "example": 0.88
+        },
+        "Accuracy": {
+          "type": "number",
+          "description": "Accuracy score ((TP + TN) / (TP + TN + FP + FN))",
+          "minimum": 0,
+          "maximum": 1,
+          "example": 0.90
+        },
+        "TruePositives": {
+          "type": "integer",
+          "description": "Count of true positive predictions",
+          "minimum": 0,
+          "example": 45
+        },
+        "FalsePositives": {
+          "type": "integer",
+          "description": "Count of false positive predictions",
+          "minimum": 0,
+          "example": 8
+        },
+        "TrueNegatives": {
+          "type": "integer",
+          "description": "Count of true negative predictions",
+          "minimum": 0,
+          "example": 120
+        },
+        "FalseNegatives": {
+          "type": "integer",
+          "description": "Count of false negative predictions",
+          "minimum": 0,
+          "example": 4
+        },
+        "MeanIoU": {
+          "type": "number",
+          "description": "Mean Intersection over Union for temporal segment overlap",
+          "minimum": 0,
+          "maximum": 1,
+          "example": 0.75
+        },
+        "MeanAveragePrecision": {
+          "type": "number",
+          "description": "Mean Average Precision (mAP) across all classes",
+          "minimum": 0,
+          "maximum": 1,
+          "example": 0.82
+        }
+      }
+    }
+  },
+  "indexes": {
+    "ground_truth_id-index": {
+      "type": "global_secondary_index",
+      "description": "GSI for querying evaluation tasks by ground truth ID",
+      "partition_key": "GroundTruthId",
+      "projection": "ALL"
+    },
+    "video_id-index": {
+      "type": "global_secondary_index",
+      "description": "GSI for querying evaluation tasks by video ID",
+      "partition_key": "VideoId",
+      "projection": "ALL"
+    },
+    "video_analyze_task_id-index": {
+      "type": "global_secondary_index",
+      "description": "GSI for querying evaluation tasks by video analyze task ID",
+      "partition_key": "VideoAnalyzeTaskId",
+      "projection": "ALL"
+    }
+  },
+  "examples": [
+    {
+      "Id": "f1a2b3c4-d5e6-7890-abcd-ef1234567890",
+      "Name": "Nova MME vs Ground Truth - Product Demo Evaluation",
+      "Description": "Evaluate Nova MME model performance against manually labeled ground truth for product demonstration detection",
+      "VideoId": "550e8400-e29b-41d4-a716-446655440000",
+      "VideoAnalyzeTaskId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "GroundTruthId": "d4e5f6a7-b8c9-0123-def4-567890abcdef",
+      "CreatedBy": "evaluator@example.com",
+      "CreatedAt": "2024-02-22T15:00:00.000Z",
+      "CompletedAt": "2024-02-22T15:30:00.000Z",
+      "Status": "completed",
+      "EvaluationMetrics": {
+        "Precision": 0.85,
+        "Recall": 0.92,
+        "F1Score": 0.88,
+        "Accuracy": 0.90,
+        "TruePositives": 45,
+        "FalsePositives": 8,
+        "TrueNegatives": 120,
+        "FalseNegatives": 4,
+        "MeanIoU": 0.75,
+        "MeanAveragePrecision": 0.82
+      }
+    },
+    {
+      "Id": "a2b3c4d5-e6f7-8901-bcde-f12345678901",
+      "Name": "TLabs MME Evaluation - Scene Segmentation",
+      "Description": "Compare TLabs MME predictions with manual scene segmentation ground truth",
+      "VideoId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "VideoAnalyzeTaskId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "GroundTruthId": "e5f6a7b8-c9d0-1234-ef56-7890abcdef01",
+      "CreatedBy": "admin@example.com",
+      "CreatedAt": "2024-02-23T10:00:00.000Z",
+      "Status": "running",
+      "EvaluationMetrics": {}
+    }
+  ],
+  "notes": {
+    "table_name": "video_eval_evaluation_task",
+    "dynamodb_specifics": [
+      "Primary key: Id (partition key)",
+      "GroundTruthId-index GSI enables efficient queries for all evaluation tasks related to a ground truth",
+      "VideoId-index GSI enables efficient queries for all evaluation tasks related to a video",
+      "VideoAnalyzeTaskId-index GSI enables efficient queries for all evaluation tasks related to an analyze task",
+      "All field names use PascalCase convention for consistency"
+    ],
+    "usage": [
+      "Evaluation tasks compare model predictions from VideoAnalyzeTask against ground truth annotations",
+      "EvaluationMetrics section stores computed performance metrics after evaluation completes",
+      "Each evaluation task links a specific analyze task to a ground truth for comparison"
+    ],
+    "related_tables": [
+      "video_eval_ground_truth - Parent ground truth table",
+      "video_eval_analyze_table - Source analyze task being evaluated",
+      "video_eval_video - Related video table"
+    ]
+  }
+}

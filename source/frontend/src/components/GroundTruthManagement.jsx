@@ -84,8 +84,6 @@ function GroundTruthManagement({ currentUser }) {
             VideoAnalyzeTaskIds: gt.VideoAnalyzeTaskIds || [],
             labels: gt.Labels || [],
             Labels: gt.Labels || [],
-            status: gt.Status || 'created',
-            Status: gt.Status || 'created',
             video: gt.video || null,
             analyzeTasks: gt.analyzeTasks || []
           }
@@ -172,6 +170,12 @@ function GroundTruthManagement({ currentUser }) {
       let aVal = a[sortField]
       let bVal = b[sortField]
 
+      // Special handling for labels count
+      if (sortField === 'labels') {
+        aVal = a.labels?.length || 0
+        bVal = b.labels?.length || 0
+      }
+
       // Handle null/undefined values
       if (aVal === null || aVal === undefined) return 1
       if (bVal === null || bVal === undefined) return -1
@@ -206,7 +210,7 @@ function GroundTruthManagement({ currentUser }) {
 
   // If viewing a specific task
   if (selectedTask) {
-    return <GroundTruthTaskDetail task={selectedTask} onBack={handleBackToList} />
+    return <GroundTruthTaskDetail task={selectedTask} onBack={handleBackToList} currentUser={currentUser} />
   }
 
   // If creating new task
@@ -272,23 +276,23 @@ function GroundTruthManagement({ currentUser }) {
           <table>
             <thead>
               <tr>
-                <th>Thumbnail</th>
+                <th></th>
                 <th onClick={() => handleSort('taskName')} style={{ cursor: 'pointer' }}>
                   Name {getSortIcon('taskName')}
                 </th>
                 <th onClick={() => handleSort('createdAt')} style={{ cursor: 'pointer' }}>
                   Created Date {getSortIcon('createdAt')}
                 </th>
-                <th>Video</th>
-                <th>Labels</th>
-                <th>Status</th>
+                <th onClick={() => handleSort('labels')} style={{ cursor: 'pointer' }}>
+                  Labels {getSortIcon('labels')}
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {sortedAndFilteredTasks.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="no-results-cell">
+                  <td colSpan="5" className="no-results-cell">
                     {searchQuery ? `No ground truths found matching "${searchQuery}"` : 'No ground truths created yet'}
                   </td>
                 </tr>
@@ -312,11 +316,7 @@ function GroundTruthManagement({ currentUser }) {
                     </td>
                     <td className="ground-truth-name">{task.taskName}</td>
                     <td>{task.createdDate}</td>
-                    <td>{task.video?.Name || 'N/A'}</td>
                     <td>{task.labels?.length || 0}</td>
-                    <td>
-                      <span className={`status-badge ${task.status}`}>{task.status}</span>
-                    </td>
                     <td>
                       <button 
                         className="btn-delete-icon"

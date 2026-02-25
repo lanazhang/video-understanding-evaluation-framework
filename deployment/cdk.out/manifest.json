@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::307857433580:role/cdk-hnb659fds-deploy-role-307857433580-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::307857433580:role/cdk-hnb659fds-cfn-exec-role-307857433580-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-307857433580-us-east-1/8bb7e7d5c2546b6a20622aa9562c528227d208e7c456aeb64f9521bf370e73f9.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-307857433580-us-east-1/431beae0d86b984fe3b1780c58f1431a371254316914212a7c4fd6dad28154d4.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -115,28 +115,28 @@
             "type": "aws:cdk:warning",
             "data": "AwsSolutions-COG2: The Cognito user pool does not require MFA.\n",
             "trace": [
-              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
-              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
-              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
-              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/nag-pack.js:79:55",
+              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
+              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
+              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
+              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:55",
               "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
-              "AwsSolutionsChecks.checkSecurityCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/packs/aws-solutions.js:996:14)",
-              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/packs/aws-solutions.js:71:18)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
-              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
-              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:295:171",
-              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:918:24)",
-              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:295:102)",
-              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:15484:36)",
-              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:15444:22)",
-              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:15445:45)",
+              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
+              "AwsSolutionsChecks.checkSecurityCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:996:14)",
+              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:71:18)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
+              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
+              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
+              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:171",
+              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:918:24)",
+              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:102)",
+              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15484:36)",
+              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15444:22)",
+              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15445:45)",
               "process.processImmediate (node:internal/timers:511:21)"
             ]
           }
@@ -373,6 +373,20 @@
             "data": "groundtruthtable203AA6C6"
           }
         ],
+        "/BedrockEvalRootStack/EvalServiceStack/evaluation-task-table": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "evaluationtasktable2EDE744D"
+            }
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/evaluation-task-table/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evaluationtasktable2EDE744D"
+          }
+        ],
         "/BedrockEvalRootStack/EvalServiceStack/SceneLayer/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -502,7 +516,7 @@
         "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericeDeployment35109787f8d6bbea2684922211ad9f695ffcbab8"
+            "data": "bedrockvideoevalapiSericeDeployment35109787b67b7ca48f1723a787aaa02998a68c31"
           }
         ],
         "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/DeploymentStage.prod/Resource": [
@@ -514,29 +528,29 @@
             "type": "aws:cdk:warning",
             "data": "AwsSolutions-APIG3: The REST API stage is not associated with AWS WAFv2 web ACL.\n",
             "trace": [
-              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
-              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
-              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
-              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/nag-pack.js:79:55",
+              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
+              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
+              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
+              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:55",
               "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
-              "AwsSolutionsChecks.checkNetworkDelivery (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/packs/aws-solutions.js:685:14)",
-              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/cdk-nag/lib/packs/aws-solutions.js:67:18)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
-              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-oxzfA7/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
-              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:295:171",
-              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:918:24)",
-              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:295:102)",
-              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:15484:36)",
-              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:15444:22)",
-              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp0l2r_wl5/lib/program.js:15445:45)",
+              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
+              "AwsSolutionsChecks.checkNetworkDelivery (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:685:14)",
+              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:67:18)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
+              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
+              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
+              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:171",
+              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:918:24)",
+              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:102)",
+              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15484:36)",
+              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15444:22)",
+              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15445:45)",
               "process.processImmediate (node:internal/timers:511:21)"
             ]
           }
@@ -955,6 +969,102 @@
             "data": "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOST5122A6E5"
           }
         ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1eval8B85FEF2"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskAA5DD9FD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskOPTIONSA0872C2F"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.upsert-evaluation-task": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalupsertevaluationtaskBC8B3A1F"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.upsert-evaluation-task": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalupsertevaluationtaskEAF65CFD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOST692495A1"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasks7152D718"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksOPTIONS2C60845B"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.get-evaluation-tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalgetevaluationtasks6904006D"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.get-evaluation-tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalgetevaluationtasksFA2575F6"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOST705BEE3F"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtask34986E67"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskOPTIONS8315F357"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.delete-evaluation-task": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevaldeleteevaluationtask535F0ABE"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.delete-evaluation-task": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevaldeleteevaluationtask897A088D"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOST2E883D69"
+          }
+        ],
         "/BedrockEvalRootStack/EvalServiceStack/eval-srv-api-manage-s3-presigned-url-role/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -1121,6 +1231,42 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "evalsrvdeletegroundtruthlambda58ED3E31"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/eval-srv-upsert-evaluation-task-role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evalsrvupsertevaluationtaskroleECAE0CD7"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/eval-srv-upsert-evaluation-task-lambda/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evalsrvupsertevaluationtasklambdaADD052A0"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/eval-srv-get-evaluation-tasks-role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evalsrvgetevaluationtasksrole00069863"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/eval-srv-get-evaluation-tasks-lambda/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evalsrvgetevaluationtaskslambda4B29B78C"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/eval-srv-delete-evaluation-task-role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evalsrvdeleteevaluationtaskrole8FF348FD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/eval-srv-delete-evaluation-task-lambda/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "evalsrvdeleteevaluationtasklambdaC4958C6F"
           }
         ],
         "/BedrockEvalRootStack/EvalServiceStack/CDKMetadata/Default": [

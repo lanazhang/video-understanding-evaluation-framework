@@ -114,6 +114,31 @@ class EvalServiceStack(NestedStack):
             projection_type=_dynamodb.ProjectionType.ALL
         )
 
+        # Evaluation task table
+        evaluation_task_table = _dynamodb.Table(self,
+            id='evaluation-task-table',
+            table_name=DYNAMO_EVALUATION_TASK_TABLE,
+            partition_key=_dynamodb.Attribute(name='Id', type=_dynamodb.AttributeType.STRING),
+            point_in_time_recovery=True,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        evaluation_task_table.add_global_secondary_index(
+            index_name="GroundTruthId-index",
+            partition_key=_dynamodb.Attribute(
+                name="GroundTruthId",
+                type=_dynamodb.AttributeType.STRING
+            ),
+            projection_type=_dynamodb.ProjectionType.ALL
+        )
+        evaluation_task_table.add_global_secondary_index(
+            index_name="VideoId-index",
+            partition_key=_dynamodb.Attribute(
+                name="VideoId",
+                type=_dynamodb.AttributeType.STRING
+            ),
+            projection_type=_dynamodb.ProjectionType.ALL
+        )
+
     def deploy_cognito(self):
         user_pool = _cognito.UserPool.from_user_pool_id(
             self, "WebUserPool",
@@ -764,6 +789,7 @@ class EvalServiceStack(NestedStack):
         v1 = api.root.add_resource("v1")
         ex = v1.add_resource("eval")
         ex_video = ex.add_resource("video")
+        ex_eval = ex.add_resource("eval")
         
         self.api_gw_base_url = api.url
         
@@ -971,6 +997,46 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
+        # POST /v1/eval/eval/upsert-evaluation-task
+        lambda_key='eval-srv-upsert-evaluation-task'
+        lambda_upsert_evaluation_task_role = self.create_role(lambda_key, ["dynamodb"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_eval, path1="upsert-evaluation-task", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_upsert_evaluation_task_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_EVALUATION_TASK_TABLE': DYNAMO_EVALUATION_TASK_TABLE
+                },
+            )
+
+        # POST /v1/eval/eval/get-evaluation-tasks
+        lambda_key='eval-srv-get-evaluation-tasks'
+        lambda_get_evaluation_tasks_role = self.create_role(lambda_key, ["dynamodb", "s3"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_eval, path1="get-evaluation-tasks", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_get_evaluation_tasks_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_EVALUATION_TASK_TABLE': DYNAMO_EVALUATION_TASK_TABLE,
+                    'DYNAMO_GROUND_TRUTH_TABLE': DYNAMO_GROUND_TRUTH_TABLE,
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'S3_PRESIGNED_URL_EXPIRY_S': S3_PRESIGNED_URL_EXPIRY_S
+                },
+            )
+
+        # POST /v1/eval/eval/delete-evaluation-task
+        lambda_key='eval-srv-delete-evaluation-task'
+        lambda_delete_evaluation_task_role = self.create_role(lambda_key, ["dynamodb"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_eval, path1="delete-evaluation-task", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_delete_evaluation_task_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_EVALUATION_TASK_TABLE': DYNAMO_EVALUATION_TASK_TABLE
+                },
+            )
+
         # API Gateway - end
 
     def create_role(self, function_name, policies):
@@ -1005,12 +1071,14 @@ class EvalServiceStack(NestedStack):
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_SHOT_TABLE}/index/*",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_USAGE_TABLE}/index/*",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_GROUND_TRUTH_TABLE}/index/*",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_EVALUATION_TASK_TABLE}/index/*",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_ANALYZE_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_FRAME_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_SHOT_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_VIDEO_USAGE_TABLE}",
                             f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_GROUND_TRUTH_TABLE}",
+                            f"arn:aws:dynamodb:{self.region}:{self.account_id}:table/{DYNAMO_EVALUATION_TASK_TABLE}",
                         ]
                     ))
         if "bedrock" in policies:

@@ -43,7 +43,7 @@ def lambda_handler(event, context):
         print(f"Parsed body: {json.dumps(body)}")
         
         # Validate required fields
-        required_fields = ['Id', 'Name', 'CreatedBy', 'VideoId', 'VideoAnalyzeTaskIds']
+        required_fields = ['Id', 'Name', 'CreatedBy', 'VideoId']
         missing_fields = [field for field in required_fields if not body.get(field)]
         
         if missing_fields:
@@ -52,28 +52,6 @@ def lambda_handler(event, context):
                 'headers': CORS_HEADERS,
                 'body': json.dumps({
                     'error': f'Missing required fields: {", ".join(missing_fields)}'
-                })
-            }
-        
-        # Validate VideoAnalyzeTaskIds is a list
-        if not isinstance(body.get('VideoAnalyzeTaskIds'), list):
-            return {
-                'statusCode': 400,
-                'headers': CORS_HEADERS,
-                'body': json.dumps({
-                    'error': 'VideoAnalyzeTaskIds must be an array'
-                })
-            }
-        
-        # Validate Status if provided
-        valid_statuses = ['created', 'in_review', 'reviewed', 'approved']
-        status = body.get('Status', 'created')
-        if status not in valid_statuses:
-            return {
-                'statusCode': 400,
-                'headers': CORS_HEADERS,
-                'body': json.dumps({
-                    'error': f'Invalid Status. Must be one of: {", ".join(valid_statuses)}'
                 })
             }
         
@@ -86,8 +64,6 @@ def lambda_handler(event, context):
             'CreatedBy': body['CreatedBy'],
             'CreatedAt': body.get('CreatedAt', timestamp),
             'VideoId': body['VideoId'],
-            'VideoAnalyzeTaskIds': body['VideoAnalyzeTaskIds'],
-            'Status': status,
             'Labels': body.get('Labels', []),
             'UpdatedAt': timestamp
         }
@@ -98,7 +74,7 @@ def lambda_handler(event, context):
         # Validate Labels structure if provided
         if item['Labels']:
             for idx, label in enumerate(item['Labels']):
-                required_label_fields = ['StartTs', 'EndTs', 'Score', 'Source']
+                required_label_fields = ['StartTs', 'EndTs', 'Score']
                 missing_label_fields = [field for field in required_label_fields if field not in label]
                 if missing_label_fields:
                     return {
@@ -109,20 +85,9 @@ def lambda_handler(event, context):
                         })
                     }
                 
-                # Validate Source enum
-                valid_sources = ['manual', 'video_analyze_task', 'model_generated']
-                if label['Source'] not in valid_sources:
-                    return {
-                        'statusCode': 400,
-                        'headers': CORS_HEADERS,
-                        'body': json.dumps({
-                            'error': f'Label at index {idx} has invalid Source. Must be one of: {", ".join(valid_sources)}'
-                        })
-                    }
-                
                 # Validate ReviewResult enum if provided
                 if 'ReviewResult' in label:
-                    valid_review_results = ['true_positive', 'false_positive', 'false_negative', 'true_negative', 'unreviewed']
+                    valid_review_results = ['true_positive', 'false_positive', 'false_negative', 'true_negative', 'unreviewed', 'reviewed']
                     if label['ReviewResult'] not in valid_review_results:
                         return {
                             'statusCode': 400,

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import './AnalyzeView.css'
 import TaskList from './TaskList'
 import CreateEmbeddingForm from './CreateEmbeddingForm'
-import CompareModal from './CompareModal'
 import { FetchPost } from '../../utils/apiHelper'
 import arrowLeftIcon from '../../assets/icons/arrow-left.svg'
 
@@ -14,7 +13,13 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
   
   // Task selection and comparison state
   const [selectedTasks, setSelectedTasks] = useState([])
-  const [showCompareModal, setShowCompareModal] = useState(false)
+  
+  // Inline search state
+  const [compareSearchText, setCompareSearchText] = useState('')
+  const [compareTopK, setCompareTopK] = useState(10)
+  const [compareResults, setCompareResults] = useState({})
+  const [compareLoading, setCompareLoading] = useState(false)
+  const [compareError, setCompareError] = useState(null)
   
   const videoPlayerRef = useRef(null)
 
@@ -66,7 +71,10 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
 
   const handleOpenSearchModal = (taskId, vectorIndex, task) => {
     setSelectedTasks([task])
-    setShowCompareModal(true)
+    // Clear previous results when selecting a new task
+    setCompareResults({})
+    setCompareSearchText('')
+    setCompareError(null)
   }
 
   const handleOpenCompareModal = () => {
@@ -74,7 +82,98 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
       alert('Please select at least one task to compare')
       return
     }
-    setShowCompareModal(true)
+    // Clear previous results when opening compare
+    setCompareResults({})
+    setCompareSearchText('')
+    setCompareError(null)
+  }
+
+  const handleCompareSearch = async () => {
+    if (!compareSearchText.trim()) {
+      setCompareError('Please enter a search query')
+      return
+    }
+
+    setCompareLoading(true)
+    setCompareError(null)
+    const results = {}
+
+    try {
+      for (const task of selectedTasks) {
+        const payload = {
+          TaskId: task.Id,
+          SearchText: compareSearchText,
+          InputType: 'text',
+          TopK: parseInt(compareTopK) || 10,
+          PageSize: 1000,
+          FromIndex: 0,
+          IncludeVideoUrl: true,
+          EmbeddingOptions: ['audio-video', 'video', 'audio']
+        }
+
+        let endpoint = '/video/nova-mme-search-vector'
+        if (task.Type === 'tlabs-mme') {
+          endpoint = '/video/tlabs-mme-search-vector'
+        }
+
+        const data = await FetchPost(endpoint, payload, 'EvalService')
+        
+        if (data.statusCode === 200) {
+          const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+          results[task.Id] = {
+            task: task,
+            results: responseBody || [],
+            error: null
+          }
+        } else {
+          const errorMessage = typeof data.body === 'object' && data.body.error 
+            ? data.body.error 
+            : data.body
+          results[task.Id] = {
+            task: task,
+            results: [],
+            error: errorMessage || 'Search failed'
+          }
+        }
+      }
+
+      setCompareResults(results)
+    } catch (err) {
+      console.error('Error comparing embeddings:', err)
+      setCompareError('Comparison failed: ' + err.message)
+    } finally {
+      setCompareLoading(false)
+    }
+  }
+
+  const handleTimeRangeClick = (startSec, endSec) => {
+    if (videoPlayerRef.current) {
+      const videoEl = videoPlayerRef.current
+      const endTime = parseFloat(endSec || 0)
+      
+      videoEl.currentTime = parseFloat(startSec || 0)
+      videoEl.muted = true
+      
+      const existingListener = videoEl._stopAtEndListener
+      if (existingListener) {
+        videoEl.removeEventListener('timeupdate', existingListener)
+      }
+      
+      const stopAtEndListener = () => {
+        if (videoEl.currentTime >= endTime) {
+          videoEl.pause()
+          videoEl.removeEventListener('timeupdate', stopAtEndListener)
+          delete videoEl._stopAtEndListener
+        }
+      }
+      
+      videoEl._stopAtEndListener = stopAtEndListener
+      videoEl.addEventListener('timeupdate', stopAtEndListener)
+      
+      videoEl.play().catch(err => {
+        console.log('Auto-play prevented:', err)
+      })
+    }
   }
 
   const handleDeleteTask = async (taskId) => {
@@ -85,17 +184,16 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
     try {
       const data = await FetchPost('/video/delete-analyze-task', { TaskId: taskId }, 'EvalService')
       
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+      // Check if the response indicates success (has task_id and message, no error field)
+      if (data.task_id && !data.error) {
         setAnalyzeTasks(prev => prev.filter(t => t.Id !== taskId))
         
-        if (responseBody?.errors && responseBody.errors.length > 0) {
-          const errorList = responseBody.errors.join('; ')
-          alert(`Task deleted, but some cleanup operations failed:\n${errorList}`)
+        if (data.errors && data.errors.length > 0) {
+          const errorList = data.errors.join('; ')
+          alert(`Task deleted successfully, but some cleanup operations had issues:\n${errorList}`)
         }
       } else {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const errorMessage = responseBody?.error || data.body || 'Failed to delete task'
+        const errorMessage = data.error || data.message || 'Failed to delete task'
         alert(`Failed to delete task: ${errorMessage}`)
       }
     } catch (err) {
@@ -177,7 +275,6 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
     
     if (data.statusCode === 200) {
       loadAnalyzeTasks()
-      alert('Embedding task started successfully!')
     } else {
       const errorMessage = typeof data.body === 'object' && data.body.error 
         ? data.body.error 
@@ -241,46 +338,37 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
       <div className="analyze-content">
         <div className="video-preview-section">
           <div className="video-preview-card">
-            <video 
-              ref={videoPlayerRef}
-              src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
-              controls
-              muted
-              className="video-preview-player"
-            >
-              Your browser does not support the video tag.
-            </video>
+            <img
+              src={video.thumbnail_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyThumbnail}`}
+              alt={video.Name}
+              className="video-preview-thumbnail"
+              onError={(e) => {
+                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"%3E%3Crect width="320" height="180" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23666"%3ENo Thumbnail%3C/text%3E%3C/svg%3E'
+              }}
+            />
             <div className="video-preview-info">
               <h4>{video.Name}</h4>
               <p className="video-id">ID: {video.Id || video.id}</p>
               <div className="video-metadata">
-                <div className="metadata-row">
+                <div className="metadata-row-three">
                   <div className="metadata-item">
-                    <span className="metadata-label">Duration:</span>
                     <span className="metadata-value">{formatDuration(video.Duration)}</span>
                   </div>
                   <div className="metadata-item">
-                    <span className="metadata-label">Resolution:</span>
                     <span className="metadata-value">{formatResolution(video.Resolution)}</span>
                   </div>
-                </div>
-                <div className="metadata-row">
                   <div className="metadata-item">
-                    <span className="metadata-label">Frame Rate:</span>
                     <span className="metadata-value">{formatFps(video.Fps)}</span>
                   </div>
+                </div>
+                <div className="metadata-row-three">
                   <div className="metadata-item">
-                    <span className="metadata-label">File Size:</span>
                     <span className="metadata-value">{formatFileSize(video.Size)}</span>
                   </div>
-                </div>
-                <div className="metadata-row">
                   <div className="metadata-item">
-                    <span className="metadata-label">Uploaded By:</span>
                     <span className="metadata-value">{video.UploadedBy || 'N/A'}</span>
                   </div>
                   <div className="metadata-item">
-                    <span className="metadata-label">Uploaded:</span>
                     <span className="metadata-value">{formatDate(video.UploadedTs)}</span>
                   </div>
                 </div>
@@ -323,6 +411,119 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
                 isGroundTruthMode={isGroundTruthMode}
               />
 
+              {selectedTasks.length > 0 && (
+                <div className="inline-search-section">
+                  <div className="inline-search-header">
+                    <h3>{selectedTasks.length === 1 ? 'Search Embeddings' : `Compare Embeddings (${selectedTasks.length} tasks)`}</h3>
+                    <button 
+                      className="btn-clear-selection"
+                      onClick={() => {
+                        setSelectedTasks([])
+                        setCompareResults({})
+                        setCompareSearchText('')
+                        setCompareError(null)
+                      }}
+                      title="Clear selection"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+
+                  <div className="inline-video-container">
+                    <video 
+                      ref={videoPlayerRef}
+                      src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
+                      controls
+                      muted
+                      className="inline-video-player"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+
+                  <div className="search-controls-inline">
+                    <input
+                      type="text"
+                      className="search-text-input"
+                      placeholder="Enter search query..."
+                      value={compareSearchText}
+                      onChange={(e) => setCompareSearchText(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleCompareSearch()}
+                      disabled={compareLoading}
+                    />
+                    <input
+                      type="number"
+                      className="search-topk-input"
+                      placeholder="Top K"
+                      min="1"
+                      max="100"
+                      value={compareTopK}
+                      onChange={(e) => setCompareTopK(e.target.value)}
+                      disabled={compareLoading}
+                      title="Number of results to return (1-100)"
+                    />
+                    <button 
+                      className="btn-search"
+                      onClick={handleCompareSearch}
+                      disabled={compareLoading || !compareSearchText.trim()}
+                    >
+                      {compareLoading ? 'Searching...' : (selectedTasks.length === 1 ? 'Search' : 'Search All')}
+                    </button>
+                  </div>
+                  
+                  {compareError && (
+                    <div className="alert alert-error">{compareError}</div>
+                  )}
+                  
+                  <div className="inline-results-container">
+                    <div className="inline-results-grid">
+                      {selectedTasks.map((task) => {
+                        const hasResults = compareResults[task.Id]
+                        const resultData = hasResults ? compareResults[task.Id] : null
+                        
+                        return (
+                          <div key={task.Id} className="inline-result-column">
+                            <div className="inline-result-header">
+                              <h4>
+                                {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}
+                              </h4>
+                              <div className="inline-model-id">{task.ModelId}</div>
+                              {resultData && resultData.results.length > 0 && (
+                                <span className="inline-result-count">{resultData.results.length} results</span>
+                              )}
+                            </div>
+                            
+                            {!hasResults ? (
+                              <div className="no-results-message">Waiting for search...</div>
+                            ) : resultData.error ? (
+                              <div className="alert alert-error">{resultData.error}</div>
+                            ) : resultData.results.length > 0 ? (
+                              <div className="results-list-inline">
+                                {resultData.results.map((result, index) => (
+                                  <div key={index} className="result-item-compact">
+                                    <span className="result-rank">#{index + 1}</span>
+                                    <button 
+                                      className="time-range-link"
+                                      onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
+                                      title="Click to navigate video to this timestamp"
+                                    >
+                                      {parseFloat(result.StartSec || 0).toFixed(2)}s-{parseFloat(result.EndSec || 0).toFixed(2)}s
+                                    </button>
+                                    <span className="result-distance">Dist: {result.Distance?.toFixed(4) || 'N/A'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="no-results-message">No results found</div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <CreateEmbeddingForm
                 video={video}
                 analyzeTasks={analyzeTasks}
@@ -340,17 +541,6 @@ function AnalyzeView({ video, onBack, onGroundTruthSaved, isGroundTruthMode = fa
           )}
         </div>
       </div>
-
-      {showCompareModal && (
-        <CompareModal
-          video={video}
-          selectedTasks={selectedTasks}
-          onClose={() => setShowCompareModal(false)}
-          onGroundTruthSaved={onGroundTruthSaved}
-          isGroundTruthMode={isGroundTruthMode}
-          currentUser={currentUser}
-        />
-      )}
     </div>
   )
 }

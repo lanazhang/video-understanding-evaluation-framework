@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { FetchPost } from '../../utils/apiHelper'
+import { useState, useEffect } from 'react'
+import SearchIndexModal from './SearchIndexModal'
 
 function AnalysisTaskSelector({
   selectedVideo,
@@ -10,120 +10,39 @@ function AnalysisTaskSelector({
   onAnalyzeTaskSelect,
   onPrevious,
   onNext,
-  videoPlayerRef
+  initialSearchResults = [],
+  initialAllSearches = []
 }) {
   const [activeTab, setActiveTab] = useState('embedding')
-  const [searchText, setSearchText] = useState('')
-  const [searchTopK, setSearchTopK] = useState(10)
-  const [searchResults, setSearchResults] = useState([])
-  const [allSearches, setAllSearches] = useState([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [searchError, setSearchError] = useState(null)
+  const [searchResults, setSearchResults] = useState(initialSearchResults)
+  const [allSearches, setAllSearches] = useState(initialAllSearches)
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const [hasOpenedModalOnce, setHasOpenedModalOnce] = useState(initialSearchResults.length > 0)
 
-  const handleSearch = async () => {
-    if (!searchText.trim()) {
-      setSearchError('Please enter a search query')
-      return
+  // Auto-open modal when an analyze task is selected for the first time
+  useEffect(() => {
+    if (selectedAnalyzeTask && !hasOpenedModalOnce && searchResults.length === 0) {
+      setShowSearchModal(true)
+      setHasOpenedModalOnce(true)
     }
+  }, [selectedAnalyzeTask, hasOpenedModalOnce, searchResults.length])
 
+  const handleAnalyzeTaskClick = (task) => {
+    onAnalyzeTaskSelect(task)
+    // Always open modal when clicking on a task
+    setShowSearchModal(true)
+  }
+
+  const handleOpenSearchModal = () => {
     if (!selectedAnalyzeTask) {
-      setSearchError('Please select an analyze task first')
       return
     }
-
-    setSearchLoading(true)
-    setSearchError(null)
-
-    try {
-      const payload = {
-        TaskId: selectedAnalyzeTask.Id,
-        SearchText: searchText,
-        InputType: 'text',
-        TopK: parseInt(searchTopK) || 10,
-        PageSize: 1000,
-        FromIndex: 0,
-        IncludeVideoUrl: true,
-        EmbeddingOptions: ['audio-video', 'video', 'audio']
-      }
-
-      let endpoint = '/video/nova-mme-search-vector'
-      if (selectedAnalyzeTask.Type === 'tlabs-mme') {
-        endpoint = '/video/tlabs-mme-search-vector'
-      }
-
-      const data = await FetchPost(endpoint, payload, 'EvalService')
-      
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const newResults = responseBody || []
-        
-        const searchEntry = {
-          query: searchText,
-          topK: searchTopK,
-          results: newResults,
-          timestamp: new Date().toISOString()
-        }
-        
-        setAllSearches(prev => [...prev, searchEntry])
-        setSearchResults(prev => [...prev, ...newResults])
-        setSearchText('')
-      } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setSearchError(errorMessage || 'Search failed')
-      }
-    } catch (err) {
-      console.error('Error searching embeddings:', err)
-      setSearchError('Search failed: ' + err.message)
-    } finally {
-      setSearchLoading(false)
-    }
+    setShowSearchModal(true)
   }
 
-  const handleClearSearches = () => {
-    setSearchResults([])
-    setAllSearches([])
-    setSearchText('')
-    setSearchError(null)
-  }
-
-  const handleRemoveSearch = (index) => {
-    const updatedSearches = allSearches.filter((_, idx) => idx !== index)
-    setAllSearches(updatedSearches)
-    
-    const combinedResults = updatedSearches.flatMap(search => search.results)
-    setSearchResults(combinedResults)
-  }
-
-  const handleTimeRangeClick = (startSec, endSec) => {
-    if (videoPlayerRef.current) {
-      const videoEl = videoPlayerRef.current
-      const endTime = parseFloat(endSec || 0)
-      
-      videoEl.currentTime = parseFloat(startSec || 0)
-      videoEl.muted = true
-      
-      const existingListener = videoEl._stopAtEndListener
-      if (existingListener) {
-        videoEl.removeEventListener('timeupdate', existingListener)
-      }
-      
-      const stopAtEndListener = () => {
-        if (videoEl.currentTime >= endTime) {
-          videoEl.pause()
-          videoEl.removeEventListener('timeupdate', stopAtEndListener)
-          delete videoEl._stopAtEndListener
-        }
-      }
-      
-      videoEl._stopAtEndListener = stopAtEndListener
-      videoEl.addEventListener('timeupdate', stopAtEndListener)
-      
-      videoEl.play().catch(err => {
-        console.log('Auto-play prevented:', err)
-      })
-    }
+  const handleSearchComplete = (results, searches) => {
+    setSearchResults(results)
+    setAllSearches(searches)
   }
 
   const handleNextStep = () => {
@@ -166,14 +85,14 @@ function AnalysisTaskSelector({
                     <div
                       key={task.Id}
                       className={`analyze-task-item ${selectedAnalyzeTask?.Id === task.Id ? 'selected' : ''}`}
-                      onClick={() => onAnalyzeTaskSelect(task)}
+                      onClick={() => handleAnalyzeTaskClick(task)}
                     >
                       <div className="task-info">
                         <input
                           type="radio"
                           name="analyzeTask"
                           checked={selectedAnalyzeTask?.Id === task.Id}
-                          onChange={() => onAnalyzeTaskSelect(task)}
+                          onChange={() => handleAnalyzeTaskClick(task)}
                           className="task-radio"
                         />
                         <div className="task-details">
@@ -193,112 +112,43 @@ function AnalysisTaskSelector({
                 </div>
               </div>
 
-              {selectedAnalyzeTask && (
+              {selectedAnalyzeTask && searchResults.length > 0 && (
                 <div className="search-section">
-                  <h3>Search Index</h3>
-                  
-                  <div className="video-preview">
-                    <video 
-                      ref={videoPlayerRef}
-                      src={selectedVideo.video_url || `https://${selectedVideo.S3Bucket}.s3.us-east-1.amazonaws.com/${selectedVideo.S3KeyVideo}`}
-                      controls
-                      muted
-                      className="preview-video-player"
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-
-                  <div className="search-controls">
-                    <input
-                      type="text"
-                      className="search-text-input"
-                      placeholder="Enter search query..."
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      disabled={searchLoading}
-                    />
-                    <input
-                      type="number"
-                      className="search-topk-input"
-                      placeholder="Top K"
-                      min="1"
-                      max="100"
-                      value={searchTopK}
-                      onChange={(e) => setSearchTopK(e.target.value)}
-                      disabled={searchLoading}
-                      title="Number of results to return (1-100)"
-                    />
+                  <div className="search-section-header">
+                    <div className="search-section-info">
+                      <h3>Search Index</h3>
+                      <p className="search-description">
+                        Search the selected index to find relevant video segments for evaluation.
+                      </p>
                     <button 
-                      className="btn-search"
-                      onClick={handleSearch}
-                      disabled={searchLoading || !searchText.trim()}
+                      className="btn-open-search"
+                      onClick={handleOpenSearchModal}
                     >
-                      {searchLoading ? 'Searching...' : allSearches.length > 0 ? 'Add Search' : 'Search'}
+                      Edit Results ({searchResults.length})
                     </button>
-                    {allSearches.length > 0 && (
-                      <button 
-                        className="btn-clear-searches"
-                        onClick={handleClearSearches}
-                        title="Clear all searches"
-                      >
-                        Clear All
-                      </button>
-                    )}
                   </div>
 
-                  {searchError && (
-                    <div className="alert alert-error">{searchError}</div>
-                  )}
+                  </div>
 
-                  {allSearches.length > 0 && (
-                    <div className="search-history">
-                      <h4>Search History ({allSearches.length} {allSearches.length === 1 ? 'query' : 'queries'})</h4>
-                      <div className="search-history-list">
-                        {allSearches.map((search, idx) => (
-                          <div key={idx} className="search-history-item">
-                            <div className="search-history-info">
-                              <span className="search-history-query">"{search.query}"</span>
-                              <span className="search-history-meta">
-                                {search.results.length} results • Top {search.topK}
-                              </span>
-                            </div>
-                            <button 
-                              className="btn-remove-search"
-                              onClick={() => handleRemoveSearch(idx)}
-                              title="Remove this search"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
+                  <div className="search-summary">
+                    <div className="summary-stats">
+                      <div className="stat-item">
+                        <span className="stat-label">Queries:</span>
+                        <span className="stat-value">{allSearches.length}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Total Segments:</span>
+                        <span className="stat-value">{searchResults.length}</span>
                       </div>
                     </div>
-                  )}
-
-                  {searchResults.length > 0 && (
-                    <div className="search-results">
-                      <div className="results-header">
-                        <h4>Combined Search Results ({searchResults.length} total segments)</h4>
-                      </div>
-                      <div className="results-list">
-                        {searchResults.map((result, index) => (
-                          <div key={index} className="result-item">
-                            <span className="result-rank">#{index + 1}</span>
-                            <button 
-                              className="time-range-link"
-                              onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
-                              title="Click to navigate video to this timestamp"
-                            >
-                              {parseFloat(result.StartSec || 0).toFixed(2)}s - {parseFloat(result.EndSec || 0).toFixed(2)}s
-                            </button>
-                            <span className="result-distance">Distance: {result.Distance?.toFixed(4) || 'N/A'}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="search-queries-list">
+                      {allSearches.map((search, idx) => (
+                        <div key={idx} className="query-chip">
+                          "{search.query}" ({search.results.length})
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </>
@@ -324,6 +174,17 @@ function AnalysisTaskSelector({
           Next: Generate Report
         </button>
       </div>
+
+      {showSearchModal && (
+        <SearchIndexModal
+          selectedVideo={selectedVideo}
+          selectedAnalyzeTask={selectedAnalyzeTask}
+          onClose={() => setShowSearchModal(false)}
+          onSearchComplete={handleSearchComplete}
+          initialSearchResults={searchResults}
+          initialAllSearches={allSearches}
+        />
+      )}
     </div>
   )
 }

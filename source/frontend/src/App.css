@@ -37,7 +37,7 @@
 
 .profile-button:hover {
   background-color: var(--neutral-50);
-  border-color: var(--blue-primary);
+  border-color: var(--green-primary);
 }
 
 .user-avatar {
@@ -174,9 +174,9 @@
 }
 
 .btn-toggle:hover {
-  background-color: var(--blue-bg-lightest);
-  border-color: var(--blue-primary);
-  color: var(--blue-primary);
+  background-color: var(--green-bg-lightest);
+  border-color: var(--green-primary);
+  color: var(--green-primary);
 }
 
 .sidebar nav {
@@ -356,8 +356,8 @@
 
 .search-input:focus {
   outline: none;
-  border-color: var(--blue-primary);
-  box-shadow: 0 0 0 3px var(--blue-bg-light);
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--green-bg-light);
 }
 
 .btn-clear-search {
@@ -406,7 +406,7 @@
 
 .task-item:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: var(--blue-primary);
+  border-color: var(--green-primary);
 }
 
 .task-item-thumbnail {
@@ -581,7 +581,7 @@
 }
 
 .task-type-badge.tlabs-mme {
-  background: var(--blue-gradient);
+  background: var(--green-gradient);
 }
 
 .model-id {

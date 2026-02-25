@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './GroundTruthReview.css'
 import { FetchPost } from '../../utils/apiHelper'
 
@@ -19,6 +19,13 @@ function GroundTruthReview({ video, allSearches, allResults, onPrevious, onUpdat
 
   const unreviewedSegments = segments.filter(seg => seg.reviewStatus === 'unreviewed')
   const reviewedSegments = segments.filter(seg => seg.reviewStatus === 'reviewed')
+
+  // Default to reviewed tab if no unreviewed items
+  useEffect(() => {
+    if (unreviewedSegments.length === 0 && reviewedSegments.length > 0) {
+      setActiveTab('reviewed')
+    }
+  }, [unreviewedSegments.length, reviewedSegments.length])
 
   const handleSelectSegment = (segment) => {
     if (selectedSegments.includes(segment)) {
@@ -153,20 +160,31 @@ function GroundTruthReview({ video, allSearches, allResults, onPrevious, onUpdat
         ReviewResult: result.reviewStatus || 'unreviewed'
       }))
 
-      // Get unique task IDs from all searches
+      // Get unique task IDs and model IDs from all searches
       const searchQueries = allSearches.map(s => s.query).join(', ')
+      const uniqueModels = [...new Set(allSearches.map(s => s.taskName))].join(', ')
+      const uniqueModelIds = [...new Set(allSearches.map(s => s.modelId).filter(Boolean))].join(', ')
 
       const username = currentUser?.username || currentUser?.signInDetails?.loginId || 'user'
+      
+      // Build description with model IDs
+      let defaultDescription = `Generated from ${allSearches.length} search ${allSearches.length === 1 ? 'query' : 'queries'}: ${searchQueries}. `
+      defaultDescription += `Models: ${uniqueModels}. `
+      if (uniqueModelIds) {
+        defaultDescription += `Model IDs: ${uniqueModelIds}. `
+      }
+      defaultDescription += `Total ${labels.length} segments found.`
+      
       const payload = {
         Id: groundTruthId,
         Name: groundTruthName,
-        Description: groundTruthDescription || `Generated from ${allSearches.length} search ${allSearches.length === 1 ? 'query' : 'queries'}: ${searchQueries}. Total ${labels.length} segments found.`,
+        Description: groundTruthDescription || defaultDescription,
         CreatedBy: existingGroundTruth?.CreatedBy || existingGroundTruth?.createdBy || username,
         VideoId: video.Id || video.id,
         Labels: labels
       }
 
-      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+      const data = await FetchPost('/gt/upsert-ground-truth', payload, 'EvalService')
 
       console.log('Ground truth save response:', data)
 

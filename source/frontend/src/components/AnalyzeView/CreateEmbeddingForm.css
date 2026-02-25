@@ -50,21 +50,6 @@
   border-bottom: 3px solid #e5e7eb;
 }
 
-.create-embedding-section h3::before {
-  content: '✨';
-  font-size: 1.3em;
-  animation: sparkle 2s ease-in-out infinite;
-}
-
-@keyframes sparkle {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-  }
-  50% {
-    transform: scale(1.2) rotate(180deg);
-  }
-}
-
 .create-embedding-form {
   margin-top: 20px;
 }
@@ -74,6 +59,7 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 24px;
   align-items: start;
+  padding-bottom: 20px;
 }
 
 .form-group {

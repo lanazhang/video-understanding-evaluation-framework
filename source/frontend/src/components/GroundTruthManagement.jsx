@@ -3,15 +3,17 @@ import './GroundTruthManagement.css'
 import { FetchPost } from '../utils/apiHelper'
 import refreshIcon from '../assets/icons/refresh.svg'
 import trashIcon from '../assets/icons/trash.svg'
+import checkIcon from '../assets/icons/check.svg'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import GroundTruthTaskDetail from './GroundTruthTaskDetail'
 import CreateGroundTruthInline from './CreateGroundTruthInline'
 
-function GroundTruthManagement({ currentUser }) {
+function GroundTruthManagement({ currentUser, initialVideoFilter = null }) {
   const [groundTruths, setGroundTruths] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [videoFilter, setVideoFilter] = useState(initialVideoFilter)
   const [selectedTask, setSelectedTask] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [sortField, setSortField] = useState('createdAt')
@@ -26,6 +28,13 @@ function GroundTruthManagement({ currentUser }) {
     }
   }, [currentUser])
 
+  useEffect(() => {
+    // Update filter when initialVideoFilter changes
+    if (initialVideoFilter) {
+      setVideoFilter(initialVideoFilter)
+    }
+  }, [initialVideoFilter])
+
   const fetchGroundTruths = async () => {
     setLoading(true)
     setError(null)
@@ -37,7 +46,7 @@ function GroundTruthManagement({ currentUser }) {
       const payload = username ? { createdBy: username } : {}
       console.log('Request payload:', payload)
       
-      const data = await FetchPost('/video/get-ground-truths', payload, 'EvalService')
+      const data = await FetchPost('/gt/get-ground-truths', payload, 'EvalService')
       console.log('API response:', data)
       console.log('Response statusCode:', data?.statusCode)
       console.log('Response body type:', typeof data?.body)
@@ -84,6 +93,7 @@ function GroundTruthManagement({ currentUser }) {
             VideoAnalyzeTaskIds: gt.VideoAnalyzeTaskIds || [],
             labels: gt.Labels || [],
             Labels: gt.Labels || [],
+            eval_count: gt.eval_count || 0,
             video: gt.video || null,
             analyzeTasks: gt.analyzeTasks || []
           }
@@ -131,12 +141,19 @@ function GroundTruthManagement({ currentUser }) {
   const handleDelete = async (e, task) => {
     e.stopPropagation() // Prevent task click when clicking delete
     
+    const evalCount = task.eval_count || 0
+    
+    if (evalCount > 0) {
+      alert(`Cannot delete this ground truth. It has ${evalCount} evaluation${evalCount > 1 ? 's' : ''} associated with it.`)
+      return
+    }
+    
     if (!window.confirm(`Are you sure you want to delete "${task.taskName}"? This action cannot be undone.`)) {
       return
     }
 
     try {
-      const data = await FetchPost('/video/delete-ground-truth', { Id: task.id }, 'EvalService')
+      const data = await FetchPost('/gt/delete-ground-truth', { Id: task.id }, 'EvalService')
       
       if (data.statusCode === 200) {
         console.log('Ground truth deleted successfully:', task.id)
@@ -152,6 +169,12 @@ function GroundTruthManagement({ currentUser }) {
       // Always refresh the list regardless of success or failure
       fetchGroundTruths()
     }
+  }
+
+  const handleViewEvaluations = (e, gtId) => {
+    e.stopPropagation() // Prevent task click when clicking button
+    // Navigate to evaluation page with GT filter
+    window.dispatchEvent(new CustomEvent('navigateToEval', { detail: { gtId } }))
   }
 
   const handleSort = (field) => {
@@ -201,6 +224,11 @@ function GroundTruthManagement({ currentUser }) {
     const query = searchQuery.toLowerCase()
     const taskName = task.taskName?.toLowerCase() || ''
     const videoName = task.video?.Name?.toLowerCase() || ''
+    
+    // Apply video filter if set
+    if (videoFilter && task.videoId !== videoFilter) {
+      return false
+    }
     
     return taskName.includes(query) || videoName.includes(query)
   })
@@ -263,6 +291,19 @@ function GroundTruthManagement({ currentUser }) {
         )}
       </div>
 
+      {videoFilter && (
+        <div className="filter-indicator">
+          <span>Filtered by video</span>
+          <button 
+            className="btn-clear-filter"
+            onClick={() => setVideoFilter(null)}
+            title="Clear video filter"
+          >
+            ✕ Clear Filter
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="alert alert-error">
           {error}
@@ -317,14 +358,25 @@ function GroundTruthManagement({ currentUser }) {
                     <td className="ground-truth-name">{task.taskName}</td>
                     <td>{task.createdDate}</td>
                     <td>{task.labels?.length || 0}</td>
-                    <td>
-                      <button 
-                        className="btn-delete-icon"
-                        onClick={(e) => handleDelete(e, task)}
-                        title="Delete ground truth"
-                      >
-                        <img src={trashIcon} alt="Delete" />
-                      </button>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      {task.eval_count > 0 ? (
+                        <button 
+                          className="btn-icon-view-eval"
+                          onClick={(e) => handleViewEvaluations(e, task.id)}
+                          title={`View ${task.eval_count} evaluation${task.eval_count > 1 ? 's' : ''}`}
+                        >
+                          <img src={checkIcon} alt="View Evaluations" />
+                          <span className="eval-count">{task.eval_count}</span>
+                        </button>
+                      ) : (
+                        <button 
+                          className="btn-delete-icon"
+                          onClick={(e) => handleDelete(e, task)}
+                          title="Delete ground truth"
+                        >
+                          <img src={trashIcon} alt="Delete" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

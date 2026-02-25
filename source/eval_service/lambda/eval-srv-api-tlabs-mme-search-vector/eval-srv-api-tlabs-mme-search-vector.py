@@ -13,6 +13,13 @@ MODEL_ID_TLAB_27 = os.environ.get("MODEL_ID_TLAB_27")
 MODEL_ID_TLAB_30 = os.environ.get("MODEL_ID_TLAB_30")
 TLABS_S3_VECTOR_BUCKET = os.environ.get("TLABS_S3_VECTOR_BUCKET")
 
+# CORS headers for all responses
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+}
+
 s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime')
 s3vectors = boto3.client('s3vectors')
@@ -52,6 +59,7 @@ def lambda_handler(event, context):
         if not task_id:
             return {
                 'statusCode': 400,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'TaskId is required'})
             }
         
@@ -66,6 +74,7 @@ def lambda_handler(event, context):
         if not search_text and not input_bytes:
             return {
                 'statusCode': 400,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'SearchText or InputBytes is required'})
             }
         
@@ -76,6 +85,7 @@ def lambda_handler(event, context):
         if 'Item' not in task_response:
             return {
                 'statusCode': 404,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': f'Task not found: {task_id}'})
             }
         
@@ -101,6 +111,7 @@ def lambda_handler(event, context):
         if not s3_vector_bucket or not s3_vector_index:
             return {
                 'statusCode': 400,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'S3 vector bucket or index not found in task result'})
             }
         
@@ -112,6 +123,7 @@ def lambda_handler(event, context):
         if not input_embedding:
             return {
                 'statusCode': 500,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'Failed to generate input embedding'})
             }
         
@@ -169,6 +181,7 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps(result, cls=DecimalEncoder)
         }
     
@@ -178,6 +191,7 @@ def lambda_handler(event, context):
         print(f"Traceback: {traceback.format_exc()}")
         return {
             'statusCode': 500,
+                'headers': CORS_HEADERS,
             'body': json.dumps({'error': str(e)})
         }
 

@@ -200,14 +200,12 @@ def lambda_handler(event, context):
                 if video:
                     item['video'] = video
             
-            # Fetch analyze task details for each task in AnalyzeTasks array
-            analyze_tasks = item.get('AnalyzeTasks', [])
-            for analyze_task in analyze_tasks:
-                task_id = analyze_task.get('VideoAnalyzeTaskId')
-                if task_id:
-                    task_details = get_analyze_task_details(task_id)
-                    if task_details:
-                        analyze_task['taskDetails'] = task_details
+            # Fetch analyze task details
+            task_id = item.get('VideoAnalyzeTaskId')
+            if task_id:
+                task_details = get_analyze_task_details(task_id)
+                if task_details:
+                    item['analyzeTask'] = task_details
         
         return {
             'statusCode': 200,

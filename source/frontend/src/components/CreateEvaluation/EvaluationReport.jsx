@@ -141,7 +141,7 @@ function EvaluationReport({
             
             <div className="overlap-tables">
               <div className="overlap-table-container">
-                <h4>Ground Truth Segments ({matchingDetails.gtMatches.filter(m => m.gtLabel.ReviewResult === 'true_positive' && m.status !== 'FN').length})</h4>
+                <h4>Ground Truth Segments ({matchingDetails.gtMatches.filter(m => m.gtLabel.ReviewResult === 'true_positive' || m.gtLabel.ReviewResult === 'reviewed').length})</h4>
                 <div className="overlap-table">
                   <div className="overlap-table-header">
                     <div className="overlap-col-index">#</div>
@@ -151,7 +151,7 @@ function EvaluationReport({
                     <div className="overlap-col-match">Matched To</div>
                   </div>
                   {[...matchingDetails.gtMatches]
-                    .filter(match => match.gtLabel.ReviewResult === 'true_positive' && match.status !== 'FN')
+                    .filter(match => match.gtLabel.ReviewResult === 'true_positive' || match.gtLabel.ReviewResult === 'reviewed')
                     .sort((a, b) => {
                       const aStart = typeof a.gtLabel.StartTs === 'number' ? a.gtLabel.StartTs : parseFloat(a.gtLabel.StartTs || 0)
                       const bStart = typeof b.gtLabel.StartTs === 'number' ? b.gtLabel.StartTs : parseFloat(b.gtLabel.StartTs || 0)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import './CreateEvaluationInline.css'
 import { FetchPost } from '../utils/apiHelper'
 import { evalAPI } from '../utils/api'
@@ -34,8 +34,6 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
   // Search state - managed in step 2
   const [searchResults, setSearchResults] = useState([])
   const [allSearches, setAllSearches] = useState([])
-  
-  const videoPlayerRef = useRef(null)
 
   useEffect(() => {
     fetchVideos()
@@ -81,12 +79,29 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     setLoadingAnalyzeTasks(true)
     setTasksError(null)
     try {
-      const data = await FetchPost('/video/get-analyze-tasks', { VideoId: videoId }, 'EvalService')
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const tasks = responseBody.Tasks || []
-        setAnalyzeTasks(tasks)
+      const data = await FetchPost('/analyze/get-analyze-tasks', { VideoId: videoId }, 'EvalService')
+      
+      // Handle response - check if it's wrapped in statusCode/body or direct
+      let responseBody
+      if (data.statusCode) {
+        // Lambda response format
+        if (data.statusCode === 200) {
+          responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        } else {
+          const errorMessage = typeof data.body === 'object' && data.body.error 
+            ? data.body.error 
+            : (typeof data.body === 'string' ? JSON.parse(data.body).error : data.body)
+          setTasksError(errorMessage || 'Failed to load analyze tasks')
+          setAnalyzeTasks([])
+          return
+        }
+      } else {
+        // Direct response format
+        responseBody = data
       }
+      
+      const tasks = responseBody.Tasks || []
+      setAnalyzeTasks(tasks)
     } catch (err) {
       console.error('Error fetching analyze tasks:', err)
       setTasksError('Failed to load analyze tasks')
@@ -141,11 +156,23 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     // Set default evaluation name
     setEvaluationName(`${selectedVideo.Name} Evaluation`)
     
+    // Generate comprehensive default description
+    const modelType = selectedAnalyzeTask.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'
+    const modelId = selectedAnalyzeTask.ModelId
+    const searchQueries = searches.map(s => `"${s.query}"`).join(', ')
+    const numResults = results.length
+    const gtDescription = selectedGroundTruth.Description ? `\n\nGround Truth: ${selectedGroundTruth.Description}` : ''
+    
+    const defaultDescription = `Evaluation of ${modelType} model (${modelId}) performance against ground truth "${selectedGroundTruth.Name}".\n\nSearch queries: ${searchQueries}\nTotal results found: ${numResults} segments${gtDescription}`
+    
+    setEvaluationDescription(defaultDescription)
+    
     // Calculate metrics immediately when entering step 3
     const result = calculateEvaluationMetrics(
       selectedGroundTruth.Labels || [],
       results,
-      searches.map(s => s.query).join(', ')
+      searches.map(s => s.query).join(', '),
+      searches
     )
     setEvaluationMetrics(result.metrics)
     setMatchingDetails(result.details)
@@ -179,48 +206,30 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     try {
       const username = currentUser?.username || currentUser?.signInDetails?.loginId || 'user'
       
-      // Step 1: Create a new ground truth with the search results as labels
-      const searchGroundTruthId = crypto.randomUUID()
+      // Prepare labels from search results
       const combinedQuery = allSearches.map(s => s.query).join(', ')
-      const newLabels = searchResults.map(result => ({
+      const labels = searchResults.map(result => ({
         StartTs: parseFloat(parseFloat(result.StartSec || 0).toFixed(3)),
         EndTs: parseFloat(parseFloat(result.EndSec || 0).toFixed(3)),
         Score: parseFloat(result.Distance || 0),
         Label: combinedQuery,
-        Source: 'model_generated',
         ReviewResult: 'unreviewed'
       }))
 
-      const searchGTPayload = {
-        Id: searchGroundTruthId,
-        Name: `Search Results - ${combinedQuery}`,
-        Description: `Generated from ${allSearches.length} search ${allSearches.length === 1 ? 'query' : 'queries'}: ${allSearches.map(s => `"${s.query}"`).join(', ')} on ${selectedAnalyzeTask.Type} model ${selectedAnalyzeTask.ModelId}`,
-        CreatedBy: username,
-        VideoId: selectedVideo.Id,
-        VideoAnalyzeTaskIds: [selectedAnalyzeTask.Id],
-        Labels: newLabels
-      }
-
-      await FetchPost('/video/upsert-ground-truth', searchGTPayload, 'EvalService')
-
-      // Step 2: Create evaluation task with pre-calculated metrics
+      // Create evaluation task with labels and metrics
       const evaluationId = crypto.randomUUID()
       const payload = {
         Id: evaluationId,
         Name: evaluationName,
         Description: evaluationDescription || `Evaluation comparing "${selectedGroundTruth.Name}" with search results for ${allSearches.length} ${allSearches.length === 1 ? 'query' : 'queries'}: ${allSearches.map(s => `"${s.query}"`).join(', ')}`,
         VideoId: selectedVideo.Id,
+        VideoAnalyzeTaskId: selectedAnalyzeTask.Id,
         GroundTruthId: selectedGroundTruth.Id,
         CreatedBy: username,
         Status: 'completed',
         CompletedAt: new Date().toISOString(),
-        AnalyzeTasks: [{
-          VideoAnalyzeTaskId: selectedAnalyzeTask.Id,
-          SearchGroundTruthId: searchGroundTruthId,
-          SearchQuery: combinedQuery,
-          SearchQueries: allSearches.map(s => s.query),
-          EvaluationMetrics: evaluationMetrics
-        }]
+        Labels: labels,
+        EvaluationMetrics: evaluationMetrics
       }
 
       await evalAPI.upsertEvaluationTask(payload)
@@ -279,7 +288,8 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
           onAnalyzeTaskSelect={handleAnalyzeTaskSelect}
           onPrevious={handlePreviousStep}
           onNext={handleStep2Next}
-          videoPlayerRef={videoPlayerRef}
+          initialSearchResults={searchResults}
+          initialAllSearches={allSearches}
         />
       )}
 

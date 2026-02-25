@@ -5,14 +5,14 @@ export const modelGroups = [
       {
         displayName: 'Nova MME',
         modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
-        api: '/video/start-nova-mme',
+        api: '/model/start-nova-mme',
         parameterType: 'nova-mme',
         dims: [1024, 3072, 384, 256]
       },
       {
         displayName: 'TwelveLabs Marengo 3.0',
         modelId: 'twelvelabs.marengo-embed-3-0-v1:0',
-        api: '/video/start-tlabs-mme',
+        api: '/model/start-tlabs-mme',
         parameterType: 'twelvelabs',
         dims: [512]
       },

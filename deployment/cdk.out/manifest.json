@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::307857433580:role/cdk-hnb659fds-deploy-role-307857433580-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::307857433580:role/cdk-hnb659fds-cfn-exec-role-307857433580-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-307857433580-us-east-1/431beae0d86b984fe3b1780c58f1431a371254316914212a7c4fd6dad28154d4.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-307857433580-us-east-1/9717dc6a90f703b94de8d5805851e6fd4cd8141137e9495c4acee331a5cd8e64.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -115,28 +115,28 @@
             "type": "aws:cdk:warning",
             "data": "AwsSolutions-COG2: The Cognito user pool does not require MFA.\n",
             "trace": [
-              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
-              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
-              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
-              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:55",
+              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
+              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
+              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
+              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/nag-pack.js:79:55",
               "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
-              "AwsSolutionsChecks.checkSecurityCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:996:14)",
-              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:71:18)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
-              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
-              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:171",
-              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:918:24)",
-              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:102)",
-              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15484:36)",
-              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15444:22)",
-              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15445:45)",
+              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
+              "AwsSolutionsChecks.checkSecurityCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/packs/aws-solutions.js:996:14)",
+              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/packs/aws-solutions.js:71:18)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
+              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
+              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
+              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:295:171",
+              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:918:24)",
+              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:295:102)",
+              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:15484:36)",
+              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:15444:22)",
+              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:15445:45)",
               "process.processImmediate (node:internal/timers:511:21)"
             ]
           }
@@ -516,7 +516,7 @@
         "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericeDeployment35109787b67b7ca48f1723a787aaa02998a68c31"
+            "data": "bedrockvideoevalapiSericeDeployment35109787140015c7d1da73875ff586e8e4101a98"
           }
         ],
         "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/DeploymentStage.prod/Resource": [
@@ -528,29 +528,29 @@
             "type": "aws:cdk:warning",
             "data": "AwsSolutions-APIG3: The REST API stage is not associated with AWS WAFv2 web ACL.\n",
             "trace": [
-              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
-              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
-              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
-              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:55",
+              "Annotations.addMessage (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1978)",
+              "Annotations.addWarning (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1002)",
+              "AnnotationLogger.onNonCompliance (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/nag-logger.js:33:61)",
+              "/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/nag-pack.js:79:55",
               "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
-              "AwsSolutionsChecks.checkNetworkDelivery (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:685:14)",
-              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/cdk-nag/lib/packs/aws-solutions.js:67:18)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
-              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-Pf76cb/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
-              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:171",
-              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:918:24)",
-              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:295:102)",
-              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15484:36)",
-              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15444:22)",
-              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmp6nopd656/lib/program.js:15445:45)",
+              "AwsSolutionsChecks.applyRule (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/nag-pack.js:79:38)",
+              "AwsSolutionsChecks.checkNetworkDelivery (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/packs/aws-solutions.js:685:14)",
+              "AwsSolutionsChecks.visit (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/cdk-nag/lib/packs/aws-solutions.js:67:18)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "recurse (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
+              "invokeAspectsV2 (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
+              "synthesize (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1760)",
+              "App.synth (/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/jsii-kernel-aQjGJX/node_modules/aws-cdk-lib/core/lib/stage.js:1:2770)",
+              "/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:295:171",
+              "Kernel._Kernel_ensureSync (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:918:24)",
+              "Kernel.invoke (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:295:102)",
+              "KernelHost.processRequest (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:15484:36)",
+              "KernelHost.run (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:15444:22)",
+              "Immediate._onImmediate (/private/var/folders/_j/yd4hm_zd04j5gt0339817wfh0000gq/T/tmph60r13fu/lib/program.js:15445:45)",
               "process.processImmediate (node:internal/timers:511:21)"
             ]
           }
@@ -567,502 +567,520 @@
             "data": "bedrockvideoevalapiSericev199912E5F"
           }
         ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1video0A06F569"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/add-video/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videoaddvideo8931E067"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/add-video/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videoaddvideoOPTIONS6CF0A9BB"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/add-video/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.video.add-video": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videoaddvideoPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1videoaddvideoFCB22D10"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/add-video/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.video.add-video": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videoaddvideoPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1videoaddvideoBE8A8CF2"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/add-video/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videoaddvideoPOST54DF5E5D"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/get-videos/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videogetvideosC6374A6D"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/get-videos/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videogetvideosOPTIONS96D8375C"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/get-videos/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.video.get-videos": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videogetvideosPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1videogetvideos8CA3BF05"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/get-videos/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.video.get-videos": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videogetvideosPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1videogetvideosF8418CFD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/get-videos/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videogetvideosPOSTF14D09F9"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/delete-video/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videodeletevideoD01688C7"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/delete-video/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videodeletevideoOPTIONS23EA18C0"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/delete-video/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.video.delete-video": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videodeletevideoPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1videodeletevideo9191C89C"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/delete-video/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.video.delete-video": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videodeletevideoPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1videodeletevideo9B393C77"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/video/delete-video/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1videodeletevideoPOSTC597C311"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyze2C41A9C1"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/delete-analyze-task/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzedeleteanalyzetaskA7C39EDD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/delete-analyze-task/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzedeleteanalyzetaskOPTIONS77BC7481"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/delete-analyze-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.analyze.delete-analyze-task": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzedeleteanalyzetaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1analyzedeleteanalyzetask2A920601"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/delete-analyze-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.analyze.delete-analyze-task": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzedeleteanalyzetaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1analyzedeleteanalyzetaskC6E7572E"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/delete-analyze-task/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzedeleteanalyzetaskPOSTAA78CE1C"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/get-analyze-tasks/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzegetanalyzetasksF4E76840"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/get-analyze-tasks/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzegetanalyzetasksOPTIONS9E5195A4"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/get-analyze-tasks/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.analyze.get-analyze-tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzegetanalyzetasksPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1analyzegetanalyzetasks68E771DB"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/get-analyze-tasks/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.analyze.get-analyze-tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzegetanalyzetasksPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1analyzegetanalyzetasks42A353FF"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/analyze/get-analyze-tasks/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1analyzegetanalyzetasksPOSTE8FE9F6B"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1model341E63A1"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-nova-mme/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstartnovamme7AAC9ECC"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-nova-mme/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstartnovammeOPTIONS3F72AE5B"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-nova-mme/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.start-nova-mme": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstartnovammePOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modelstartnovamme3263343A"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-nova-mme/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.start-nova-mme": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstartnovammePOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modelstartnovammeBC7359D1"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-nova-mme/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstartnovammePOST91107979"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-tlabs-mme/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstarttlabsmmeEB92526F"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-tlabs-mme/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstarttlabsmmeOPTIONS91EE7039"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-tlabs-mme/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.start-tlabs-mme": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstarttlabsmmePOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modelstarttlabsmmeA7ECFAAD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-tlabs-mme/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.start-tlabs-mme": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstarttlabsmmePOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modelstarttlabsmmeF4B19376"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/start-tlabs-mme/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelstarttlabsmmePOSTA15AA5E4"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/nova-mme-search-vector/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelnovammesearchvector85332975"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/nova-mme-search-vector/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelnovammesearchvectorOPTIONS7C3318DC"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/nova-mme-search-vector/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.nova-mme-search-vector": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelnovammesearchvectorPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modelnovammesearchvector41F9398A"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/nova-mme-search-vector/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.nova-mme-search-vector": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelnovammesearchvectorPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modelnovammesearchvector921F0DAD"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/nova-mme-search-vector/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modelnovammesearchvectorPOSTE393188B"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/tlabs-mme-search-vector/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modeltlabsmmesearchvector3A02600E"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/tlabs-mme-search-vector/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modeltlabsmmesearchvectorOPTIONS06622970"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/tlabs-mme-search-vector/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.tlabs-mme-search-vector": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modeltlabsmmesearchvectorPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modeltlabsmmesearchvectorA51D1866"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/tlabs-mme-search-vector/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.model.tlabs-mme-search-vector": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modeltlabsmmesearchvectorPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1modeltlabsmmesearchvector82511559"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/model/tlabs-mme-search-vector/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1modeltlabsmmesearchvectorPOST49E87AD0"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gt4EA8088D"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/upsert-ground-truth/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtupsertgroundtruth96B4FAED"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/upsert-ground-truth/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtupsertgroundtruthOPTIONS3166D7ED"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/upsert-ground-truth/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.gt.upsert-ground-truth": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtupsertgroundtruthPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1gtupsertgroundtruth0D8DD0B7"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/upsert-ground-truth/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.gt.upsert-ground-truth": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtupsertgroundtruthPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1gtupsertgroundtruthD6271686"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/upsert-ground-truth/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtupsertgroundtruthPOST41AACAB6"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/get-ground-truths/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtgetgroundtruths9FD1FF3A"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/get-ground-truths/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtgetgroundtruthsOPTIONS5450221E"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/get-ground-truths/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.gt.get-ground-truths": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtgetgroundtruthsPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1gtgetgroundtruthsB4FDF992"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/get-ground-truths/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.gt.get-ground-truths": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtgetgroundtruthsPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1gtgetgroundtruthsA773F823"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/get-ground-truths/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtgetgroundtruthsPOST480306B9"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/delete-ground-truth/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtdeletegroundtruthB1C56F17"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/delete-ground-truth/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtdeletegroundtruthOPTIONS72066F25"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/delete-ground-truth/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.gt.delete-ground-truth": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtdeletegroundtruthPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1gtdeletegroundtruth1F77CFB3"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/delete-ground-truth/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.gt.delete-ground-truth": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtdeletegroundtruthPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1gtdeletegroundtruthC1BA97EB"
+          }
+        ],
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/gt/delete-ground-truth/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bedrockvideoevalapiSericev1gtdeletegroundtruthPOST3F4F99BA"
+          }
+        ],
         "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "bedrockvideoevalapiSericev1eval1779D859"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/upsert-evaluation-task/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoBAF46079"
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtask5CB421F3"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/manage-s3-presigned-url/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/upsert-evaluation-task/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideomanages3presignedurl740C38F5"
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskOPTIONSB6AE8934"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/manage-s3-presigned-url/OPTIONS/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/upsert-evaluation-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.upsert-evaluation-task": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideomanages3presignedurlOPTIONS69E6B63A"
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalupsertevaluationtaskB5C99C1C"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/manage-s3-presigned-url/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.manage-s3-presigned-url": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/upsert-evaluation-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.upsert-evaluation-task": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideomanages3presignedurlPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideomanages3presignedurl9F3B8AAE"
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalupsertevaluationtask31355480"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/manage-s3-presigned-url/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.manage-s3-presigned-url": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/upsert-evaluation-task/POST/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideomanages3presignedurlPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideomanages3presignedurlB06C7D65"
+            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOST8F311CFD"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/manage-s3-presigned-url/POST/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/get-evaluation-tasks/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideomanages3presignedurlPOST0BF84DCE"
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksCBB0BC45"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/add-video/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/get-evaluation-tasks/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoaddvideo9BFFAC2A"
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksOPTIONS3A947F6C"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/add-video/OPTIONS/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/get-evaluation-tasks/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.get-evaluation-tasks": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoaddvideoOPTIONS4C23863A"
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalgetevaluationtasks5EB88155"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/add-video/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.add-video": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/get-evaluation-tasks/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.get-evaluation-tasks": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoaddvideoPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideoaddvideo65655534"
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalgetevaluationtasks0E919C48"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/add-video/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.add-video": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/get-evaluation-tasks/POST/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoaddvideoPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideoaddvideo366BDDFF"
+            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOST085F5172"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/add-video/POST/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/delete-evaluation-task/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoaddvideoPOST11619D05"
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskFBB5E546"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-videos/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/delete-evaluation-task/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetvideos62114745"
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskOPTIONS9D7F1587"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-videos/OPTIONS/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/delete-evaluation-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.delete-evaluation-task": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetvideosOPTIONSED1B7EED"
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evaldeleteevaluationtask55A4103D"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-videos/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-videos": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/delete-evaluation-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.delete-evaluation-task": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetvideosPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetvideos498762B9"
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evaldeleteevaluationtask3B5F2603"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-videos/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-videos": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/delete-evaluation-task/POST/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetvideosPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetvideosE5CCB9C6"
+            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOST8E6C543E"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-videos/POST/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/util/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetvideosPOST9A2E4C05"
+            "data": "bedrockvideoevalapiSericev1utilFC89F5DD"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-video/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/util/manage-s3-presigned-url/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletevideoBADDAADB"
+            "data": "bedrockvideoevalapiSericev1utilmanages3presignedurl0B5A44BB"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-video/OPTIONS/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/util/manage-s3-presigned-url/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletevideoOPTIONS05BCF5D2"
+            "data": "bedrockvideoevalapiSericev1utilmanages3presignedurlOPTIONS6DA77202"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-video/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-video": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/util/manage-s3-presigned-url/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.util.manage-s3-presigned-url": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletevideoPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeletevideoB1649374"
+            "data": "bedrockvideoevalapiSericev1utilmanages3presignedurlPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1utilmanages3presignedurl9451B602"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-video/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-video": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/util/manage-s3-presigned-url/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.util.manage-s3-presigned-url": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletevideoPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeletevideo8722F73D"
+            "data": "bedrockvideoevalapiSericev1utilmanages3presignedurlPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1utilmanages3presignedurlDF43C936"
           }
         ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-video/POST/Resource": [
+        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/util/manage-s3-presigned-url/POST/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletevideoPOST827802F0"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-analyze-task/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskB198AF01"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-analyze-task/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskOPTIONSC7092323"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-analyze-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-analyze-task": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeleteanalyzetaskB016CCDB"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-analyze-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-analyze-task": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeleteanalyzetaskED75351D"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-analyze-task/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeleteanalyzetaskPOSTDD0E03D5"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-analyze-tasks/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetanalyzetasksBFCD9D6E"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-analyze-tasks/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetanalyzetasksOPTIONS9B55B227"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-analyze-tasks/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-analyze-tasks": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetanalyzetasksPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetanalyzetasks2D169012"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-analyze-tasks/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-analyze-tasks": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetanalyzetasksPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetanalyzetasks9AB38483"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-analyze-tasks/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetanalyzetasksPOST980D6A53"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-nova-mme/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostartnovammeE39F1429"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-nova-mme/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostartnovammeOPTIONSF33DF98A"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-nova-mme/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.start-nova-mme": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostartnovammePOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideostartnovammeE2C9807E"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-nova-mme/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.start-nova-mme": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostartnovammePOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideostartnovamme1D4A6A20"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-nova-mme/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostartnovammePOSTBFE75C51"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-tlabs-mme/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostarttlabsmme83F85AE7"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-tlabs-mme/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostarttlabsmmeOPTIONSD455D28C"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-tlabs-mme/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.start-tlabs-mme": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostarttlabsmmePOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideostarttlabsmmeF62ED902"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-tlabs-mme/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.start-tlabs-mme": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostarttlabsmmePOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideostarttlabsmme1063F02E"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/start-tlabs-mme/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideostarttlabsmmePOST36C3A266"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/nova-mme-search-vector/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideonovammesearchvector4E641805"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/nova-mme-search-vector/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideonovammesearchvectorOPTIONS58576527"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/nova-mme-search-vector/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.nova-mme-search-vector": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideonovammesearchvectorPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideonovammesearchvector15BE812E"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/nova-mme-search-vector/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.nova-mme-search-vector": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideonovammesearchvectorPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideonovammesearchvectorB7FD16A4"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/nova-mme-search-vector/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideonovammesearchvectorPOSTFA0FC42E"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvector54E1501A"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorOPTIONS17632C10"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.tlabs-mme-search-vector": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideotlabsmmesearchvectorFA8FA627"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.tlabs-mme-search-vector": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideotlabsmmesearchvectorF0B8764C"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/tlabs-mme-search-vector/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideotlabsmmesearchvectorPOSTF9566A0D"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthF3572A00"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthOPTIONS69F0B4CA"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.upsert-ground-truth": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideoupsertgroundtruthADCDDE8F"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.upsert-ground-truth": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideoupsertgroundtruthE73E9E61"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/upsert-ground-truth/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideoupsertgroundtruthPOSTFED29D88"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsB2BF6FAC"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsOPTIONSD3ED5298"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-ground-truths": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetgroundtruthsEAC9058D"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.get-ground-truths": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideogetgroundtruthsCCF35CC9"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/get-ground-truths/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideogetgroundtruthsPOST41600D9A"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletegroundtruth3223366F"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletegroundtruthOPTIONSB73D4EB7"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-ground-truth": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeletegroundtruth98AEB037"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.video.delete-ground-truth": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalvideodeletegroundtruth6AE29B1D"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/video/delete-ground-truth/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalvideodeletegroundtruthPOST5122A6E5"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1eval8B85FEF2"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskAA5DD9FD"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskOPTIONSA0872C2F"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.upsert-evaluation-task": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalupsertevaluationtaskBC8B3A1F"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.upsert-evaluation-task": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalupsertevaluationtaskEAF65CFD"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/upsert-evaluation-task/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalupsertevaluationtaskPOST692495A1"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasks7152D718"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksOPTIONS2C60845B"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.get-evaluation-tasks": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalgetevaluationtasks6904006D"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.get-evaluation-tasks": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevalgetevaluationtasksFA2575F6"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/get-evaluation-tasks/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evalgetevaluationtasksPOST705BEE3F"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtask34986E67"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/OPTIONS/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskOPTIONS8315F357"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/POST/ApiPermission.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.delete-evaluation-task": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOSTApiPermissionBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevaldeleteevaluationtask535F0ABE"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/POST/ApiPermission.Test.BedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4.POST..v1.eval.eval.delete-evaluation-task": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOSTApiPermissionTestBedrockEvalRootStackEvalServiceStackbedrockvideoevalapiSerice04EDACE4POSTv1evalevaldeleteevaluationtask897A088D"
-          }
-        ],
-        "/BedrockEvalRootStack/EvalServiceStack/bedrock-video-eval-apiSerice/Default/v1/eval/eval/delete-evaluation-task/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "bedrockvideoevalapiSericev1evaldeleteevaluationtaskPOST2E883D69"
+            "data": "bedrockvideoevalapiSericev1utilmanages3presignedurlPOST8AF08139"
           }
         ],
         "/BedrockEvalRootStack/EvalServiceStack/eval-srv-api-manage-s3-presigned-url-role/Resource": [

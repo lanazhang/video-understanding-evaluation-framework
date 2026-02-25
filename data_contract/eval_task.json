@@ -79,6 +79,52 @@
       "default": "created",
       "example": "completed"
     },
+    "Labels": {
+      "type": "array",
+      "description": "Array of labeled segments with timestamps and scores from evaluation results",
+      "items": {
+        "type": "object",
+        "required": ["StartTs", "EndTs", "Score"],
+        "properties": {
+          "StartTs": {
+            "type": "number",
+            "description": "Start timestamp in seconds",
+            "minimum": 0,
+            "example": 12.5
+          },
+          "EndTs": {
+            "type": "number",
+            "description": "End timestamp in seconds",
+            "minimum": 0,
+            "example": 17.5
+          },
+          "Score": {
+            "type": "number",
+            "description": "Score value (MME search distance, confidence score, or similarity metric)",
+            "example": 0.85
+          },
+          "Label": {
+            "type": "string",
+            "description": "Optional label or category for the segment",
+            "maxLength": 200,
+            "example": "product_demonstration"
+          },
+          "ReviewResult": {
+            "type": "string",
+            "description": "Review result classification for the label",
+            "enum": [
+              "true_positive",
+              "false_positive",
+              "false_negative",
+              "true_negative",
+              "unreviewed"
+            ],
+            "default": "unreviewed",
+            "example": "true_positive"
+          }
+        }
+      }
+    },
     "EvaluationMetrics": {
       "type": "object",
       "description": "Evaluation result metrics comparing predictions against ground truth",
@@ -184,6 +230,29 @@
       "CreatedAt": "2024-02-22T15:00:00.000Z",
       "CompletedAt": "2024-02-22T15:30:00.000Z",
       "Status": "completed",
+      "Labels": [
+        {
+          "StartTs": 12.5,
+          "EndTs": 17.5,
+          "Score": 0.85,
+          "Label": "product_demonstration",
+          "ReviewResult": "true_positive"
+        },
+        {
+          "StartTs": 25.0,
+          "EndTs": 32.0,
+          "Score": 0.92,
+          "Label": "feature_highlight",
+          "ReviewResult": "true_positive"
+        },
+        {
+          "StartTs": 45.5,
+          "EndTs": 50.0,
+          "Score": 0.78,
+          "Label": "call_to_action",
+          "ReviewResult": "false_positive"
+        }
+      ],
       "EvaluationMetrics": {
         "Precision": 0.85,
         "Recall": 0.92,
@@ -207,6 +276,7 @@
       "CreatedBy": "admin@example.com",
       "CreatedAt": "2024-02-23T10:00:00.000Z",
       "Status": "running",
+      "Labels": [],
       "EvaluationMetrics": {}
     }
   ],
@@ -220,7 +290,8 @@
       "All field names use PascalCase convention for consistency"
     ],
     "usage": [
-      "Evaluation tasks compare model predictions from VideoAnalyzeTask against ground truth annotations",
+      "Evaluation tasks compare model predictions (stored in Labels) against ground truth annotations",
+      "Labels array stores the search results/predictions from the model that were evaluated",
       "EvaluationMetrics section stores computed performance metrics after evaluation completes",
       "Each evaluation task links a specific analyze task to a ground truth for comparison"
     ],

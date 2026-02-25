@@ -130,7 +130,7 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
         Labels: labels
       }
 
-      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+      const data = await FetchPost('/gt/upsert-ground-truth', payload, 'EvalService')
 
       if (data.statusCode === 200 || data.message) {
         task.Name = tempName.trim()
@@ -256,7 +256,7 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
         Labels: labels
       }
 
-      const data = await FetchPost('/video/upsert-ground-truth', payload, 'EvalService')
+      const data = await FetchPost('/gt/upsert-ground-truth', payload, 'EvalService')
 
       console.log('Ground truth update response:', data)
 

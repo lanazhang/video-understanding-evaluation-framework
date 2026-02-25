@@ -14,7 +14,24 @@
   --orange-shadow-hover: rgba(249, 115, 22, 0.35);
   --orange-border: #fdba74;
   
-  /* Blue Theme - Secondary Actions, Information, Status */
+  /* Green Theme - Secondary Actions, Information, Status */
+  --green-primary: #10b981;
+  --green-light: #34d399;
+  --green-lighter: #6ee7b7;
+  --green-dark: #059669;
+  --green-darker: #047857;
+  --green-bg-lightest: #ecfdf5;
+  --green-bg-light: #d1fae5;
+  --green-bg-medium: #a7f3d0;
+  --green-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --green-gradient-light: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  --green-gradient-hover: linear-gradient(135deg, #059669 0%, #047857 100%);
+  --green-shadow: rgba(16, 185, 129, 0.25);
+  --green-shadow-light: rgba(52, 211, 153, 0.2);
+  --green-shadow-hover: rgba(16, 185, 129, 0.35);
+  --green-border: #6ee7b7;
+  
+  /* Blue Theme - For Evaluation Metrics Only */
   --blue-primary: #3b82f6;
   --blue-light: #60a5fa;
   --blue-lighter: #93c5fd;
@@ -31,18 +48,18 @@
   --blue-shadow-hover: rgba(59, 130, 246, 0.35);
   --blue-border: #93c5fd;
   
-  /* Status Colors using Orange/Blue themes */
-  --status-success-bg: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  --status-success-text: #1d4ed8;
-  --status-success-border: #60a5fa;
+  /* Status Colors using Orange/Green themes */
+  --status-success-bg: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  --status-success-text: #047857;
+  --status-success-border: #34d399;
   
   --status-warning-bg: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
   --status-warning-text: #c2410c;
   --status-warning-border: #fb923c;
   
-  --status-info-bg: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  --status-info-text: #2563eb;
-  --status-info-border: #60a5fa;
+  --status-info-bg: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  --status-info-text: #059669;
+  --status-info-border: #34d399;
   
   --status-error-bg: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
   --status-error-text: #c62828;

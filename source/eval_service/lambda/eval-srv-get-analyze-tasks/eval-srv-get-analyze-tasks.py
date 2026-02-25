@@ -34,10 +34,19 @@ def lambda_handler(event, context):
     try:
         print(f"Received event: {json.dumps(event)}")
         
-        # Parse request body
-        body = event
-        if isinstance(body, str):
-            body = json.loads(body)
+        # Parse request body - handle both API Gateway and direct invocation
+        if 'body' in event:
+            # API Gateway proxy integration
+            body = event['body']
+            if isinstance(body, str):
+                body = json.loads(body)
+        else:
+            # Direct invocation
+            body = event
+            if isinstance(body, str):
+                body = json.loads(body)
+        
+        print(f"Parsed body: {json.dumps(body)}")
         
         video_id = body.get('VideoId')
         task_type = body.get('Type')

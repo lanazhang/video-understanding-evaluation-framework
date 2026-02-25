@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './EvaluationManagement.css'
 import { evalAPI } from '../utils/api'
 import refreshIcon from '../assets/icons/refresh.svg'
@@ -6,12 +7,13 @@ import trashIcon from '../assets/icons/trash.svg'
 import EvaluationDetail from './EvaluationDetail'
 import CreateEvaluationInline from './CreateEvaluationInline'
 
-function EvaluationManagement({ currentUser }) {
+function EvaluationManagement({ currentUser, initialGTFilter = null }) {
+  const navigate = useNavigate()
   const [evaluationTasks, setEvaluationTasks] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTask, setSelectedTask] = useState(null)
+  const [gtFilter, setGtFilter] = useState(initialGTFilter)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [sortField, setSortField] = useState('createdAt')
   const [sortDirection, setSortDirection] = useState('desc')
@@ -24,6 +26,13 @@ function EvaluationManagement({ currentUser }) {
       fetchEvaluationTasks()
     }
   }, [currentUser])
+
+  useEffect(() => {
+    // Update filter when initialGTFilter changes
+    if (initialGTFilter) {
+      setGtFilter(initialGTFilter)
+    }
+  }, [initialGTFilter])
 
   const fetchEvaluationTasks = async () => {
     setLoading(true)
@@ -73,14 +82,21 @@ function EvaluationManagement({ currentUser }) {
         CompletedAt: task.CompletedAt,
         videoId: task.VideoId,
         VideoId: task.VideoId,
+        videoAnalyzeTaskId: task.VideoAnalyzeTaskId,
+        VideoAnalyzeTaskId: task.VideoAnalyzeTaskId,
         groundTruthId: task.GroundTruthId,
         GroundTruthId: task.GroundTruthId,
+        labels: task.Labels || [],
+        Labels: task.Labels || [],
+        evaluationMetrics: task.EvaluationMetrics || {},
+        EvaluationMetrics: task.EvaluationMetrics || {},
         analyzeTasks: task.AnalyzeTasks || [],
         AnalyzeTasks: task.AnalyzeTasks || [],
         status: task.Status || 'created',
         Status: task.Status || 'created',
         video: task.video || null,
-        groundTruth: task.groundTruth || null
+        groundTruth: task.groundTruth || null,
+        analyzeTask: task.analyzeTask || null
       }))
         
       setEvaluationTasks(transformedTasks)
@@ -95,18 +111,15 @@ function EvaluationManagement({ currentUser }) {
   }
 
   const handleTaskClick = (task) => {
-    setSelectedTask(task)
-    setShowCreateForm(false)
+    navigate(`/evaluation/${task.id}`)
   }
 
   const handleBackToList = () => {
-    setSelectedTask(null)
     fetchEvaluationTasks()
   }
 
   const handleCreateNew = () => {
     setShowCreateForm(true)
-    setSelectedTask(null)
   }
 
   const handleCancelCreate = () => {
@@ -174,15 +187,15 @@ function EvaluationManagement({ currentUser }) {
     const videoName = task.video?.Name?.toLowerCase() || ''
     const gtName = task.groundTruth?.Name?.toLowerCase() || ''
     
+    // Apply GT filter if set
+    if (gtFilter && task.groundTruthId !== gtFilter) {
+      return false
+    }
+    
     return taskName.includes(query) || videoName.includes(query) || gtName.includes(query)
   })
 
   const sortedAndFilteredTasks = getSortedEvaluationTasks(filteredTasks)
-
-  // If viewing a specific task
-  if (selectedTask) {
-    return <EvaluationDetail task={selectedTask} onBack={handleBackToList} />
-  }
 
   // If creating new evaluation
   if (showCreateForm) {
@@ -234,6 +247,19 @@ function EvaluationManagement({ currentUser }) {
         )}
       </div>
 
+      {gtFilter && (
+        <div className="filter-indicator">
+          <span>Filtered by ground truth</span>
+          <button 
+            className="btn-clear-filter"
+            onClick={() => setGtFilter(null)}
+            title="Clear ground truth filter"
+          >
+            ✕ Clear Filter
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="alert alert-error">
           {error}
@@ -256,7 +282,6 @@ function EvaluationManagement({ currentUser }) {
                 <th onClick={() => handleSort('createdAt')} style={{ cursor: 'pointer' }}>
                   Created Date {getSortIcon('createdAt')}
                 </th>
-                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -269,8 +294,8 @@ function EvaluationManagement({ currentUser }) {
                 </tr>
               ) : (
                 sortedAndFilteredTasks.map(task => {
-                  // Get metrics from the first analyze task
-                  const metrics = task.analyzeTasks?.[0]?.EvaluationMetrics
+                  // Get metrics directly from the task (new schema)
+                  const metrics = task.EvaluationMetrics || task.analyzeTasks?.[0]?.EvaluationMetrics
                   
                   return (
                     <tr 
@@ -303,9 +328,6 @@ function EvaluationManagement({ currentUser }) {
                         {metrics?.MeanIoU !== undefined ? `${(metrics.MeanIoU * 100).toFixed(1)}%` : 'N/A'}
                       </td>
                       <td>{task.createdDate}</td>
-                      <td>
-                        <span className={`status-badge ${task.status}`}>{task.status}</span>
-                      </td>
                       <td>
                         <button 
                           className="btn-delete-icon"

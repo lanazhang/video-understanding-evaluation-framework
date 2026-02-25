@@ -9,11 +9,13 @@ s3 = boto3.client('s3')
 table_name = os.environ.get('DYNAMO_GROUND_TRUTH_TABLE')
 video_table_name = os.environ.get('DYNAMO_VIDEO_TABLE')
 analyze_table_name = os.environ.get('DYNAMO_VIDEO_ANALYZE_TABLE')
+eval_table_name = os.environ.get('DYNAMO_EVALUATION_TASK_TABLE')
 S3_PRESIGNED_URL_EXPIRY_S = int(os.environ.get('S3_PRESIGNED_URL_EXPIRY_S', 3600))  # Default 1 hour
 
 table = dynamodb.Table(table_name)
 video_table = dynamodb.Table(video_table_name)
 analyze_table = dynamodb.Table(analyze_table_name)
+eval_table = dynamodb.Table(eval_table_name) if eval_table_name else None
 
 # CORS headers for all responses
 CORS_HEADERS = {
@@ -110,6 +112,25 @@ def get_analyze_tasks(task_ids):
     
     return tasks
 
+def get_eval_count_for_gt(gt_id):
+    """
+    Get the count of evaluation tasks for a specific ground truth
+    """
+    try:
+        if not eval_table:
+            return 0
+        
+        from boto3.dynamodb.conditions import Key
+        response = eval_table.query(
+            IndexName='GroundTruthId-index',
+            KeyConditionExpression=Key('GroundTruthId').eq(gt_id),
+            Select='COUNT'
+        )
+        return response.get('Count', 0)
+    except Exception as e:
+        print(f"Error getting evaluation count for GT {gt_id}: {str(e)}")
+        return 0
+
 def lambda_handler(event, context):
     """
     Get ground truth records from DynamoDB table
@@ -184,7 +205,7 @@ def lambda_handler(event, context):
         items = response.get('Items', [])
         print(f"Found {len(items)} ground truth records")
         
-        # Enrich each ground truth with video and analyze task details
+        # Enrich each ground truth with video, analyze task details, and evaluation count
         for item in items:
             # Fetch video details with presigned URLs
             video_id = item.get('VideoId')
@@ -199,6 +220,11 @@ def lambda_handler(event, context):
                 tasks = get_analyze_tasks(task_ids)
                 if tasks:
                     item['analyzeTasks'] = tasks
+            
+            # Get evaluation count for this ground truth
+            gt_id = item.get('Id')
+            if gt_id:
+                item['eval_count'] = get_eval_count_for_gt(gt_id)
         
         return {
             'statusCode': 200,

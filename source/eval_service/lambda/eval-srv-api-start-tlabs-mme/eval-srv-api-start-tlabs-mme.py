@@ -8,6 +8,13 @@ DYNAMO_VIDEO_ANALYZE_TABLE = os.environ.get("DYNAMO_VIDEO_ANALYZE_TABLE")
 DYNAMO_VIDEO_TABLE = os.environ.get("DYNAMO_VIDEO_TABLE")
 DEFAULT_TLABS_MME_MODEL_ID = os.environ.get("DEFAULT_TLABS_MME_MODEL_ID")
 
+# CORS headers for all responses
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+}
+
 bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
 sts = boto3.client("sts")
@@ -22,14 +29,26 @@ def lambda_handler(event, context):
     try:
         print(f"Received event: {json.dumps(event)}")
         
-        # Parse body
-        body = event if isinstance(event, dict) else json.loads(event)
+        # Parse body - handle both API Gateway and direct invocation
+        if 'body' in event:
+            # API Gateway proxy integration
+            body = event['body']
+            if isinstance(body, str):
+                body = json.loads(body)
+        else:
+            # Direct invocation
+            body = event
+            if isinstance(body, str):
+                body = json.loads(body)
+        
+        print(f"Parsed body: {json.dumps(body)}")
         
         # Validate required fields - accept both snake_case (API) and PascalCase (internal)
         video_id = body.get("VideoId") or body.get("video_id")
         if not video_id:
             return {
                 'statusCode': 400,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'Missing required field: VideoId or video_id'})
             }
         
@@ -38,6 +57,7 @@ def lambda_handler(event, context):
         if 'Item' not in video_response:
             return {
                 'statusCode': 404,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': f'Video not found: {video_id}'})
             }
         
@@ -48,6 +68,7 @@ def lambda_handler(event, context):
         if not s3_bucket or not s3_key:
             return {
                 'statusCode': 400,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'Video S3 location not found'})
             }
         
@@ -190,6 +211,7 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'task_id': task_id,
                 'video_id': video_id,
@@ -205,5 +227,6 @@ def lambda_handler(event, context):
         print(f"Traceback: {traceback.format_exc()}")
         return {
             'statusCode': 500,
+            'headers': CORS_HEADERS,
             'body': json.dumps({'error': str(e)})
         }

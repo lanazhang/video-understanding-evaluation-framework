@@ -787,16 +787,19 @@ class EvalServiceStack(NestedStack):
 
         # Create resources
         v1 = api.root.add_resource("v1")
-        ex = v1.add_resource("eval")
-        ex_video = ex.add_resource("video")
-        ex_eval = ex.add_resource("eval")
+        video = v1.add_resource("video")
+        analyze = v1.add_resource("analyze")
+        model = v1.add_resource("model")
+        gt = v1.add_resource("gt")
+        eval_resource = v1.add_resource("eval")
+        util = v1.add_resource("util")
         
         self.api_gw_base_url = api.url
         
-        # POST /v1/eval/video/manage-s3-presigned-url
+        # POST /v1/util/manage-s3-presigned-url
         lambda_key='eval-srv-api-manage-s3-presigned-url'
         lambda_es_manage_s3_url_role = self.create_role(lambda_key, ["s3"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="manage-s3-presigned-url", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=util, path1="manage-s3-presigned-url", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_es_manage_s3_url_role,
                 lambda_file_name=lambda_key,
                 memory_m=128, timeout_s=10, ephemeral_storage_size=512,
@@ -807,7 +810,7 @@ class EvalServiceStack(NestedStack):
                 },
             )   
 
-        # POST /v1/eval/video/add-video
+        # POST /v1/video/add-video
         lambda_key='eval-srv-add-video'
         lambda_add_video_role = self.create_role(lambda_key, ["dynamodb", "lambda"])
         
@@ -826,7 +829,7 @@ class EvalServiceStack(NestedStack):
         
         # Note: Nova MME Lambda will be created by the API endpoint below
         # We reference it by its function name here
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="add-video", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=video, path1="add-video", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_add_video_role,
                 lambda_file_name=lambda_key,
                 memory_m=128, timeout_s=10, ephemeral_storage_size=512,
@@ -838,23 +841,24 @@ class EvalServiceStack(NestedStack):
                 },
             )   
 
-        # POST /v1/eval/video/get-videos
+        # POST /v1/video/get-videos
         lambda_key='eval-srv-get-videos'
         lambda_get_videos_role = self.create_role(lambda_key, ["dynamodb","s3"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="get-videos", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=video, path1="get-videos", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_get_videos_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
                 evns={
                     'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_GROUND_TRUTH_TABLE': DYNAMO_GROUND_TRUTH_TABLE,
                     'S3_PRESIGNED_URL_EXPIRY_S': S3_PRESIGNED_URL_EXPIRY_S
                 },
             )   
 
-        # POST /v1/eval/video/delete-video
+        # POST /v1/video/delete-video
         lambda_key='eval-srv-delete-video'
         lambda_delete_video_role = self.create_role(lambda_key, ["dynamodb","s3","s3vectors"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="delete-video", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=video, path1="delete-video", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_delete_video_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -866,10 +870,10 @@ class EvalServiceStack(NestedStack):
                 },
             )   
 
-        # POST /v1/eval/video/delete-analyze-task
+        # POST /v1/analyze/delete-analyze-task
         lambda_key='eval-srv-delete-analyze-task'
         lambda_delete_analyze_task_role = self.create_role(lambda_key, ["dynamodb","s3","s3vectors"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="delete-analyze-task", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=analyze, path1="delete-analyze-task", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_delete_analyze_task_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -879,10 +883,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/video/get-analyze-tasks
+        # POST /v1/analyze/get-analyze-tasks
         lambda_key='eval-srv-get-analyze-tasks'
         lambda_get_analyze_tasks_role = self.create_role(lambda_key, ["dynamodb"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="get-analyze-tasks", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=analyze, path1="get-analyze-tasks", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_get_analyze_tasks_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -891,10 +895,10 @@ class EvalServiceStack(NestedStack):
                 },
             )   
 
-        # POST /v1/eval/video/start-nova-mme
+        # POST /v1/model/start-nova-mme
         lambda_key='eval-srv-api-start-nova-mme'
         lambda_start_nova_mme_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock"])
-        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="start-nova-mme", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="start-nova-mme", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_start_nova_mme_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=60, ephemeral_storage_size=512,
@@ -906,10 +910,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/video/start-tlabs-mme
+        # POST /v1/model/start-tlabs-mme
         lambda_key='eval-srv-api-start-tlabs-mme'
         lambda_start_tlabs_mme_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock"])
-        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="start-tlabs-mme", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="start-tlabs-mme", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_start_tlabs_mme_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=60, ephemeral_storage_size=512,
@@ -920,10 +924,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/video/nova-mme-search-vector
+        # POST /v1/model/nova-mme-search-vector
         lambda_key='eval-srv-api-nova-mme-search-vector'
         lambda_search_vector_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock","s3vectors"])
-        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="nova-mme-search-vector", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="nova-mme-search-vector", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_search_vector_role,
                 lambda_file_name=lambda_key,
                 memory_m=512, timeout_s=60, ephemeral_storage_size=512,
@@ -939,10 +943,10 @@ class EvalServiceStack(NestedStack):
                 layers=[self.boto3_layer]
             )
 
-        # POST /v1/eval/video/tlabs-mme-search-vector
+        # POST /v1/model/tlabs-mme-search-vector
         lambda_key='eval-srv-api-tlabs-mme-search-vector'
         lambda_tlabs_search_vector_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock","s3vectors"])
-        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=ex_video, path1="tlabs-mme-search-vector", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="tlabs-mme-search-vector", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_tlabs_search_vector_role,
                 lambda_file_name=lambda_key,
                 memory_m=512, timeout_s=60, ephemeral_storage_size=512,
@@ -958,10 +962,10 @@ class EvalServiceStack(NestedStack):
                 layers=[self.boto3_layer]
             )
 
-        # POST /v1/eval/video/upsert-ground-truth
+        # POST /v1/gt/upsert-ground-truth
         lambda_key='eval-srv-upsert-ground-truth'
         lambda_upsert_ground_truth_role = self.create_role(lambda_key, ["dynamodb"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="upsert-ground-truth", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=gt, path1="upsert-ground-truth", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_upsert_ground_truth_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -970,10 +974,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/video/get-ground-truths
+        # POST /v1/gt/get-ground-truths
         lambda_key='eval-srv-get-ground-truths'
         lambda_get_ground_truths_role = self.create_role(lambda_key, ["dynamodb", "s3"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="get-ground-truths", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=gt, path1="get-ground-truths", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_get_ground_truths_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -981,14 +985,15 @@ class EvalServiceStack(NestedStack):
                     'DYNAMO_GROUND_TRUTH_TABLE': DYNAMO_GROUND_TRUTH_TABLE,
                     'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
                     'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'DYNAMO_EVALUATION_TASK_TABLE': DYNAMO_EVALUATION_TASK_TABLE,
                     'S3_PRESIGNED_URL_EXPIRY_S': S3_PRESIGNED_URL_EXPIRY_S
                 },
             )
 
-        # POST /v1/eval/video/delete-ground-truth
+        # POST /v1/gt/delete-ground-truth
         lambda_key='eval-srv-delete-ground-truth'
         lambda_delete_ground_truth_role = self.create_role(lambda_key, ["dynamodb"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_video, path1="delete-ground-truth", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=gt, path1="delete-ground-truth", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_delete_ground_truth_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -997,10 +1002,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/eval/upsert-evaluation-task
+        # POST /v1/eval/upsert-evaluation-task
         lambda_key='eval-srv-upsert-evaluation-task'
         lambda_upsert_evaluation_task_role = self.create_role(lambda_key, ["dynamodb"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_eval, path1="upsert-evaluation-task", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=eval_resource, path1="upsert-evaluation-task", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_upsert_evaluation_task_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -1009,10 +1014,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/eval/get-evaluation-tasks
+        # POST /v1/eval/get-evaluation-tasks
         lambda_key='eval-srv-get-evaluation-tasks'
         lambda_get_evaluation_tasks_role = self.create_role(lambda_key, ["dynamodb", "s3"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_eval, path1="get-evaluation-tasks", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=eval_resource, path1="get-evaluation-tasks", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_get_evaluation_tasks_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,
@@ -1025,10 +1030,10 @@ class EvalServiceStack(NestedStack):
                 },
             )
 
-        # POST /v1/eval/eval/delete-evaluation-task
+        # POST /v1/eval/delete-evaluation-task
         lambda_key='eval-srv-delete-evaluation-task'
         lambda_delete_evaluation_task_role = self.create_role(lambda_key, ["dynamodb"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=ex_eval, path1="delete-evaluation-task", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=eval_resource, path1="delete-evaluation-task", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_delete_evaluation_task_role,
                 lambda_file_name=lambda_key,
                 memory_m=256, timeout_s=30, ephemeral_storage_size=512,

@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import './EmbeddingSearch.css'
 import { FetchPost } from '../../utils/apiHelper'
 import ManualLabel from './ManualLabel'
 
-function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], initialResults = [] }) {
+function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults = [] }) {
   const [activeTab, setActiveTab] = useState('embedding')
   const [analyzeTasks, setAnalyzeTasks] = useState([])
   const [loadingTasks, setLoadingTasks] = useState(false)
   const [tasksError, setTasksError] = useState(null)
   
   const [selectedTask, setSelectedTask] = useState(null)
+  const [showSearchModal, setShowSearchModal] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [topK, setTopK] = useState(10)
   const [searchResults, setSearchResults] = useState([])
@@ -23,8 +25,10 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
   const videoPlayerRef = useRef(null)
 
   useEffect(() => {
-    loadAnalyzeTasks()
-  }, [])
+    if (video && (video.Id || video.id)) {
+      loadAnalyzeTasks()
+    }
+  }, [video])
 
   const loadAnalyzeTasks = async () => {
     const videoId = video.Id || video.id
@@ -37,20 +41,30 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
     setLoadingTasks(true)
     setTasksError(null)
     try {
-      const data = await FetchPost('/video/get-analyze-tasks', { VideoId: videoId }, 'EvalService')
+      const data = await FetchPost('/analyze/get-analyze-tasks', { VideoId: videoId }, 'EvalService')
       
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const allTasks = responseBody.Tasks || []
-        // Only show completed tasks with vector indexes
-        const completedTasks = allTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
-        setAnalyzeTasks(completedTasks)
+      // Handle response - check if it's wrapped in statusCode/body or direct
+      let responseBody
+      if (data.statusCode) {
+        // Lambda response format
+        if (data.statusCode === 200) {
+          responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        } else {
+          const errorMessage = typeof data.body === 'object' && data.body.error 
+            ? data.body.error 
+            : (typeof data.body === 'string' ? JSON.parse(data.body).error : data.body)
+          setTasksError(errorMessage || 'Failed to load embedding indexes')
+          return
+        }
       } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setTasksError(errorMessage || 'Failed to load embedding indexes')
+        // Direct response format
+        responseBody = data
       }
+      
+      const allTasks = responseBody.Tasks || []
+      // Only show completed tasks with vector indexes
+      const completedTasks = allTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
+      setAnalyzeTasks(completedTasks)
     } catch (err) {
       console.error('Error loading analyze tasks:', err)
       setTasksError('Failed to load embedding indexes')
@@ -61,9 +75,14 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
 
   const handleSelectTask = (task) => {
     setSelectedTask(task)
+    setShowSearchModal(true)
     setSearchResults([])
     setSearchText('')
     setSearchError(null)
+  }
+
+  const handleCloseModal = () => {
+    setShowSearchModal(false)
   }
 
   const handleSearch = async () => {
@@ -92,44 +111,36 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
         EmbeddingOptions: ['audio-video', 'video', 'audio']
       }
 
-      let endpoint = '/video/nova-mme-search-vector'
+      let endpoint = '/model/nova-mme-search-vector'
       if (selectedTask.Type === 'tlabs-mme') {
-        endpoint = '/video/tlabs-mme-search-vector'
+        endpoint = '/model/tlabs-mme-search-vector'
       }
 
       const data = await FetchPost(endpoint, payload, 'EvalService')
       
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const results = responseBody || []
-        setSearchResults(results)
-        
-        // Add to accumulated searches and results
-        const searchRecord = {
-          id: crypto.randomUUID(),
-          taskId: selectedTask.Id,
-          taskName: selectedTask.ModelId,
-          taskType: selectedTask.Type,
-          query: searchText,
-          topK: parseInt(topK) || 10,
-          resultCount: results.length,
-          timestamp: new Date().toISOString()
+      // Handle response - check if it's wrapped in statusCode/body or direct
+      let responseBody
+      if (data.statusCode) {
+        // Lambda response format
+        if (data.statusCode === 200) {
+          responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        } else {
+          const errorMessage = typeof data.body === 'object' && data.body.error 
+            ? data.body.error 
+            : (typeof data.body === 'string' ? JSON.parse(data.body).error : data.body)
+          setSearchError(errorMessage || 'Search failed')
+          return
         }
-        
-        setAllSearches(prev => [...prev, searchRecord])
-        setAllResults(prev => [...prev, ...results.map(r => ({
-          ...r,
-          searchId: searchRecord.id,
-          query: searchText,
-          taskId: selectedTask.Id,
-          source: 'embedding' // Mark as embedding source
-        }))])
+      } else if (Array.isArray(data)) {
+        // Direct array response format
+        responseBody = data
       } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setSearchError(errorMessage || 'Search failed')
+        // Direct object response format
+        responseBody = data
       }
+      
+      const results = responseBody || []
+      setSearchResults(results)
     } catch (err) {
       console.error('Error searching embeddings:', err)
       setSearchError('Search failed: ' + err.message)
@@ -138,9 +149,38 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
     }
   }
 
-  const handleRemoveSearch = (searchId) => {
-    setAllSearches(prev => prev.filter(s => s.id !== searchId))
-    setAllResults(prev => prev.filter(r => r.searchId !== searchId))
+  const handleAcceptSearchResults = () => {
+    if (searchResults.length === 0) {
+      setSearchError('No search results to accept')
+      return
+    }
+
+    // Add to accumulated searches and results
+    const searchRecord = {
+      id: crypto.randomUUID(),
+      taskId: selectedTask.Id,
+      taskName: selectedTask.ModelId,
+      taskType: selectedTask.Type,
+      query: searchText,
+      topK: parseInt(topK) || 10,
+      resultCount: searchResults.length,
+      timestamp: new Date().toISOString()
+    }
+    
+    setAllSearches(prev => [...prev, searchRecord])
+    setAllResults(prev => [...prev, ...searchResults.map(r => ({
+      ...r,
+      searchId: searchRecord.id,
+      query: searchText,
+      taskId: selectedTask.Id,
+      source: 'embedding' // Mark as embedding source
+    }))])
+
+    // Close modal and reset search
+    setShowSearchModal(false)
+    setSearchResults([])
+    setSearchText('')
+    setSearchError(null)
   }
 
   const handleClearAllSearches = () => {
@@ -267,8 +307,8 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
 
       {activeTab === 'embedding' ? (
         <div className="embedding-search-content">
-          {/* Left: Index Selection */}
-          <div className="index-selection-panel">
+          {/* Index Selection Only */}
+          <div className="index-selection-full">
             <h3>Select Embedding Index</h3>
             
             {tasksError && (
@@ -278,11 +318,11 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
             {loadingTasks ? (
               <div className="loading-message">Loading indexes...</div>
             ) : analyzeTasks.length > 0 ? (
-              <div className="index-list">
+              <div className="index-grid">
                 {analyzeTasks.map((task) => (
                   <div
                     key={task.Id}
-                    className={`index-card ${selectedTask?.Id === task.Id ? 'selected' : ''}`}
+                    className="index-card clickable"
                     onClick={() => handleSelectTask(task)}
                   >
                     <div className="index-card-header">
@@ -307,183 +347,112 @@ function EmbeddingSearch({ video, onNext, currentUser, initialSearches = [], ini
             )}
           </div>
 
-          {/* Right: Search & Results */}
-          <div className="search-results-panel">
-            {selectedTask ? (
-              <>
-                <div className="search-section">
-                  <h3>Search: {selectedTask.ModelId}</h3>
-                  
-                  <div className="video-player-container">
-                    <video 
-                      ref={videoPlayerRef}
-                      src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
-                      controls
-                      muted
-                      className="search-video-player"
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-
-                  <div className="search-controls">
-                    <input
-                      type="text"
-                      className="search-input"
-                      placeholder="Enter search query..."
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      disabled={searching}
-                    />
-                    <input
-                      type="number"
-                      className="topk-input"
-                      placeholder="Top K"
-                      min="1"
-                      max="100"
-                      value={topK}
-                      onChange={(e) => setTopK(e.target.value)}
-                      disabled={searching}
-                      title="Number of results (1-100)"
-                    />
-                    <button 
-                      className="btn-search"
-                      onClick={handleSearch}
-                      disabled={searching || !searchText.trim()}
-                    >
-                      {searching ? 'Searching...' : 'Search'}
-                    </button>
-                  </div>
-                  
-                  {searchError && (
-                    <div className="alert alert-error">{searchError}</div>
-                  )}
+          {/* Search Modal */}
+          {showSearchModal && selectedTask && createPortal(
+            <div className="search-modal-overlay" onClick={handleCloseModal}>
+              <div className="search-modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="search-modal-header">
+                  <h2>Search: {selectedTask.ModelId}</h2>
+                  <button className="btn-close-modal" onClick={handleCloseModal}>
+                    ✕
+                  </button>
                 </div>
-
-                {/* Accumulated Searches Summary */}
-                {allSearches.length > 0 && (
-                  <div className="accumulated-searches-section">
-                    <div className="accumulated-header">
-                      <h4>Accumulated Searches ({allSearches.length})</h4>
-                      <button 
-                        className="btn-clear-searches"
-                        onClick={handleClearAllSearches}
-                        title="Clear all searches"
+                
+                <div className="search-modal-body">
+                  <div className="search-modal-layout">
+                    {/* Left: Video Player */}
+                    <div className="modal-video-section">
+                      <video 
+                        ref={videoPlayerRef}
+                        src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
+                        controls
+                        muted
+                        className="modal-video-player"
                       >
-                        Clear All
-                      </button>
+                        Your browser does not support the video tag.
+                      </video>
                     </div>
-                    <div className="search-history-list">
-                      {allSearches.map((search) => (
-                        <div key={search.id} className="search-history-item">
-                          <div className="search-history-info">
-                            <span className="search-query">"{search.query}"</span>
-                            <span className="search-meta">{search.taskName} • {search.resultCount} results</span>
+
+                    {/* Right: Search Controls & Results */}
+                    <div className="modal-search-section">
+                      <div className="search-controls">
+                        <input
+                          type="text"
+                          className="search-input"
+                          placeholder="Enter search query..."
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                          disabled={searching}
+                        />
+                        <div className="search-controls-row">
+                          <input
+                            type="number"
+                            className="topk-input"
+                            placeholder="Top K"
+                            min="1"
+                            max="100"
+                            value={topK}
+                            onChange={(e) => setTopK(e.target.value)}
+                            disabled={searching}
+                            title="Number of results (1-100)"
+                          />
+                          <button 
+                            className="btn-search"
+                            onClick={handleSearch}
+                            disabled={searching || !searchText.trim()}
+                          >
+                            {searching ? 'Searching...' : 'Search'}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {searchError && (
+                        <div className="alert alert-error">{searchError}</div>
+                      )}
+
+                      {/* Search Results */}
+                      {searchResults.length > 0 && (
+                        <div className="modal-results-section">
+                          <div className="results-header">
+                            <h4>{searchResults.length} Results</h4>
+                            <button 
+                              className="btn-use-results"
+                              onClick={handleAcceptSearchResults}
+                              title="Add these results to label collection"
+                            >
+                              ✓ Use Results
+                            </button>
                           </div>
-                          <button 
-                            className="btn-remove-search"
-                            onClick={() => handleRemoveSearch(search.id)}
-                            title="Remove this search"
-                          >
-                            ✕
-                          </button>
+                          
+                          <div className="results-list">
+                            {searchResults.map((result, index) => (
+                              <div key={index} className="result-item">
+                                <span className="result-rank">#{index + 1}</span>
+                                <button 
+                                  className="result-time-link"
+                                  onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
+                                >
+                                  {parseFloat(result.StartSec || 0).toFixed(2)}s - {parseFloat(result.EndSec || 0).toFixed(2)}s
+                                </button>
+                                <span className="result-duration">
+                                  {formatDuration(parseFloat(result.EndSec || 0) - parseFloat(result.StartSec || 0))}
+                                </span>
+                                <span className="result-distance">
+                                  {result.Distance?.toFixed(4) || 'N/A'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
-                )}
-
-                {/* Combined Results - Show all labels regardless of review status */}
-                {allResults.length > 0 && (
-                  <div className="results-section">
-                    <div className="results-header">
-                      <h4>All Results ({allResults.length} segments)</h4>
-                    </div>
-                    
-                    <div className="results-list">
-                      {allResults.map((result, index) => (
-                        <div key={index} className={`result-item ${result.source === 'manual' ? 'manual-source' : 'embedding-source'} ${result.reviewStatus === 'reviewed' ? 'reviewed-item' : ''}`}>
-                          <span className="result-rank">#{index + 1}</span>
-                          {result.reviewStatus === 'reviewed' && (
-                            <span className="review-status-badge" title="Reviewed">
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </span>
-                          )}
-                          {result.source === 'manual' ? (
-                            <span className="source-badge manual-badge" title="Manual Label">
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                              </svg>
-                            </span>
-                          ) : (
-                            <span className="source-badge embedding-badge" title="Embedding Search">
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-                                <path d="M10.5 10.5L8.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                              </svg>
-                            </span>
-                          )}
-                          <button 
-                            className="result-time-link"
-                            onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
-                          >
-                            {parseFloat(result.StartSec || 0).toFixed(2)}s - {parseFloat(result.EndSec || 0).toFixed(2)}s
-                          </button>
-                          {result.query && (
-                            <span className="result-query-tag">"{result.query}"</span>
-                          )}
-                          <span className="result-duration">
-                            {formatDuration(parseFloat(result.EndSec || 0) - parseFloat(result.StartSec || 0))}
-                          </span>
-                          {result.Distance !== undefined && (
-                            <span className="result-distance">
-                              Dist: {result.Distance?.toFixed(4) || 'N/A'}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Current Search Results (if any and not yet added) */}
-                {searchResults.length > 0 && allSearches.length === 0 && (
-                  <div className="results-section">
-                    <div className="results-header">
-                      <h4>{searchResults.length} Results</h4>
-                    </div>
-                    
-                    <div className="results-list">
-                      {searchResults.map((result, index) => (
-                        <div key={index} className="result-item">
-                          <span className="result-rank">#{index + 1}</span>
-                          <button 
-                            className="result-time-link"
-                            onClick={() => handleTimeRangeClick(result.StartSec, result.EndSec)}
-                          >
-                            {parseFloat(result.StartSec || 0).toFixed(2)}s - {parseFloat(result.EndSec || 0).toFixed(2)}s
-                          </button>
-                          <span className="result-duration">
-                            {formatDuration(parseFloat(result.EndSec || 0) - parseFloat(result.StartSec || 0))}
-                          </span>
-                          <span className="result-distance">
-                            Dist: {result.Distance?.toFixed(4) || 'N/A'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="no-selection-message">
-                <p>Select an embedding index from the left to start searching</p>
+                </div>
               </div>
-            )}
-          </div>
+            </div>,
+            document.body
+          )}
         </div>
       ) : activeTab === 'understanding' ? (
         <div className="coming-soon-section">

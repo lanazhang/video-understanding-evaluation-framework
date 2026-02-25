@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react'
 import './EvaluationDetail.css'
 import { evalAPI } from '../utils/api'
-import { FetchPost } from '../utils/apiHelper'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import SegmentDetailModal from './CreateEvaluation/SegmentDetailModal'
 import { calculateEvaluationMetrics } from './CreateEvaluation/evaluationUtils'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 function EvaluationDetail({ task, onBack }) {
   const [selectedSegment, setSelectedSegment] = useState(null)
   const [showSegmentModal, setShowSegmentModal] = useState(false)
+  const [showVideoModal, setShowVideoModal] = useState(false)
   const [matchingDetails, setMatchingDetails] = useState(null)
   const [groundTruth, setGroundTruth] = useState(null)
-  const [searchGroundTruth, setSearchGroundTruth] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     fetchEvaluationData()
   }, [task])
 
   const fetchEvaluationData = async () => {
-    setLoading(true)
     try {
       // Fetch the original ground truth
       if (task.GroundTruthId) {
@@ -31,35 +31,16 @@ function EvaluationDetail({ task, onBack }) {
           setGroundTruth(foundGT)
         }
       }
-
-      // Fetch the search ground truth (model predictions)
-      if (task.AnalyzeTasks && task.AnalyzeTasks.length > 0) {
-        const analyzeTask = task.AnalyzeTasks[0]
-        if (analyzeTask.SearchGroundTruthId) {
-          const searchGTResponse = await evalAPI.getGroundTruths(task.VideoId)
-          const searchGTBody = typeof searchGTResponse.body === 'string' ? JSON.parse(searchGTResponse.body) : searchGTResponse.body || searchGTResponse
-          const allGTs = searchGTBody.groundTruths || []
-          const foundSearchGT = allGTs.find(gt => gt.Id === analyzeTask.SearchGroundTruthId)
-          if (foundSearchGT) {
-            setSearchGroundTruth(foundSearchGT)
-          }
-        }
-      }
     } catch (err) {
       console.error('Error fetching evaluation data:', err)
-    } finally {
-      setLoading(false)
     }
   }
 
   useEffect(() => {
-    // Recalculate matching details when we have both ground truths
-    if (groundTruth && searchGroundTruth && task.AnalyzeTasks && task.AnalyzeTasks.length > 0) {
-      const analyzeTask = task.AnalyzeTasks[0]
-      const searchQuery = analyzeTask.SearchQuery || ''
-      
-      // Convert search ground truth labels to search results format
-      const searchResults = searchGroundTruth.Labels.map((label, idx) => ({
+    // Recalculate matching details when we have ground truth and evaluation labels
+    if (groundTruth && task.Labels && task.EvaluationMetrics) {
+      // Convert evaluation labels to search results format
+      const searchResults = task.Labels.map((label) => ({
         StartSec: label.StartTs,
         EndSec: label.EndTs,
         Distance: label.Score || 0
@@ -68,12 +49,36 @@ function EvaluationDetail({ task, onBack }) {
       const result = calculateEvaluationMetrics(
         groundTruth.Labels || [],
         searchResults,
-        searchQuery
+        ''
       )
       
-      setMatchingDetails(result.details)
+      // Add all ground truth labels to gtMatches, marking non-true_positive ones as TN
+      const allGTMatches = (groundTruth.Labels || []).map((label, idx) => {
+        // Find if this label is already in gtMatches from the calculation
+        const existingMatch = result.details.gtMatches.find(m => m.gtIndex === idx)
+        
+        if (existingMatch) {
+          return existingMatch
+        } else {
+          // This label was not included in evaluation (not true_positive/reviewed)
+          // Mark it as TN (True Negative)
+          return {
+            gtIndex: idx,
+            gtLabel: label,
+            predIndex: null,
+            predLabel: null,
+            iou: 0,
+            status: 'TN'
+          }
+        }
+      })
+      
+      setMatchingDetails({
+        gtMatches: allGTMatches,
+        predMatches: result.details.predMatches
+      })
     }
-  }, [groundTruth, searchGroundTruth, task])
+  }, [groundTruth, task])
 
   const handleSegmentClick = (match, type) => {
     setSelectedSegment({ ...match, type })
@@ -85,7 +90,58 @@ function EvaluationDetail({ task, onBack }) {
     setSelectedSegment(null)
   }
 
-  if (!task.AnalyzeTasks || task.AnalyzeTasks.length === 0) {
+  const handleExportPDF = async () => {
+    setExporting(true)
+    try {
+      const element = document.querySelector('.evaluation-detail-content')
+      if (!element) {
+        console.error('Content element not found')
+        return
+      }
+
+      // Create canvas from the content
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+      const imgX = (pdfWidth - imgWidth * ratio) / 2
+      const imgY = 10
+
+      // Add content to PDF
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio)
+      
+      // Save PDF
+      const fileName = `${task.Name.replace(/[^a-z0-9]/gi, '_')}_evaluation_report.pdf`
+      pdf.save(fileName)
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      alert('Failed to export PDF. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleVideoClick = (e) => {
+    e.stopPropagation()
+    setShowVideoModal(true)
+  }
+
+  const handleCloseVideoModal = () => {
+    setShowVideoModal(false)
+  }
+
+  if (!task.EvaluationMetrics) {
     return (
       <div className="evaluation-detail">
         <div className="evaluation-detail-header">
@@ -102,9 +158,8 @@ function EvaluationDetail({ task, onBack }) {
     )
   }
 
-  const analyzeTask = task.AnalyzeTasks[0]
-  const metrics = analyzeTask.EvaluationMetrics
-  const searchQueries = analyzeTask.SearchQueries || [analyzeTask.SearchQuery]
+  const metrics = task.EvaluationMetrics
+  const searchLabels = task.Labels || []
 
   return (
     <div className="evaluation-detail">
@@ -114,6 +169,13 @@ function EvaluationDetail({ task, onBack }) {
           Back to List
         </button>
         <h1>{task.Name}</h1>
+        <button 
+          className="btn-export-pdf" 
+          onClick={handleExportPDF}
+          disabled={exporting}
+        >
+          {exporting ? 'Exporting...' : '📄 Export PDF'}
+        </button>
       </div>
 
       <div className="evaluation-detail-content">
@@ -130,7 +192,17 @@ function EvaluationDetail({ task, onBack }) {
             <h3>Summary</h3>
             <div className="summary-item">
               <span className="summary-label">Video:</span>
-              <span className="summary-value">{task.video?.Name || 'N/A'}</span>
+              <span className="summary-value">
+                {task.video?.Name ? (
+                  <button 
+                    className="video-link" 
+                    onClick={handleVideoClick}
+                    title="View video details"
+                  >
+                    {task.video.Name}
+                  </button>
+                ) : 'N/A'}
+              </span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Ground Truth:</span>
@@ -139,12 +211,12 @@ function EvaluationDetail({ task, onBack }) {
             <div className="summary-item">
               <span className="summary-label">Model:</span>
               <span className="summary-value">
-                {analyzeTask.VideoAnalyzeTask?.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {analyzeTask.VideoAnalyzeTask?.ModelId || 'N/A'}
+                {task.analyzeTask?.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {task.analyzeTask?.ModelId || 'N/A'}
               </span>
             </div>
             <div className="summary-item">
-              <span className="summary-label">Search Queries:</span>
-              <span className="summary-value">{searchQueries.map(q => `"${q}"`).join(', ')}</span>
+              <span className="summary-label">Search Results:</span>
+              <span className="summary-value">{searchLabels.length} segments</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Created:</span>
@@ -225,17 +297,17 @@ function EvaluationDetail({ task, onBack }) {
               
               <div className="overlap-tables">
                 <div className="overlap-table-container">
-                  <h4>Ground Truth Segments ({matchingDetails.gtMatches.filter(m => m.gtLabel.ReviewResult === 'true_positive' && m.status !== 'FN').length})</h4>
+                  <h4>Ground Truth Segments ({matchingDetails.gtMatches.length})</h4>
                   <div className="overlap-table">
                     <div className="overlap-table-header">
                       <div className="overlap-col-index">#</div>
                       <div className="overlap-col-time">Time Range</div>
+                      <div className="overlap-col-label">Label</div>
                       <div className="overlap-col-status">Status</div>
                       <div className="overlap-col-iou">IoU</div>
                       <div className="overlap-col-match">Matched To</div>
                     </div>
                     {[...matchingDetails.gtMatches]
-                      .filter(match => match.gtLabel.ReviewResult === 'true_positive' && match.status !== 'FN')
                       .sort((a, b) => {
                         const aStart = typeof a.gtLabel.StartTs === 'number' ? a.gtLabel.StartTs : parseFloat(a.gtLabel.StartTs || 0)
                         const bStart = typeof b.gtLabel.StartTs === 'number' ? b.gtLabel.StartTs : parseFloat(b.gtLabel.StartTs || 0)
@@ -251,6 +323,9 @@ function EvaluationDetail({ task, onBack }) {
                         <div className="overlap-col-index">{idx + 1}</div>
                         <div className="overlap-col-time">
                           {typeof match.gtLabel.StartTs === 'number' ? match.gtLabel.StartTs.toFixed(2) : parseFloat(match.gtLabel.StartTs || 0).toFixed(2)}s - {typeof match.gtLabel.EndTs === 'number' ? match.gtLabel.EndTs.toFixed(2) : parseFloat(match.gtLabel.EndTs || 0).toFixed(2)}s
+                        </div>
+                        <div className="overlap-col-label">
+                          {match.gtLabel.Label || 'N/A'}
                         </div>
                         <div className="overlap-col-status">
                           <span className={`status-badge ${match.status.toLowerCase()}`}>
@@ -322,6 +397,99 @@ function EvaluationDetail({ task, onBack }) {
           selectedVideo={task.video}
           onClose={handleCloseSegmentModal}
         />
+      )}
+
+      {showVideoModal && task.video && (
+        <div className="video-modal-overlay" onClick={handleCloseVideoModal}>
+          <div className="video-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="video-modal-header">
+              <h2>{task.video.Name}</h2>
+              <button className="btn-close-modal" onClick={handleCloseVideoModal}>
+                ✕
+              </button>
+            </div>
+            <div className="video-modal-body">
+              <div className="video-modal-layout">
+                <div className="video-section">
+                  {task.video.video_url ? (
+                    <video 
+                      controls 
+                      className="video-player"
+                      src={task.video.video_url}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div className="no-video-message">
+                      Video not available
+                    </div>
+                  )}
+                </div>
+                
+                <div className="metadata-section">
+                  <h3>Video Information</h3>
+                  <div className="metadata-grid">
+                    {task.video.Duration && (
+                      <div className="metadata-item">
+                        <span className="metadata-label">Duration</span>
+                        <span className="metadata-value">{task.video.Duration}s</span>
+                      </div>
+                    )}
+                    {task.video.Resolution && task.video.Resolution.length === 2 && (
+                      <div className="metadata-item">
+                        <span className="metadata-label">Resolution</span>
+                        <span className="metadata-value">{task.video.Resolution[0]} × {task.video.Resolution[1]}</span>
+                      </div>
+                    )}
+                    {task.video.Fps && (
+                      <div className="metadata-item">
+                        <span className="metadata-label">FPS</span>
+                        <span className="metadata-value">{Number(task.video.Fps).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {task.video.Size && (
+                      <div className="metadata-item">
+                        <span className="metadata-label">Size</span>
+                        <span className="metadata-value">{(task.video.Size / (1024 * 1024)).toFixed(2)} MB</span>
+                      </div>
+                    )}
+                    {task.video.MetaData?.VideoMetaData?.NameFormat && (
+                      <div className="metadata-item">
+                        <span className="metadata-label">Format</span>
+                        <span className="metadata-value">{task.video.MetaData.VideoMetaData.NameFormat.toUpperCase()}</span>
+                      </div>
+                    )}
+                    {task.video.UploadedTs && (
+                      <div className="metadata-item metadata-item-full">
+                        <span className="metadata-label">Uploaded</span>
+                        <span className="metadata-value">{new Date(task.video.UploadedTs).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {task.video.EmbedCompleteTs && (
+                      <div className="metadata-item metadata-item-full">
+                        <span className="metadata-label">Processed</span>
+                        <span className="metadata-value">{new Date(task.video.EmbedCompleteTs).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {task.video.UploadedBy && (
+                      <div className="metadata-item metadata-item-full">
+                        <span className="metadata-label">Uploaded By</span>
+                        <span className="metadata-value">{task.video.UploadedBy}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {task.video.Description && (
+                <div className="video-description">
+                  <h3>Description</h3>
+                  <p>{task.video.Description}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

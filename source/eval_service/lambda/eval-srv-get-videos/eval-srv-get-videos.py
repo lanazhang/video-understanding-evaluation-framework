@@ -8,7 +8,16 @@ dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
 table_name = os.environ.get('DYNAMO_VIDEO_TABLE')
 table = dynamodb.Table(table_name)
+gt_table_name = os.environ.get('DYNAMO_GROUND_TRUTH_TABLE')
+gt_table = dynamodb.Table(gt_table_name) if gt_table_name else None
 S3_PRESIGNED_URL_EXPIRY_S = int(os.environ.get('S3_PRESIGNED_URL_EXPIRY_S', 3600))  # Default 1 hour
+
+# CORS headers for all responses
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+}
 
 class DecimalEncoder(json.JSONEncoder):
     """Helper class to convert DynamoDB Decimal types to JSON"""
@@ -52,6 +61,24 @@ def generate_video_presigned_url(s3_bucket, s3_key):
     except Exception as e:
         print(f"Error generating pre-signed URL for {s3_bucket}/{s3_key}: {str(e)}")
         return None
+
+def get_gt_count_for_video(video_id):
+    """
+    Get the count of ground truths for a specific video
+    """
+    try:
+        if not gt_table:
+            return 0
+        
+        response = gt_table.query(
+            IndexName='VideoId-index',
+            KeyConditionExpression=Key('VideoId').eq(video_id),
+            Select='COUNT'
+        )
+        return response.get('Count', 0)
+    except Exception as e:
+        print(f"Error getting GT count for video {video_id}: {str(e)}")
+        return 0
 
 def lambda_handler(event, context):
     """
@@ -126,11 +153,12 @@ def lambda_handler(event, context):
         end_index = start_index + page_size
         paginated_items = all_items[start_index:end_index]
         
-        # Generate pre-signed URLs for thumbnails and videos
+        # Generate pre-signed URLs for thumbnails and videos, and get GT counts
         for item in paginated_items:
             s3_bucket = item.get('S3Bucket')
             s3_key_thumbnail = item.get('S3KeyThumbnail')
             s3_key_video = item.get('S3KeyVideo')
+            video_id = item.get('Id')
             
             # Generate thumbnail pre-signed URL
             if s3_bucket and s3_key_thumbnail:
@@ -143,6 +171,10 @@ def lambda_handler(event, context):
                 video_url = generate_video_presigned_url(s3_bucket, s3_key_video)
                 if video_url:
                     item['video_url'] = video_url
+            
+            # Get GT count for this video
+            if video_id:
+                item['gt_count'] = get_gt_count_for_video(video_id)
         
         # Prepare response
         result = {
@@ -158,6 +190,7 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps(result, cls=DecimalEncoder)
         }
     
@@ -167,5 +200,6 @@ def lambda_handler(event, context):
         print(f"Traceback: {traceback.format_exc()}")
         return {
             'statusCode': 500,
+            'headers': CORS_HEADERS,
             'body': json.dumps({'error': str(e)})
         }

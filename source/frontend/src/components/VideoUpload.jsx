@@ -11,7 +11,7 @@ function VideoUpload({ onSuccess, onCancel }) {
   const [uploadFiles, setUploadFiles] = useState([])
   const [taskName, setTaskName] = useState('')
   const [description, setDescription] = useState('')
-  const [selectedEmbeddings, setSelectedEmbeddings] = useState([]) // Default to none checked
+  const [selectedEmbeddings, setSelectedEmbeddings] = useState(embeddingModels) // Default to all models selected
   const [novaMmeConfig, setNovaMmeConfig] = useState({
     durationS: 5,
     embedMode: 'AUDIO_VIDEO_COMBINED',
@@ -49,7 +49,7 @@ function VideoUpload({ onSuccess, onCancel }) {
     setUploadFiles([])
     setTaskName('')
     setDescription('')
-    setSelectedEmbeddings([]) // Reset to none checked
+    setSelectedEmbeddings(embeddingModels) // Reset to all models selected
     setNovaMmeConfig({
       durationS: 5,
       embedMode: 'AUDIO_VIDEO_COMBINED',

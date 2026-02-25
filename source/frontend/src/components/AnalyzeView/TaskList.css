@@ -33,11 +33,6 @@
   gap: 12px;
 }
 
-.section-header-with-action h3::before {
-  content: '📊';
-  font-size: 1.2em;
-}
-
 .section-header-with-action .btn-refresh {
   padding: 10px;
   width: 42px;
@@ -137,19 +132,12 @@
 }
 
 .select-all-row {
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  border: 2px solid #fed7aa;
-  border-radius: 12px;
-  margin-bottom: 14px;
-  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);
-  transition: all 0.2s ease;
+  padding: 8px 4px;
+  margin-bottom: 2px;
 }
 
 .select-all-row:hover {
-  border-color: #fdba74;
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
-  transform: translateY(-1px);
+  /* No hover effects */
 }
 
 .select-all-checkbox {

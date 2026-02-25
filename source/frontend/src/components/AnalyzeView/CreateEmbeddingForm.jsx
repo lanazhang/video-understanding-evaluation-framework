@@ -1,71 +1,20 @@
-import { useState, useEffect } from 'react'
 import './CreateEmbeddingForm.css'
 import { modelGroups } from '../../static/modelConfig'
 
-function CreateEmbeddingForm({ video, analyzeTasks, onCreate }) {
-  const [createParams, setCreateParams] = useState({
-    modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
-    durationS: 5,
-    embedMode: 'AUDIO_VIDEO_COMBINED',
-    embeddingDim: 1024,
-    segmentationMethod: 'dynamic',
-    minDurationSec: 4,
-    embeddingScope: ['clip'],
-    embeddingOption: ['visual', 'audio', 'transcription'],
-    description: ''
-  })
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState(null)
-
-  const selectedModel = modelGroups
-    .find(group => group.groupName === 'Multimodal Embedding')
-    ?.models.find(model => model.modelId === createParams.modelId)
-
-  useEffect(() => {
-    if (selectedModel?.dims && selectedModel.dims.length > 0) {
-      if (!selectedModel.dims.includes(parseInt(createParams.embeddingDim))) {
-        setCreateParams(prev => ({ ...prev, embeddingDim: selectedModel.dims[0] }))
-      }
-    }
-  }, [selectedModel, createParams.embeddingDim])
-
-  const handleCreate = async () => {
-    setCreating(true)
-    setCreateError(null)
-
-    try {
-      await onCreate(createParams, selectedModel, analyzeTasks)
-      
-      // Reset form
-      if (selectedModel?.parameterType === 'nova-mme') {
-        setCreateParams(prev => ({
-          ...prev,
-          durationS: 5,
-          embedMode: 'AUDIO_VIDEO_COMBINED',
-          embeddingDim: 1024,
-          description: ''
-        }))
-      } else if (selectedModel?.parameterType === 'twelvelabs') {
-        setCreateParams(prev => ({
-          ...prev,
-          segmentationMethod: 'dynamic',
-          minDurationSec: 4,
-          embeddingScope: ['clip'],
-          embeddingOption: ['visual', 'audio', 'transcription'],
-          description: ''
-        }))
-      }
-      setCreateError(null)
-    } catch (err) {
-      setCreateError(err.message)
-    } finally {
-      setCreating(false)
-    }
-  }
+function CreateEmbeddingForm({ 
+  createParams, 
+  setCreateParams, 
+  selectedModel, 
+  creating, 
+  createError, 
+  onCreateEmbedding 
+}) {
 
   return (
     <div className="create-embedding-section">
-      <h3>Create New Embedding Index</h3>
+      <h3>
+        Create New Embedding Index
+      </h3>
       
       {createError && (
         <div className="alert alert-error">{createError}</div>
@@ -150,7 +99,7 @@ function CreateEmbeddingForm({ video, analyzeTasks, onCreate }) {
               <label>&nbsp;</label>
               <button 
                 className="btn-create-embedding"
-                onClick={handleCreate}
+                onClick={onCreateEmbedding}
                 disabled={creating}
               >
                 {creating ? 'Creating...' : 'Create Embedding'}
@@ -233,7 +182,7 @@ function CreateEmbeddingForm({ video, analyzeTasks, onCreate }) {
               <label>&nbsp;</label>
               <button 
                 className="btn-create-embedding"
-                onClick={handleCreate}
+                onClick={onCreateEmbedding}
                 disabled={creating}
               >
                 {creating ? 'Creating...' : 'Create Embedding'}

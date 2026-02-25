@@ -54,11 +54,11 @@ th[style*="cursor: pointer"]:hover {
 
 td {
   padding: 16px;
-  border-bottom: 1px solid #f1f3f5;
+  border-bottom: none;
 }
 
 tbody tr:hover {
-  background-color: #f8f9fa;
+  background-color: #e8e8e8;
   transition: background-color 0.2s ease;
 }
 

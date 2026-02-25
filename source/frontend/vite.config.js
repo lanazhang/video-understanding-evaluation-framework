@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  //base: '/video-eval-mock/', // Change this to your subfolder path
+  base: '/video-eval-mock/', // Change this to your subfolder path
 })

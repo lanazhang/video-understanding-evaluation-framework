@@ -50,9 +50,11 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     setLoadingVideos(true)
     try {
       const data = await FetchPost('/video/get-videos', {}, 'EvalService')
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        setVideos(responseBody.videos || [])
+      // FetchPost returns parsed JSON directly, check for videos array
+      if (data.videos !== undefined) {
+        setVideos(data.videos || [])
+      } else if (data.error) {
+        console.error('Error fetching videos:', data.error)
       }
     } catch (err) {
       console.error('Error fetching videos:', err)

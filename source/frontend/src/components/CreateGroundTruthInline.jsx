@@ -42,16 +42,15 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
       
       const data = await FetchPost('/video/get-videos', payload, 'EvalService')
       
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        setVideos(responseBody.videos || [])
-        setTotalCount(responseBody.total_count || 0)
-        setHasMore(responseBody.has_more || false)
+      // FetchPost returns parsed JSON directly, check for videos array
+      if (data.videos !== undefined) {
+        setVideos(data.videos || [])
+        setTotalCount(data.total_count || 0)
+        setHasMore(data.has_more || false)
+      } else if (data.error) {
+        setVideoError(data.error || 'Failed to fetch videos')
       } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setVideoError(errorMessage || 'Failed to fetch videos')
+        setVideoError('Unexpected response format')
       }
     } catch (err) {
       console.error('Error fetching videos:', err)

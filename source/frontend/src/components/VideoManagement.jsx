@@ -55,18 +55,18 @@ function VideoManagement({ currentUser }) {
       
       const data = await FetchPost('/video/get-videos', payload, 'EvalService')
       
-      if (data.statusCode === 200) {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        
-        setVideos(responseBody.videos)
-        setTotalCount(responseBody.total_count || 0)
-        setHasMore(responseBody.has_more || false)
+      console.log('API Response:', data)
+      
+      // FetchPost returns the parsed response body directly
+      if (data.videos !== undefined) {
+        setVideos(data.videos || [])
+        setTotalCount(data.total_count || 0)
+        setHasMore(data.has_more || false)
         setCurrentPage(page)
+      } else if (data.error) {
+        setError(data.error || 'Failed to fetch videos')
       } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setError(errorMessage || 'Failed to fetch videos')
+        setError('Unexpected response format')
       }
     } catch (err) {
       console.error('Error fetching videos:', err)
@@ -115,17 +115,15 @@ function VideoManagement({ currentUser }) {
     }
 
     try {
-      const data = await FetchPost('/video/delete-video', { id }, 'EvalService')
+      const data = await FetchPost('/video/delete-video', { Id: id }, 'EvalService')
       
-      if (data.statusCode === 200) {
+      // FetchPost returns the parsed response body directly
+      if (data.error) {
+        setError(data.error || 'Failed to delete video')
+      } else {
         // Remove from local state
         setVideos(prev => prev.filter(v => v.Id !== id && v.id !== id))
         console.log('Video deleted successfully:', id)
-      } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setError(errorMessage || 'Failed to delete video')
       }
     } catch (err) {
       console.error('Error deleting video:', err)
@@ -209,6 +207,27 @@ function VideoManagement({ currentUser }) {
   // Placeholder thumbnail as data URI
   const placeholderThumbnail = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90"%3E%3Crect width="160" height="90" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="%23666"%3ENo Thumbnail%3C/text%3E%3C/svg%3E'
 
+  // If showing upload, render that view instead
+  if (showUploadModal) {
+    return (
+      <div className="video-management">
+        <div className="content-header">
+          <button 
+            className="btn-back" 
+            onClick={() => setShowUploadModal(false)}
+          >
+            ← Back to Videos
+          </button>
+          <h1>Upload Videos</h1>
+        </div>
+        <VideoUpload
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadModal(false)}
+        />
+      </div>
+    )
+  }
+
   // If showing analyze, render that view instead
   if (showAnalyze && analyzeVideo) {
     return (
@@ -235,18 +254,11 @@ function VideoManagement({ currentUser }) {
           >
             <img src={refreshIcon} alt="Refresh" />
           </button>
-          <button className="btn-create" onClick={() => setShowUploadModal(!showUploadModal)}>
-            {showUploadModal ? '✕ Cancel' : '+ Upload Videos'}
+          <button className="btn-create" onClick={() => setShowUploadModal(true)}>
+            + Upload Videos
           </button>
         </div>
       </div>
-
-      {showUploadModal && (
-        <VideoUpload
-          onSuccess={handleUploadSuccess}
-          onCancel={() => setShowUploadModal(false)}
-        />
-      )}
 
       <SearchBar
         searchQuery={searchQuery}

@@ -23,9 +23,10 @@ function CompareModal({
   if (!show) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content compare-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="compare-modal-wrapper">
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content compare-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
           <h2>{selectedTasks.length === 1 ? 'Search Embeddings' : `Compare Embeddings (${selectedTasks.length} tasks)`}</h2>
           <button className="close-button" onClick={onClose}>&times;</button>
         </div>
@@ -167,6 +168,7 @@ function CompareModal({
                 )
               })}
             </div>
+          </div>
           </div>
         </div>
       </div>

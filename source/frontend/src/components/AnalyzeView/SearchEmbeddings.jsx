@@ -62,13 +62,14 @@ function SearchEmbeddings({
   }, [compareResults, sortBy, sortOrder])
 
   return (
-    <div className="search-embeddings-modal-overlay" onClick={onClose}>
-      <div className={`search-embeddings-modal ${isCompareMode ? 'compare-mode' : 'single-mode'}`} onClick={(e) => e.stopPropagation()}>
-        <div className="search-modal-header">
+    <div className="search-embeddings-wrapper">
+      <div className="se-modal-overlay" onClick={onClose}>
+        <div className={`se-modal-container ${isCompareMode ? 'compare-mode' : 'single-mode'}`} onClick={(e) => e.stopPropagation()}>
+        <div className="se-modal-header">
           <h3>
             {isCompareMode ? `Compare Embeddings (${selectedTasks.length} tasks)` : 'Search Embeddings'}
           </h3>
-          <button className="btn-close-modal" onClick={onClose} title="Close">
+          <button className="se-modal-btn-close" onClick={onClose} title="Close">
             ✕
           </button>
         </div>
@@ -203,53 +204,55 @@ function SearchEmbeddings({
             </div>
           </div>
         ) : (
-          <div className="search-modal-content">
-            <div className="search-modal-video-section">
+          <div className="se-modal-content-single">
+            <div className="se-modal-video-left">
               <video 
                 ref={videoPlayerRef}
                 src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
                 controls
                 muted
-                className="search-modal-video-player"
+                className="se-modal-video-player"
               >
                 Your browser does not support the video tag.
               </video>
             </div>
 
-            <div className="search-modal-controls-section">
-              <div className="search-controls-modal">
-                <input
-                  type="text"
-                  className="search-text-input"
-                  placeholder="Enter search query..."
-                  value={compareSearchText}
-                  onChange={(e) => setCompareSearchText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                  disabled={compareLoading}
-                />
-                <input
-                  type="number"
-                  className="search-topk-input"
-                  placeholder="Top K"
-                  min="1"
-                  max="100"
-                  value={compareTopK}
-                  onChange={(e) => setCompareTopK(e.target.value)}
-                  disabled={compareLoading}
-                  title="Number of results to return (1-100)"
-                />
-                <button 
-                  className="btn-search"
-                  onClick={onSearch}
-                  disabled={compareLoading || !compareSearchText.trim()}
-                >
-                  {compareLoading ? 'Searching...' : 'Search'}
-                </button>
+            <div className="se-modal-controls-right">
+              <div className="se-modal-search-controls">
+                <div className="se-modal-controls-row">
+                  <input
+                    type="text"
+                    className="se-modal-text-input"
+                    placeholder="Enter search query..."
+                    value={compareSearchText}
+                    onChange={(e) => setCompareSearchText(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+                    disabled={compareLoading}
+                  />
+                  <input
+                    type="number"
+                    className="se-modal-topk-input"
+                    placeholder="Top K"
+                    min="1"
+                    max="100"
+                    value={compareTopK}
+                    onChange={(e) => setCompareTopK(e.target.value)}
+                    disabled={compareLoading}
+                    title="Number of results to return (1-100)"
+                  />
+                  <button 
+                    className="se-modal-btn-search"
+                    onClick={onSearch}
+                    disabled={compareLoading || !compareSearchText.trim()}
+                  >
+                    {compareLoading ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
                 
-                <div className="sort-controls">
-                  <label className="sort-label">Sort by:</label>
+                <div className="se-modal-sort-controls">
+                  <label className="se-modal-sort-label">Sort by:</label>
                   <select 
-                    className="sort-select"
+                    className="se-modal-sort-select"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     disabled={compareLoading}
@@ -258,7 +261,7 @@ function SearchEmbeddings({
                     <option value="timestamp">Timestamp</option>
                   </select>
                   <button 
-                    className="sort-order-btn"
+                    className="se-modal-sort-order-btn"
                     onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                     disabled={compareLoading}
                     title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
@@ -269,10 +272,10 @@ function SearchEmbeddings({
               </div>
               
               {compareError && (
-                <div className="alert alert-error">{compareError}</div>
+                <div className="se-modal-alert se-modal-alert-error">{compareError}</div>
               )}
               
-              <div className="search-results-modal-container">
+              <div className="se-modal-results-container">
                 {selectedTasks.map((task) => {
                   const hasResults = sortedCompareResults[task.Id]
                   const resultData = hasResults ? sortedCompareResults[task.Id] : null
@@ -292,40 +295,40 @@ function SearchEmbeddings({
                   }
                   
                   return (
-                    <div key={task.Id} className="search-result-modal-column">
-                      <div className="search-result-modal-header" title={tooltipContent}>
+                    <div key={task.Id} className="se-modal-result-column">
+                      <div className="se-modal-result-header" title={tooltipContent}>
                         <h4>
                           {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}
-                          <span className="info-icon" title={tooltipContent}>ⓘ</span>
+                          <span className="se-modal-info-icon" title={tooltipContent}>ⓘ</span>
                         </h4>
-                        <span className="search-model-id">{task.ModelId}</span>
+                        <span className="se-modal-model-id">{task.ModelId}</span>
                         {resultData && resultData.results.length > 0 && (
-                          <span className="search-result-count">{resultData.results.length} results</span>
+                          <span className="se-modal-result-count">{resultData.results.length} results</span>
                         )}
                       </div>
                       
                       {!hasResults ? (
-                        <div className="no-results-message">Waiting for search...</div>
+                        <div className="se-modal-no-results">Waiting for search...</div>
                       ) : resultData.error ? (
-                        <div className="alert alert-error">{resultData.error}</div>
+                        <div className="se-modal-alert se-modal-alert-error">{resultData.error}</div>
                       ) : resultData.results.length > 0 ? (
-                        <div className="results-list-modal">
+                        <div className="se-modal-results-list">
                           {resultData.results.map((result, index) => (
-                            <div key={index} className="result-item-modal">
-                              <span className="result-rank">#{index + 1}</span>
+                            <div key={index} className="se-modal-result-item">
+                              <span className="se-modal-result-rank">#{index + 1}</span>
                               <button 
-                                className="time-range-link"
+                                className="se-modal-time-link"
                                 onClick={() => onTimeRangeClick(result.StartSec, result.EndSec)}
                                 title="Click to navigate video to this timestamp"
                               >
                                 {parseFloat(result.StartSec || 0).toFixed(2)}s-{parseFloat(result.EndSec || 0).toFixed(2)}s
                               </button>
-                              <span className="result-distance">Dist: {result.Distance?.toFixed(4) || 'N/A'}</span>
+                              <span className="se-modal-result-distance">Dist: {result.Distance?.toFixed(4) || 'N/A'}</span>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="no-results-message">No results found</div>
+                        <div className="se-modal-no-results">No results found</div>
                       )}
                     </div>
                   )
@@ -334,6 +337,7 @@ function SearchEmbeddings({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

@@ -188,16 +188,52 @@
 
 .sidebar-footer {
   position: absolute;
-  bottom: 50px;
+  bottom: 16px;
   left: 8px;
   right: 8px;
   padding-top: 16px;
   border-top: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .sidebar.expanded .sidebar-footer {
   left: 16px;
   right: 16px;
+}
+
+.sidebar-footer > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 12px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.95em;
+  transition: all 0.2s ease;
+  justify-content: flex-start;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar:not(.expanded) .sidebar-footer > button {
+  justify-content: center;
+  padding: 10px;
+  margin-left: 5px;
+}
+
+.sidebar-footer > button:hover {
+  background-color: #e9ecef;
+}
+
+.sidebar-footer > button.active {
+  background: var(--orange-gradient);
+  color: white;
+  box-shadow: 0 4px 12px var(--orange-shadow);
 }
 
 .sidebar-footer .user-profile {

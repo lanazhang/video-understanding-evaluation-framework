@@ -31,9 +31,9 @@ function VideoAnalyzeRoute({ currentUser }) {
       try {
         const data = await FetchPost('/video/get-videos', {}, 'EvalService')
         
-        if (data.statusCode === 200) {
-          const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-          const videos = responseBody.videos || []
+        // Handle Lambda proxy response format
+        if (data.videos !== undefined) {
+          const videos = data.videos || []
           const foundVideo = videos.find(v => v.Id === videoId)
           
           if (foundVideo) {
@@ -41,8 +41,22 @@ function VideoAnalyzeRoute({ currentUser }) {
           } else {
             setError('Video not found')
           }
+        } else if (data.statusCode !== undefined) {
+          if (data.statusCode === 200) {
+            const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+            const videos = responseBody.videos || []
+            const foundVideo = videos.find(v => v.Id === videoId)
+            
+            if (foundVideo) {
+              setVideo(foundVideo)
+            } else {
+              setError('Video not found')
+            }
+          } else {
+            setError('Failed to fetch video')
+          }
         } else {
-          setError('Failed to fetch video')
+          setError('Unexpected response format')
         }
       } catch (err) {
         console.error('Error fetching video:', err)
@@ -175,6 +189,8 @@ function AppContent({ currentUser, setCurrentUser }) {
   const [gtVideoFilter, setGtVideoFilter] = useState(null)
   const [evalGTFilter, setEvalGTFilter] = useState(null)
   const [gtResetKey, setGtResetKey] = useState(0)
+  const [videoResetKey, setVideoResetKey] = useState(0)
+  const [evalResetKey, setEvalResetKey] = useState(0)
 
   // Determine active menu from URL
   const getActiveMenu = () => {
@@ -231,12 +247,16 @@ function AppContent({ currentUser, setCurrentUser }) {
     if (menu === 'introduction') {
       navigate('/')
     } else if (menu === 'videos') {
+      // Increment reset key to force remount of VideoManagement
+      setVideoResetKey(prev => prev + 1)
       navigate('/videos')
     } else if (menu === 'ground-truth') {
       // Increment reset key to force remount of GroundTruthManagement
       setGtResetKey(prev => prev + 1)
       navigate('/ground-truth')
     } else if (menu === 'evaluation') {
+      // Increment reset key to force remount of EvaluationManagement
+      setEvalResetKey(prev => prev + 1)
       navigate('/evaluation')
     }
   }
@@ -258,16 +278,6 @@ function AppContent({ currentUser, setCurrentUser }) {
           </button>
         </div>
         <nav>
-          <button 
-            className={activeMenu === 'introduction' ? 'active' : ''}
-            onClick={() => handleMenuClick('introduction')}
-            title="Introduction"
-          >
-            <span className="menu-icon">
-              <img src={infoIcon} alt="Introduction" />
-            </span>
-            <span className="menu-text">Introduction</span>
-          </button>
           <button 
             className={activeMenu === 'videos' ? 'active' : ''}
             onClick={() => handleMenuClick('videos')}
@@ -301,6 +311,16 @@ function AppContent({ currentUser, setCurrentUser }) {
         </nav>
         
         <div className="sidebar-footer">
+          <button 
+            className={activeMenu === 'introduction' ? 'active' : ''}
+            onClick={() => handleMenuClick('introduction')}
+            title="Introduction"
+          >
+            <span className="menu-icon">
+              <img src={infoIcon} alt="Introduction" />
+            </span>
+            <span className="menu-text">Introduction</span>
+          </button>
           <div className="user-profile">
             <button 
               className="profile-button"
@@ -322,11 +342,11 @@ function AppContent({ currentUser, setCurrentUser }) {
       <div className="content">
         <Routes>
           <Route path="/" element={<Introduction />} />
-          <Route path="/videos" element={<VideoManagement currentUser={currentUser} />} />
+          <Route path="/videos" element={<VideoManagement key={videoResetKey} currentUser={currentUser} />} />
           <Route path="/introduction" element={<Introduction />} />
           <Route path="/video/:videoId/analyze" element={<VideoAnalyzeRoute currentUser={currentUser} />} />
           <Route path="/ground-truth" element={<GroundTruthManagement key={gtResetKey} currentUser={currentUser} initialVideoFilter={gtVideoFilter} />} />
-          <Route path="/evaluation" element={<EvaluationManagement currentUser={currentUser} initialGTFilter={evalGTFilter} />} />
+          <Route path="/evaluation" element={<EvaluationManagement key={evalResetKey} currentUser={currentUser} initialGTFilter={evalGTFilter} />} />
           <Route path="/evaluation/:id" element={<EvaluationDetailRoute currentUser={currentUser} />} />
         </Routes>
       </div>

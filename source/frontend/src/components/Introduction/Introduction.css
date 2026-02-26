@@ -16,11 +16,135 @@
   margin-bottom: 48px;
 }
 
+.intro-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #212529;
+}
+
 .intro-description {
   font-size: 16px;
   line-height: 1.6;
   color: #495057;
   max-width: 900px;
+}
+
+.personas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin: 32px 0;
+}
+
+.persona-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 28px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.persona-card:hover {
+  border-color: #f97316;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.15);
+}
+
+.persona-card:first-child {
+  border-color: #f97316;
+}
+
+.persona-card:first-child:hover {
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.2);
+}
+
+.persona-card:last-child {
+  border-color: #10b981;
+}
+
+.persona-card:last-child:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+}
+
+.persona-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.persona-icon {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.persona-card:hover .persona-icon {
+  transform: scale(1.1);
+}
+
+.persona-card p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #495057;
+  margin-bottom: 20px;
+}
+
+.persona-benefits {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.persona-card:first-child .persona-benefits {
+  border-left: 4px solid #f97316;
+}
+
+.persona-card:last-child .persona-benefits {
+  border-left: 4px solid #10b981;
+}
+
+.persona-benefits strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.persona-card:first-child .persona-benefits strong {
+  color: #f97316;
+}
+
+.persona-card:last-child .persona-benefits strong {
+  color: #10b981;
+}
+
+.persona-benefits ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.persona-benefits li {
+  padding: 6px 0;
+  font-size: 14px;
+  color: #495057;
+  position: relative;
+  padding-left: 20px;
+}
+
+.persona-benefits li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: bold;
+  font-size: 16px;
 }
 
 .workflow-diagram {
@@ -115,14 +239,14 @@
 }
 
 .model-group-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .model-group-card h3 {
   font-size: 16px;
   font-weight: 600;
-  color: #3b82f6;
+  color: #10b981;
   margin: 0 0 16px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid #e9ecef;
@@ -232,6 +356,10 @@
   }
 
   .steps-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .personas-grid {
     grid-template-columns: 1fr;
   }
 

@@ -17,6 +17,7 @@ from aws_cdk import (
     aws_events_targets as targets,
 )
 from aws_cdk.aws_apigateway import IdentitySource
+import os
 
 from constructs import Construct
 import os, re
@@ -960,6 +961,47 @@ class EvalServiceStack(NestedStack):
                     'TLABS_S3_VECTOR_BUCKET': S3_VECTOR_BUCKET_NAME
                 },
                 layers=[self.boto3_layer]
+            )
+
+        # POST /v1/model/tlabs-pegasus
+        lambda_key='eval-srv-api-tlabs-pegasus'
+        lambda_tlabs_pegasus_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="tlabs-pegasus", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_tlabs_pegasus_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=300, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'DEFAULT_TLABS_PEGASUS_MODEL_ID': 'twelvelabs.pegasus-1-0-v1:0'
+                },
+            )
+
+        # POST /v1/model/bedrock-converse
+        lambda_key='eval-srv-api-bedrock-converse'
+        lambda_bedrock_converse_role = self.create_role(lambda_key, ["dynamodb","s3","bedrock"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="bedrock-converse", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_bedrock_converse_role,
+                lambda_file_name=lambda_key,
+                memory_m=3008, timeout_s=300, ephemeral_storage_size=10240,
+                evns={
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'DEFAULT_BEDROCK_CONVERSE_MODEL_ID': 'amazon.nova-pro-v1:0'
+                },
+            )
+
+        # POST /v1/model/gemini
+        lambda_key='eval-srv-api-gemini'
+        lambda_gemini_role = self.create_role(lambda_key, ["dynamodb","s3"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="gemini", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_gemini_role,
+                lambda_file_name=lambda_key,
+                memory_m=3008, timeout_s=600, ephemeral_storage_size=10240,
+                evns={
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DEFAULT_GEMINI_MODEL_ID': 'gemini-1.5-flash'
+                },
             )
 
         # POST /v1/gt/upsert-ground-truth

@@ -1,8 +1,6 @@
 import refreshIcon from '../../assets/icons/refresh.svg'
-import TaskItem from './TaskItem'
 import SearchEmbeddings from './SearchEmbeddings'
 import './TaskList.css'
-import './TaskItem.css'
 
 function TaskList({
   analyzeTasks,
@@ -40,12 +38,12 @@ function TaskList({
   const completedTasks = analyzeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
 
   return (
-    <div className="tasks-display-section">
-      <div className="section-header-with-action">
-        <h3>Multimodal Embedding Indexes</h3>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div className="task-list">
+      <div className="task-list__header">
+        <h3 className="task-list__title">Multimodal Embedding Indexes</h3>
+        <div className="task-list__actions">
           <button 
-            className="btn-compare"
+            className="task-list__btn task-list__btn--compare"
             onClick={onOpenCompare}
             disabled={selectedTasks.length === 0}
             title={selectedTasks.length === 0 ? "Select tasks to compare" : "Compare selected embeddings"}
@@ -53,7 +51,7 @@ function TaskList({
             Compare ({selectedTasks.length})
           </button>
           <button 
-            className="btn-refresh" 
+            className="task-list__btn task-list__btn--refresh" 
             onClick={onRefresh}
             disabled={loadingTasks}
             title="Refresh task list"
@@ -64,18 +62,19 @@ function TaskList({
       </div>
       
       {tasksError && (
-        <div className="alert alert-error">{tasksError}</div>
+        <div className="task-list__alert task-list__alert--error">{tasksError}</div>
       )}
       
       {loadingTasks ? (
-        <div className="loading-message">Loading tasks...</div>
+        <div className="task-list__loading">Loading tasks...</div>
       ) : analyzeTasks.length > 0 ? (
-        <div className="analyze-tasks-list">
+        <div className="task-list__items">
           {completedTasks.length > 0 && (
-            <div className="select-all-row">
-              <label className="select-all-checkbox">
+            <div className="task-list__select-all">
+              <label className="task-list__select-all-label">
                 <input
                   type="checkbox"
+                  className="task-list__select-all-checkbox"
                   checked={selectedTasks.length > 0 && selectedTasks.length === completedTasks.length}
                   onChange={(e) => {
                     if (e.target.checked) {
@@ -96,30 +95,30 @@ function TaskList({
             const canCompare = task.Status === 'completed' && task.Result && task.Result.S3VectorIndex
             
             return (
-              <div key={task.Id} className="analyze-task-item compact">
-                <div className="task-compact-header">
-                  <div className="task-compact-info">
+              <div key={task.Id} className="task-list__item">
+                <div className="task-list__item-header">
+                  <div className="task-list__item-info">
                     {canCompare && (
                       <input
                         type="checkbox"
-                        className="task-checkbox"
+                        className="task-list__item-checkbox"
                         checked={isSelected}
                         onChange={() => onToggleSelection(task)}
                         title="Select for comparison"
                       />
                     )}
-                    <span className={`task-status ${task.Status}`}>{task.Status}</span>
-                    <span className="task-compact-detail">
+                    <span className={`task-list__status task-list__status--${task.Status}`}>{task.Status}</span>
+                    <span className="task-list__item-detail">
                       {task.ModelId || 'N/A'}
                     </span>
-                    <span className="task-compact-detail">
+                    <span className="task-list__item-detail">
                       {task.Type}
                     </span>
                   </div>
-                  <div className="task-actions">
+                  <div className="task-list__item-actions">
                     {task.Status === 'completed' && task.Result && task.Result.S3VectorIndex && (
                       <button 
-                        className="btn-search-icon"
+                        className="task-list__btn task-list__btn--search"
                         onClick={() => onOpenSearch(task.Id, task.Result.S3VectorIndex, task)}
                         title="Search embeddings"
                       >
@@ -131,7 +130,7 @@ function TaskList({
                       </button>
                     )}
                     <button 
-                      className="btn-delete-task"
+                      className="task-list__btn task-list__btn--delete"
                       onClick={(e) => {
                         e.stopPropagation()
                         onDeleteTask(task.Id)
@@ -143,7 +142,7 @@ function TaskList({
                       </svg>
                     </button>
                     <button 
-                      className="btn-expand"
+                      className="task-list__btn task-list__btn--expand"
                       onClick={() => onToggleExpand(isExpanded ? null : task.Id)}
                       title={isExpanded ? 'Collapse' : 'Expand'}
                     >
@@ -168,49 +167,49 @@ function TaskList({
                 </div>
                 
                 {isExpanded && (
-                  <div className="task-details">
-                    <div className="task-detail-grid">
-                      <div className="task-detail-row">
-                        <span className="detail-label">Task ID:</span>
-                        <span className="detail-value">{task.Id}</span>
+                  <div className="task-list__details">
+                    <div className="task-list__details-grid">
+                      <div className="task-list__detail-row">
+                        <span className="task-list__detail-label">Task ID:</span>
+                        <span className="task-list__detail-value">{task.Id}</span>
                       </div>
-                      <div className="task-detail-row">
-                        <span className="detail-label">Type:</span>
-                        <span className="detail-value">{task.Type}</span>
+                      <div className="task-list__detail-row">
+                        <span className="task-list__detail-label">Type:</span>
+                        <span className="task-list__detail-value">{task.Type}</span>
                       </div>
-                      <div className="task-detail-row">
-                        <span className="detail-label">Model:</span>
-                        <span className="detail-value">{task.ModelId || 'N/A'}</span>
+                      <div className="task-list__detail-row">
+                        <span className="task-list__detail-label">Model:</span>
+                        <span className="task-list__detail-value">{task.ModelId || 'N/A'}</span>
                       </div>
-                      <div className="task-detail-row">
-                        <span className="detail-label">Created:</span>
-                        <span className="detail-value">{formatDate(task.StartedTs)}</span>
+                      <div className="task-list__detail-row">
+                        <span className="task-list__detail-label">Created:</span>
+                        <span className="task-list__detail-value">{formatDate(task.StartedTs)}</span>
                       </div>
                       
                       {task.Type === 'tlabs-mme' ? (
                         <>
                           {(task.Request?.Segmentation || task.Request?.segmentation) && (
                             <>
-                              <div className="task-detail-row">
-                                <span className="detail-label">Segmentation Method:</span>
-                                <span className="detail-value">
+                              <div className="task-list__detail-row">
+                                <span className="task-list__detail-label">Segmentation Method:</span>
+                                <span className="task-list__detail-value">
                                   {task.Request.Segmentation?.Method || task.Request.segmentation?.method || 'N/A'}
                                 </span>
                               </div>
                               {(task.Request.Segmentation?.Dynamic || task.Request.segmentation?.dynamic) && (
                                 <>
                                   {(task.Request.Segmentation?.Dynamic?.MinDurationSec || task.Request.segmentation?.dynamic?.minDurationSec) && (
-                                    <div className="task-detail-row">
-                                      <span className="detail-label">Min Duration:</span>
-                                      <span className="detail-value">
+                                    <div className="task-list__detail-row">
+                                      <span className="task-list__detail-label">Min Duration:</span>
+                                      <span className="task-list__detail-value">
                                         {task.Request.Segmentation?.Dynamic?.MinDurationSec || task.Request.segmentation?.dynamic?.minDurationSec}s
                                       </span>
                                     </div>
                                   )}
                                   {(task.Request.Segmentation?.Dynamic?.MaxDurationSec || task.Request.segmentation?.dynamic?.maxDurationSec) && (
-                                    <div className="task-detail-row">
-                                      <span className="detail-label">Max Duration:</span>
-                                      <span className="detail-value">
+                                    <div className="task-list__detail-row">
+                                      <span className="task-list__detail-label">Max Duration:</span>
+                                      <span className="task-list__detail-value">
                                         {task.Request.Segmentation?.Dynamic?.MaxDurationSec || task.Request.segmentation?.dynamic?.maxDurationSec}s
                                       </span>
                                     </div>
@@ -218,9 +217,9 @@ function TaskList({
                                 </>
                               )}
                               {(task.Request.Segmentation?.Fixed?.DurationSec || task.Request.segmentation?.fixed?.durationSec) && (
-                                <div className="task-detail-row">
-                                  <span className="detail-label">Fixed Duration:</span>
-                                  <span className="detail-value">
+                                <div className="task-list__detail-row">
+                                  <span className="task-list__detail-label">Fixed Duration:</span>
+                                  <span className="task-list__detail-value">
                                     {task.Request.Segmentation?.Fixed?.DurationSec || task.Request.segmentation?.fixed?.durationSec}s
                                   </span>
                                 </div>
@@ -228,17 +227,17 @@ function TaskList({
                             </>
                           )}
                           {(task.Request?.EmbeddingScope || task.Request?.embeddingScope) && (
-                            <div className="task-detail-row">
-                              <span className="detail-label">Embedding Scope:</span>
-                              <span className="detail-value">
+                            <div className="task-list__detail-row">
+                              <span className="task-list__detail-label">Embedding Scope:</span>
+                              <span className="task-list__detail-value">
                                 {(task.Request.EmbeddingScope || task.Request.embeddingScope)?.join(', ') || 'N/A'}
                               </span>
                             </div>
                           )}
                           {(task.Request?.EmbeddingOption || task.Request?.embeddingOption) && (
-                            <div className="task-detail-row">
-                              <span className="detail-label">Embedding Options:</span>
-                              <span className="detail-value">
+                            <div className="task-list__detail-row">
+                              <span className="task-list__detail-label">Embedding Options:</span>
+                              <span className="task-list__detail-value">
                                 {(task.Request.EmbeddingOption || task.Request.embeddingOption)?.join(', ') || 'N/A'}
                               </span>
                             </div>
@@ -246,31 +245,31 @@ function TaskList({
                         </>
                       ) : (
                         <>
-                          <div className="task-detail-row">
-                            <span className="detail-label">Duration:</span>
-                            <span className="detail-value">{task.Request?.DurationS || 'N/A'}s</span>
+                          <div className="task-list__detail-row">
+                            <span className="task-list__detail-label">Duration:</span>
+                            <span className="task-list__detail-value">{task.Request?.DurationS || 'N/A'}s</span>
                           </div>
-                          <div className="task-detail-row">
-                            <span className="detail-label">Embed Mode:</span>
-                            <span className="detail-value">{task.Request?.EmbedMode || 'N/A'}</span>
+                          <div className="task-list__detail-row">
+                            <span className="task-list__detail-label">Embed Mode:</span>
+                            <span className="task-list__detail-value">{task.Request?.EmbedMode || 'N/A'}</span>
                           </div>
-                          <div className="task-detail-row">
-                            <span className="detail-label">Embedding Dimension:</span>
-                            <span className="detail-value">{task.Request?.EmbeddingDim || 'N/A'}</span>
+                          <div className="task-list__detail-row">
+                            <span className="task-list__detail-label">Embedding Dimension:</span>
+                            <span className="task-list__detail-value">{task.Request?.EmbeddingDim || 'N/A'}</span>
                           </div>
                         </>
                       )}
                       
                       {task.Status === 'completed' && task.Result && (
                         <>
-                          <div className="task-detail-row">
-                            <span className="detail-label">Embeddings:</span>
-                            <span className="detail-value">{task.Result.EmbeddingCount || 0}</span>
+                          <div className="task-list__detail-row">
+                            <span className="task-list__detail-label">Embeddings:</span>
+                            <span className="task-list__detail-value">{task.Result.EmbeddingCount || 0}</span>
                           </div>
                           {task.CompletedTs && (
-                            <div className="task-detail-row">
-                              <span className="detail-label">Completed:</span>
-                              <span className="detail-value">{formatDate(task.CompletedTs)}</span>
+                            <div className="task-list__detail-row">
+                              <span className="task-list__detail-label">Completed:</span>
+                              <span className="task-list__detail-value">{formatDate(task.CompletedTs)}</span>
                             </div>
                           )}
                         </>
@@ -278,18 +277,16 @@ function TaskList({
                     </div>
                     
                     {task.Status === 'completed' && task.Result && (
-                      <>
-                        <div className="task-detail-full-width">
-                          <div className="task-detail-row">
-                            <span className="detail-label">S3 Vector Bucket:</span>
-                            <span className="detail-value">{task.Result.S3VectorBucket || 'N/A'}</span>
-                          </div>
-                          <div className="task-detail-row">
-                            <span className="detail-label">S3 Vector Index:</span>
-                            <span className="detail-value">{task.Result.S3VectorIndex || 'N/A'}</span>
-                          </div>
+                      <div className="task-list__details-full">
+                        <div className="task-list__detail-row">
+                          <span className="task-list__detail-label">S3 Vector Bucket:</span>
+                          <span className="task-list__detail-value">{task.Result.S3VectorBucket || 'N/A'}</span>
                         </div>
-                      </>
+                        <div className="task-list__detail-row">
+                          <span className="task-list__detail-label">S3 Vector Index:</span>
+                          <span className="task-list__detail-value">{task.Result.S3VectorIndex || 'N/A'}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -298,7 +295,7 @@ function TaskList({
           })}
         </div>
       ) : (
-        <div className="no-tasks-message">
+        <div className="task-list__empty">
           No multimodal embedding tasks found for this video.
         </div>
       )}

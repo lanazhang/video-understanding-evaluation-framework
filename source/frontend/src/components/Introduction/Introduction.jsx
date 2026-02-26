@@ -9,11 +9,72 @@ function Introduction() {
         <h1>Welcome to Video Understanding Evaluation</h1>
         
         <div className="intro-section">
+          <h2>Business Goal</h2>
           <p className="intro-description">
-            This platform enables comprehensive evaluation of multimodal AI models on video understanding tasks. 
-            Analyze videos using various models and pipelines, create ground truth datasets 
-            through a hybrid approach combining AI-assisted labeling with human validation, and evaluate model 
-            performance with detailed metrics and comparisons.
+            This platform enables comprehensive evaluation of multimodal AI models on video understanding tasks, 
+            serving two key personas with distinct needs:
+          </p>
+          
+          <div className="personas-grid">
+            <div className="persona-card">
+              <h3>
+                <svg className="persona-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#f97316" strokeWidth="2"/>
+                  <path d="M12 8V12L15 15" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="12" r="2" fill="#f97316"/>
+                </svg>
+                Business Decision Makers
+              </h3>
+              <p>
+                Customers who need to evaluate video AI solutions against their specific use cases—such as sports event 
+                analysis, IP camera labeling, or retail monitoring. Starting with a small set of videos and very specific 
+                requirements, they need to quickly evaluate multiple models and solutions to make informed decisions about 
+                which technology best fits their needs.
+              </p>
+              <div className="persona-benefits">
+                <strong>Key Benefits:</strong>
+                <ul>
+                  <li>Rapid model comparison for quick decision-making</li>
+                  <li>Use-case specific evaluation with custom videos</li>
+                  <li>Clear metrics to justify technology investments</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="persona-card">
+              <h3>
+                <svg className="persona-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 3H4C3.44772 3 3 3.44772 3 4V9C3 9.55228 3.44772 10 4 10H9C9.55228 10 10 9.55228 10 9V4C10 3.44772 9.55228 3 9 3Z" stroke="#10b981" strokeWidth="2"/>
+                  <path d="M20 3H15C14.4477 3 14 3.44772 14 4V9C14 9.55228 14.4477 10 15 10H20C20.5523 10 21 9.55228 21 9V4C21 3.44772 20.5523 3 20 3Z" stroke="#10b981" strokeWidth="2"/>
+                  <path d="M9 14H4C3.44772 14 3 14.4477 3 15V20C3 20.5523 3.44772 21 4 21H9C9.55228 21 10 20.5523 10 20V15C10 14.4477 9.55228 14 9 14Z" stroke="#10b981" strokeWidth="2"/>
+                  <path d="M20 14H15C14.4477 14 14 14.4477 14 15V20C14 20.5523 14.4477 21 15 21H20C20.5523 21 21 20.5523 21 20V15C21 14.4477 20.5523 14 20 14Z" stroke="#10b981" strokeWidth="2"/>
+                  <circle cx="6.5" cy="6.5" r="1.5" fill="#10b981"/>
+                  <circle cx="17.5" cy="6.5" r="1.5" fill="#10b981"/>
+                  <circle cx="6.5" cy="17.5" r="1.5" fill="#10b981"/>
+                  <circle cx="17.5" cy="17.5" r="1.5" fill="#10b981"/>
+                </svg>
+                Data Scientists & Researchers
+              </h3>
+              <p>
+                Technical professionals who need a robust tool to perform efficient, scientific evaluation against 
+                industry-specific datasets. They require systematic approaches to benchmark models, create high-quality 
+                ground truth data, and generate reproducible evaluation results for research or production deployment.
+              </p>
+              <div className="persona-benefits">
+                <strong>Key Benefits:</strong>
+                <ul>
+                  <li>Scientific evaluation with detailed metrics</li>
+                  <li>Efficient ground truth creation workflow</li>
+                  <li>Comprehensive model benchmarking capabilities</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <p className="intro-description">
+            The platform provides features to serve both personas: analyze videos using various models and pipelines, 
+            create ground truth datasets through a hybrid approach combining AI-assisted labeling with human validation, 
+            and evaluate model performance with detailed metrics and comparisons.
           </p>
         </div>
 
@@ -65,25 +126,25 @@ function Introduction() {
 
             {/* Model Categories */}
             <g className="model-categories">
-              <rect x="20" y="180" width="320" height="220" rx="8" fill="#f8f9fa" stroke="#3b82f6" strokeWidth="2"/>
+              <rect x="20" y="180" width="320" height="220" rx="8" fill="#f8f9fa" stroke="#10b981" strokeWidth="2"/>
               <text x="180" y="205" textAnchor="middle" fill="#212529" fontSize="14" fontWeight="bold">Supported Model Categories</text>
               
-              <text x="40" y="235" fill="#3b82f6" fontSize="12" fontWeight="bold">• Multimodal Embedding</text>
+              <text x="40" y="235" fill="#10b981" fontSize="12" fontWeight="bold">• Multimodal Embedding</text>
               <text x="55" y="255" fill="#6c757d" fontSize="11">Nova MME, TwelveLabs Marengo</text>
               
-              <text x="40" y="280" fill="#3b82f6" fontSize="12" fontWeight="bold">• Video Understanding</text>
+              <text x="40" y="280" fill="#10b981" fontSize="12" fontWeight="bold">• Video Understanding</text>
               <text x="55" y="300" fill="#6c757d" fontSize="11">Nova Lite/Pro, TwelveLabs, Gemini</text>
               
-              <text x="40" y="325" fill="#3b82f6" fontSize="12" fontWeight="bold">• Image Frame Based</text>
+              <text x="40" y="325" fill="#10b981" fontSize="12" fontWeight="bold">• Image Frame Based</text>
               <text x="55" y="345" fill="#6c757d" fontSize="11">Nova, Llama, OpenAI, Gemini</text>
               
-              <text x="40" y="370" fill="#3b82f6" fontSize="12" fontWeight="bold">• Video Clip Based</text>
+              <text x="40" y="370" fill="#10b981" fontSize="12" fontWeight="bold">• Video Clip Based</text>
               <text x="55" y="390" fill="#6c757d" fontSize="11">Nova Lite/Pro pipelines</text>
             </g>
 
             {/* Features */}
             <g className="features-group">
-              <rect x="380" y="180" width="320" height="220" rx="8" fill="#f8f9fa" stroke="#10b981" strokeWidth="2"/>
+              <rect x="380" y="180" width="320" height="220" rx="8" fill="#f8f9fa" stroke="#f97316" strokeWidth="2"/>
               <text x="540" y="205" textAnchor="middle" fill="#212529" fontSize="14" fontWeight="bold">Key Features</text>
               
               <text x="400" y="235" fill="#495057" fontSize="12">• Multi-Model Analysis: Compare approaches</text>

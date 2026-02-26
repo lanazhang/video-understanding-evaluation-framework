@@ -1,0 +1,291 @@
+.video-understanding-form {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.video-understanding-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.video-understanding-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.video-understanding-form label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.video-understanding-form .model-dropdown {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.video-understanding-form .model-dropdown:hover:not(:disabled) {
+  border-color: #999;
+}
+
+.video-understanding-form .model-dropdown:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.video-understanding-form .model-dropdown:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.video-understanding-form .prompt-input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s;
+}
+
+.video-understanding-form .prompt-input:hover:not(:disabled) {
+  border-color: #999;
+}
+
+.video-understanding-form .prompt-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.video-understanding-form .prompt-input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.video-understanding-form .form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.video-understanding-form .btn-submit,
+.video-understanding-form .btn-clear {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.video-understanding-form .btn-submit {
+  background: #0066cc;
+  color: white;
+  flex: 1;
+}
+
+.video-understanding-form .btn-submit:hover:not(:disabled) {
+  background: #0052a3;
+}
+
+.video-understanding-form .btn-submit:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.video-understanding-form .btn-clear {
+  background: #f5f5f5;
+  color: #333;
+  padding: 10px 24px;
+}
+
+.video-understanding-form .btn-clear:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.video-understanding-form .btn-clear:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.video-understanding-form .alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.video-understanding-form .alert-error {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.video-understanding-form .response-section {
+  margin-top: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.video-understanding-form .response-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.2em;
+  color: #111827;
+  font-weight: 700;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.video-understanding-form .response-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.video-understanding-form .metadata-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.video-understanding-form .metadata-label {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.video-understanding-form .metadata-value {
+  color: #111827;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.video-understanding-form .status-completed {
+  padding: 4px 8px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.video-understanding-form .response-content {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.video-understanding-form .response-text {
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.video-understanding-form .response-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.video-understanding-form .response-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.video-understanding-form .response-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.video-understanding-form .response-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.video-understanding-form .scenes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.video-understanding-form .scene-item {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.video-understanding-form .scene-item:hover {
+  border-color: #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.15);
+}
+
+.video-understanding-form .scene-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.video-understanding-form .scene-number {
+  font-weight: 700;
+  color: #f97316;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.video-understanding-form .scene-time {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #6b7280;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.video-understanding-form .scene-description {
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.video-understanding-form .response-text pre {
+  margin: 0;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #374151;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

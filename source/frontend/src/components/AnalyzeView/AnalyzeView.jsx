@@ -7,6 +7,7 @@ import VideoPreview from './VideoPreview'
 import TaskList from './TaskList'
 import CreateEmbeddingForm from './CreateEmbeddingForm'
 import SearchEmbeddings from './SearchEmbeddings'
+import VideoUnderstandingForm from './VideoUnderstandingForm'
 import './AnalyzeView.css'
 
 function AnalyzeView({ video, onBack }) {
@@ -511,9 +512,12 @@ function AnalyzeView({ video, onBack }) {
 
           {activeTab === 'understanding' && (
             <div className="tab-content">
-              <div className="coming-soon-section">
-                <p>Video Understanding features coming soon.</p>
-              </div>
+              <VideoUnderstandingForm
+                video={video}
+                onSuccess={(response) => {
+                  console.log('Video understanding completed:', response)
+                }}
+              />
             </div>
           )}
         </div>

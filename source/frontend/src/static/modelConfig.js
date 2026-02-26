@@ -22,34 +22,29 @@ export const modelGroups = [
     groupName: 'Video Understanding',
     models: [
       {
-        displayName: 'Nova Lite 1',
-        modelId: '',
-        api: '/video/start-understanding-nova-lite-1'
+        displayName: 'Nova 2 Lite',
+        modelId: 'us.amazon.nova-2-lite-v1:0',
+        api: '/model/bedrock-converse'
       },
       {
-        displayName: 'Nova Lite 2',
-        modelId: '',
-        api: '/video/start-understanding-nova-lite-2'
+        displayName: 'Nova Lite',
+        modelId: 'amazon.nova-lite-v1:0',
+        api: '/model/bedrock-converse'
       },
       {
-        displayName: 'Nova Pro 1',
-        modelId: '',
-        api: '/video/start-understanding-nova-pro-1'
+        displayName: 'Nova Pro',
+        modelId: 'amazon.nova-pro-v1:0',
+        api: '/model/bedrock-converse'
       },
       {
-        displayName: 'Nova Pro 2',
-        modelId: '',
-        api: '/video/start-understanding-nova-pro-2'
+        displayName: 'TwelveLabs Pegasus',
+        modelId: 'twelvelabs.pegasus-1-2-v1:0',
+        api: '/model/tlabs-pegasus'
       },
       {
-        displayName: 'TwelveLabs Pegasus 3',
-        modelId: '',
-        api: '/video/start-understanding-twelvelabs-pegasus-3'
-      },
-      {
-        displayName: 'Gemini',
-        modelId: '',
-        api: '/video/start-understanding-gemini'
+        displayName: 'Gemini 1.5 Flash',
+        modelId: 'gemini-1.5-flash',
+        api: '/model/gemini'
       },
     ],
   },

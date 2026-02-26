@@ -149,7 +149,7 @@ function VideoUpload({ onSuccess, onCancel }) {
 
     try {
       const data = await FetchPost(
-        '/video/manage-s3-presigned-url',
+        '/util/manage-s3-presigned-url',
         {
           FileName: file.name,
           NumParts: chunks,
@@ -158,15 +158,25 @@ function VideoUpload({ onSuccess, onCancel }) {
         'EvalService'
       )
 
-      // Handle response - data might be the body directly or wrapped
-      const responseData = data.body ? (typeof data.body === 'string' ? JSON.parse(data.body) : data.body) : data
+      console.log('Presigned URL response:', data)
+
+      // Handle Lambda proxy response format
+      let responseData = data
       
-      if (data.statusCode && data.statusCode !== 200) {
-        setStatus(null)
-        setAlert(responseData.error || responseData.message || 'Failed to generate presigned URLs')
-        setCurrentUploadingFileName(null)
-        return
+      // If response has statusCode and body, it's a Lambda proxy response
+      if (data.statusCode !== undefined) {
+        if (data.statusCode !== 200) {
+          const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+          setStatus(null)
+          setAlert(errorBody.error || errorBody.message || 'Failed to generate presigned URLs')
+          setCurrentUploadingFileName(null)
+          return
+        }
+        // Parse the body for successful response
+        responseData = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
       }
+
+      console.log('Parsed response data:', responseData)
 
       if (responseData.UploadPartUrls) {
         await uploadFile({
@@ -184,6 +194,7 @@ function VideoUpload({ onSuccess, onCancel }) {
         setCurrentUploadingFileName(null)
       }
     } catch (err) {
+      console.error('Error generating presigned URLs:', err)
       setStatus(null)
       setAlert(err.message)
       setCurrentUploadingFileName(null)
@@ -230,9 +241,11 @@ function VideoUpload({ onSuccess, onCancel }) {
       // Sort parts by PartNumber in ascending order (required by S3)
       parts.sort((a, b) => a.PartNumber - b.PartNumber)
 
+      console.log('All chunks uploaded, completing multipart upload with parts:', parts)
+
       // Complete multipart upload
       const completeData = await FetchPost(
-        '/video/manage-s3-presigned-url',
+        '/util/manage-s3-presigned-url',
         {
           TaskId: urlResp.taskId,
           FileName: file.name,
@@ -243,19 +256,23 @@ function VideoUpload({ onSuccess, onCancel }) {
         'EvalService'
       )
 
-      // Handle response - data might be the body directly or wrapped
-      const completeResponseData = completeData.body ? (typeof completeData.body === 'string' ? JSON.parse(completeData.body) : completeData.body) : completeData
+      console.log('Complete multipart upload response:', completeData)
 
-      if (completeData.statusCode && completeData.statusCode !== 200) {
-        setAlert(completeResponseData.error || completeResponseData.message || 'Failed to complete upload')
+      // Handle Lambda proxy response format
+      if (completeData.statusCode !== undefined && completeData.statusCode !== 200) {
+        const errorBody = typeof completeData.body === 'string' ? JSON.parse(completeData.body) : completeData.body
+        setAlert(errorBody.error || errorBody.message || 'Failed to complete upload')
         setStatus(null)
         setCurrentUploadingFileName(null)
         return
       }
 
+      console.log('Multipart upload completed successfully, submitting video metadata')
+
       // Submit video metadata
       await submitVideoMetadata(urlResp, file)
     } catch (err) {
+      console.error('Error during upload:', err)
       setStatus(null)
       setAlert(err.message)
       setCurrentUploadingFileName(null)
@@ -313,21 +330,29 @@ function VideoUpload({ onSuccess, onCancel }) {
     try {
       const data = await FetchPost('/video/add-video', payload, 'EvalService')
 
-      // Handle response - data might be the body directly or wrapped
-      const responseData = data.body ? (typeof data.body === 'string' ? JSON.parse(data.body) : data.body) : data
+      console.log('Add video response:', data)
 
-      if (data.statusCode && data.statusCode !== 200) {
-        const errorMessage = responseData.error || responseData.message || 'Failed to add video'
+      // Handle Lambda proxy response format
+      if (data.statusCode !== undefined && data.statusCode !== 200) {
+        const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+        const errorMessage = errorBody.error || errorBody.message || 'Failed to add video'
         setStatus(null)
         setAlert(errorMessage)
         setCurrentUploadingFileName(null)
+      } else if (data.error) {
+        // Handle direct error response
+        setStatus(null)
+        setAlert(data.error || 'Failed to add video')
+        setCurrentUploadingFileName(null)
       } else {
         // Video uploaded successfully - embedding tasks are created by add-video Lambda
+        console.log('Video uploaded successfully!')
         setCurrentUploadingFileName(null)
         resetState()
         onSuccess()
       }
     } catch (err) {
+      console.error('Error adding video metadata:', err)
       setStatus(null)
       setAlert(err.message)
       setCurrentUploadingFileName(null)

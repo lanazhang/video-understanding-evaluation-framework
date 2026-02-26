@@ -225,12 +225,100 @@
   border: 2px solid var(--blue-border);
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
 .metric-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px var(--blue-shadow-light);
   border-color: var(--blue-primary);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.metric-info-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  color: var(--blue-primary);
+  position: relative;
+  top: -5px;
+}
+
+.metric-info-btn:hover {
+  opacity: 1;
+}
+
+.metric-tooltip {
+  position: fixed;
+  transform: translate(-50%, 0);
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  min-width: 300px;
+  max-width: 400px;
+  text-align: left;
+  pointer-events: none;
+}
+
+.metric-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.95);
+}
+
+.tooltip-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #60a5fa;
+}
+
+.tooltip-formula {
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  color: #fbbf24;
+}
+
+.tooltip-description {
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  color: #e5e7eb;
+}
+
+.tooltip-interpretation {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #9ca3af;
+  font-style: italic;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .metric-label {
@@ -347,6 +435,42 @@
   background: white;
   border-radius: 12px;
   border: 1px solid var(--neutral-200);
+}
+
+.overlap-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.overlap-section-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.btn-view-timeline {
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-view-timeline:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
 }
 
 .overlap-section h3 {

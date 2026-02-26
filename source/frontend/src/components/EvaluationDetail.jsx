@@ -1,19 +1,72 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './EvaluationDetail.css'
 import { evalAPI } from '../utils/api'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import SegmentDetailModal from './CreateEvaluation/SegmentDetailModal'
+import VideoComparisonModal from './CreateEvaluation/VideoComparisonModal'
 import { calculateEvaluationMetrics } from './CreateEvaluation/evaluationUtils'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
 function EvaluationDetail({ task, onBack }) {
+  const navigate = useNavigate()
+  
+  const InfoIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M8 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="8" cy="5" r="0.5" fill="currentColor"/>
+    </svg>
+  )
   const [selectedSegment, setSelectedSegment] = useState(null)
   const [showSegmentModal, setShowSegmentModal] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [matchingDetails, setMatchingDetails] = useState(null)
   const [groundTruth, setGroundTruth] = useState(null)
   const [exporting, setExporting] = useState(false)
+
+  const metricExplanations = {
+    Precision: {
+      title: "Precision",
+      formula: "TP / (TP + FP)",
+      description: "Measures the accuracy of positive predictions. It represents the proportion of predicted segments that actually overlap with ground truth segments.",
+      interpretation: "Higher precision means fewer false alarms - the model is more conservative and only predicts when confident."
+    },
+    Recall: {
+      title: "Recall (Sensitivity)",
+      formula: "TP / (TP + FN)",
+      description: "Measures the completeness of detection. It represents the proportion of ground truth segments that were successfully detected by the model.",
+      interpretation: "Higher recall means fewer missed detections - the model catches more of the actual events."
+    },
+    F1Score: {
+      title: "F1 Score",
+      formula: "2 × (Precision × Recall) / (Precision + Recall)",
+      description: "The harmonic mean of precision and recall, providing a single score that balances both metrics.",
+      interpretation: "F1 score is useful when you need a balance between precision and recall. A high F1 score indicates both high precision and high recall."
+    },
+    Accuracy: {
+      title: "Accuracy",
+      formula: "(TP + TN) / (TP + TN + FP + FN)",
+      description: "The overall correctness of the model across all predictions, including both positive and negative cases.",
+      interpretation: "While intuitive, accuracy can be misleading with imbalanced datasets. Use precision, recall, and F1 for better insights."
+    },
+    MeanIoU: {
+      title: "Mean IoU (Intersection over Union)",
+      formula: "Average of (Overlap Duration / Union Duration) for all TP matches",
+      description: "Measures the temporal overlap quality between predicted and ground truth segments. IoU = (intersection duration) / (union duration) for each matched pair.",
+      interpretation: "Higher IoU means better temporal alignment. An IoU of 1.0 indicates perfect overlap, while 0.0 means no overlap."
+    },
+    MeanAveragePrecision: {
+      title: "Mean Average Precision (mAP)",
+      formula: "Average precision across all ground truth segments",
+      description: "Evaluates both detection accuracy and temporal localization quality. Considers the ranking of predictions by confidence scores.",
+      interpretation: "mAP provides a comprehensive measure of detection performance, accounting for both precision and temporal accuracy."
+    }
+  }
+
+  const [activeTooltip, setActiveTooltip] = useState(null)
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     fetchEvaluationData()
@@ -137,6 +190,11 @@ function EvaluationDetail({ task, onBack }) {
     setShowVideoModal(true)
   }
 
+  const handleVideoNameClick = (e) => {
+    e.preventDefault()
+    setShowVideoModal(true)
+  }
+
   const handleCloseVideoModal = () => {
     setShowVideoModal(false)
   }
@@ -196,8 +254,8 @@ function EvaluationDetail({ task, onBack }) {
                 {task.video?.Name ? (
                   <button 
                     className="video-link" 
-                    onClick={handleVideoClick}
-                    title="View video details"
+                    onClick={handleVideoNameClick}
+                    title="Go to video analyze page"
                   >
                     {task.video.Name}
                   </button>
@@ -233,32 +291,114 @@ function EvaluationDetail({ task, onBack }) {
               <h3>Evaluation Metrics</h3>
               <div className="metrics-grid">
                 <div className="metric-card">
-                  <div className="metric-label">Precision</div>
+                  <div className="metric-header">
+                    <div className="metric-label">Precision</div>
+                    <button 
+                      className="metric-info-btn"
+                      onMouseEnter={(e) => {
+                        setActiveTooltip('Precision')
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M8 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <circle cx="8" cy="5" r="0.5" fill="currentColor"/>
+                      </svg>
+                    </button>
+                  </div>
                   <div className="metric-value">{(metrics.Precision * 100).toFixed(2)}%</div>
                   <div className="metric-description">TP / (TP + FP)</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">Recall</div>
+                  <div className="metric-header">
+                    <div className="metric-label">Recall</div>
+                    <button 
+                      className="metric-info-btn"
+                      onMouseEnter={(e) => {
+                        setActiveTooltip('Recall')
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <InfoIcon />
+                    </button>
+                  </div>
                   <div className="metric-value">{(metrics.Recall * 100).toFixed(2)}%</div>
                   <div className="metric-description">TP / (TP + FN)</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">F1 Score</div>
+                  <div className="metric-header">
+                    <div className="metric-label">F1 Score</div>
+                    <button 
+                      className="metric-info-btn"
+                      onMouseEnter={(e) => {
+                        setActiveTooltip('F1Score')
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <InfoIcon />
+                    </button>
+                  </div>
                   <div className="metric-value">{(metrics.F1Score * 100).toFixed(2)}%</div>
                   <div className="metric-description">Harmonic mean</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">Accuracy</div>
+                  <div className="metric-header">
+                    <div className="metric-label">Accuracy</div>
+                    <button 
+                      className="metric-info-btn"
+                      onMouseEnter={(e) => {
+                        setActiveTooltip('Accuracy')
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <InfoIcon />
+                    </button>
+                  </div>
                   <div className="metric-value">{(metrics.Accuracy * 100).toFixed(2)}%</div>
                   <div className="metric-description">Overall accuracy</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">Mean IoU</div>
+                  <div className="metric-header">
+                    <div className="metric-label">Mean IoU</div>
+                    <button 
+                      className="metric-info-btn"
+                      onMouseEnter={(e) => {
+                        setActiveTooltip('MeanIoU')
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <InfoIcon />
+                    </button>
+                  </div>
                   <div className="metric-value">{(metrics.MeanIoU * 100).toFixed(2)}%</div>
                   <div className="metric-description">Temporal overlap</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">mAP</div>
+                  <div className="metric-header">
+                    <div className="metric-label">mAP</div>
+                    <button 
+                      className="metric-info-btn"
+                      onMouseEnter={(e) => {
+                        setActiveTooltip('MeanAveragePrecision')
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <InfoIcon />
+                    </button>
+                  </div>
                   <div className="metric-value">{(metrics.MeanAveragePrecision * 100).toFixed(2)}%</div>
                   <div className="metric-description">Mean Avg Precision</div>
                 </div>
@@ -290,7 +430,16 @@ function EvaluationDetail({ task, onBack }) {
 
           {matchingDetails && matchingDetails.gtMatches && matchingDetails.predMatches && (
             <div className="overlap-section">
-              <h3>Segment Matching Details</h3>
+              <div className="overlap-section-header">
+                <h3>Segment Matching Details</h3>
+                <button 
+                  className="btn-view-timeline"
+                  onClick={handleVideoClick}
+                  title="View video with timeline comparison"
+                >
+                  View Timeline Comparison
+                </button>
+              </div>
               <p className="overlap-description">
                 Segments are matched based on any temporal overlap. IoU (Intersection over Union) is calculated for display purposes.
               </p>
@@ -399,96 +548,27 @@ function EvaluationDetail({ task, onBack }) {
         />
       )}
 
-      {showVideoModal && task.video && (
-        <div className="video-modal-overlay" onClick={handleCloseVideoModal}>
-          <div className="video-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="video-modal-header">
-              <h2>{task.video.Name}</h2>
-              <button className="btn-close-modal" onClick={handleCloseVideoModal}>
-                ✕
-              </button>
-            </div>
-            <div className="video-modal-body">
-              <div className="video-modal-layout">
-                <div className="video-section">
-                  {task.video.video_url ? (
-                    <video 
-                      controls 
-                      className="video-player"
-                      src={task.video.video_url}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <div className="no-video-message">
-                      Video not available
-                    </div>
-                  )}
-                </div>
-                
-                <div className="metadata-section">
-                  <h3>Video Information</h3>
-                  <div className="metadata-grid">
-                    {task.video.Duration && (
-                      <div className="metadata-item">
-                        <span className="metadata-label">Duration</span>
-                        <span className="metadata-value">{task.video.Duration}s</span>
-                      </div>
-                    )}
-                    {task.video.Resolution && task.video.Resolution.length === 2 && (
-                      <div className="metadata-item">
-                        <span className="metadata-label">Resolution</span>
-                        <span className="metadata-value">{task.video.Resolution[0]} × {task.video.Resolution[1]}</span>
-                      </div>
-                    )}
-                    {task.video.Fps && (
-                      <div className="metadata-item">
-                        <span className="metadata-label">FPS</span>
-                        <span className="metadata-value">{Number(task.video.Fps).toFixed(2)}</span>
-                      </div>
-                    )}
-                    {task.video.Size && (
-                      <div className="metadata-item">
-                        <span className="metadata-label">Size</span>
-                        <span className="metadata-value">{(task.video.Size / (1024 * 1024)).toFixed(2)} MB</span>
-                      </div>
-                    )}
-                    {task.video.MetaData?.VideoMetaData?.NameFormat && (
-                      <div className="metadata-item">
-                        <span className="metadata-label">Format</span>
-                        <span className="metadata-value">{task.video.MetaData.VideoMetaData.NameFormat.toUpperCase()}</span>
-                      </div>
-                    )}
-                    {task.video.UploadedTs && (
-                      <div className="metadata-item metadata-item-full">
-                        <span className="metadata-label">Uploaded</span>
-                        <span className="metadata-value">{new Date(task.video.UploadedTs).toLocaleString()}</span>
-                      </div>
-                    )}
-                    {task.video.EmbedCompleteTs && (
-                      <div className="metadata-item metadata-item-full">
-                        <span className="metadata-label">Processed</span>
-                        <span className="metadata-value">{new Date(task.video.EmbedCompleteTs).toLocaleString()}</span>
-                      </div>
-                    )}
-                    {task.video.UploadedBy && (
-                      <div className="metadata-item metadata-item-full">
-                        <span className="metadata-label">Uploaded By</span>
-                        <span className="metadata-value">{task.video.UploadedBy}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+      {showVideoModal && task.video && groundTruth && (
+        <VideoComparisonModal
+          video={task.video}
+          groundTruthLabels={groundTruth.Labels || []}
+          evaluationLabels={task.Labels || []}
+          onClose={handleCloseVideoModal}
+        />
+      )}
 
-              {task.video.Description && (
-                <div className="video-description">
-                  <h3>Description</h3>
-                  <p>{task.video.Description}</p>
-                </div>
-              )}
-            </div>
-          </div>
+      {activeTooltip && (
+        <div 
+          className="metric-tooltip"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`
+          }}
+        >
+          <div className="tooltip-title">{metricExplanations[activeTooltip].title}</div>
+          <div className="tooltip-formula">{metricExplanations[activeTooltip].formula}</div>
+          <div className="tooltip-description">{metricExplanations[activeTooltip].description}</div>
+          <div className="tooltip-interpretation">{metricExplanations[activeTooltip].interpretation}</div>
         </div>
       )}
     </div>

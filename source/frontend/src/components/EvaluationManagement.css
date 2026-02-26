@@ -389,7 +389,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 14px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, var(--green-primary) 0%, #059669 100%);
   border: none;
   border-radius: 8px;
   margin-bottom: 16px;

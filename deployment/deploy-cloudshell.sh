@@ -8,7 +8,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Bootstrap CDK - this step will launch a CloudFormation stack to provision the CDK package, which will take ~2 minutes.
-cdk bootstrap aws://${CDK_DEFAULT_ACCOUNT}/${CDK_DEFAULT_REGION}
+cdk bootstrap aws://${CDK_DEFAULT_ACCOUNT}/${ç}
 export AWS_DEFAULT_REGION=${CDK_DEFAULT_REGION}
 
 echo "cdk deploy --parameters inputUserEmails=${CDK_INPUT_USER_EMAILS} --parameters inputUserName=${CDK_INPUT_USER_NAME} --requires-approval never  --all"

@@ -90,12 +90,16 @@ def lambda_handler(event, context):
         # Log the incoming event for debugging
         print(f"Received event: {json.dumps(event)}")
         
-        # Parse body - handle both string and dict
-        body_raw = event
-        if isinstance(body_raw, str):
-            body = json.loads(body_raw)
+        # Parse body from API Gateway proxy integration
+        if 'body' in event:
+            body_raw = event['body']
+            if isinstance(body_raw, str):
+                body = json.loads(body_raw)
+            else:
+                body = body_raw
         else:
-            body = body_raw
+            # Direct invocation (not from API Gateway)
+            body = event
             
         print(f"Parsed body: {json.dumps(body)}")
         

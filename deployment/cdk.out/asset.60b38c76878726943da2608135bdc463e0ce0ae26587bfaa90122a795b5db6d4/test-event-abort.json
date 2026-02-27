@@ -1,6 +1,0 @@
-{
-  "Action": "abort",
-  "TaskId": "test-task-456",
-  "FileName": "sample-video.mp4",
-  "UploadId": "example-upload-id-from-s3"
-}

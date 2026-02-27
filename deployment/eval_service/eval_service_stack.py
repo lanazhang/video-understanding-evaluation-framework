@@ -181,6 +181,11 @@ class EvalServiceStack(NestedStack):
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
             description="python3.13 boto3 for S3 vectors"
         )
+        self.google_layer = _lambda.LayerVersion(self, 'GoogleLayer',
+            code=_lambda.S3Code(bucket=layer_bucket, key=LAMBDA_LAYER_SOURCE_S3_KEY_GOOGLE),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
+            description="python3.13 google-generativeai 3.0.0"
+        )
         self.aws_layer = _lambda.LayerVersion.from_layer_version_arn(self, "AwsLayerPowerTool", 
             layer_version_arn=f"arn:aws:lambda:{self.region}:336392948345:layer:AWSSDKPandas-Python313:4"
         )
@@ -793,14 +798,14 @@ class EvalServiceStack(NestedStack):
         model = v1.add_resource("model")
         gt = v1.add_resource("gt")
         eval_resource = v1.add_resource("eval")
-        util = v1.add_resource("util")
+        utils = v1.add_resource("utils")
         
         self.api_gw_base_url = api.url
         
-        # POST /v1/util/manage-s3-presigned-url
+        # POST /v1/utils/manage-s3-presigned-url
         lambda_key='eval-srv-api-manage-s3-presigned-url'
         lambda_es_manage_s3_url_role = self.create_role(lambda_key, ["s3"])
-        self.create_api_endpoint(id=f'{lambda_key}-ep', root=util, path1="manage-s3-presigned-url", method="POST", auth=self.cognito_authorizer, 
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=utils, path1="manage-s3-presigned-url", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_es_manage_s3_url_role,
                 lambda_file_name=lambda_key,
                 memory_m=128, timeout_s=10, ephemeral_storage_size=512,
@@ -810,6 +815,16 @@ class EvalServiceStack(NestedStack):
                     'VIDEO_UPLOAD_S3_PREFIX': VIDEO_UPLOAD_S3_PREFIX
                 },
             )   
+
+        # POST /v1/utils/manage-api-key
+        lambda_key='eval-srv-api-manage-api-key'
+        lambda_manage_api_key_role = self.create_role(lambda_key, ["secretsmanager"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=utils, path1="manage-api-key", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_manage_api_key_role,
+                lambda_file_name=lambda_key,
+                memory_m=128, timeout_s=10, ephemeral_storage_size=512,
+                evns={},
+            )
 
         # POST /v1/video/add-video
         lambda_key='eval-srv-add-video'
@@ -1001,6 +1016,23 @@ class EvalServiceStack(NestedStack):
                 evns={
                     'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
                     'DEFAULT_GEMINI_MODEL_ID': 'gemini-1.5-flash'
+                },
+                layers=[self.google_layer]
+            )
+
+        # POST /v1/model/start-video-understanding
+        lambda_key='eval-srv-api-start-video-understanding'
+        lambda_start_video_understanding_role = self.create_role(lambda_key, ["dynamodb","lambda","secretsmanager"])
+        self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="start-video-understanding", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_start_video_understanding_role,
+                lambda_file_name=lambda_key,
+                memory_m=256, timeout_s=30, ephemeral_storage_size=512,
+                evns={
+                    'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
+                    'LAMBDA_BEDROCK_CONVERSE': f"{LAMBDA_NAME_PREFIX}eval-srv-api-bedrock-converse",
+                    'LAMBDA_TLABS_PEGASUS': f"{LAMBDA_NAME_PREFIX}eval-srv-api-tlabs-pegasus",
+                    'LAMBDA_GEMINI': f"{LAMBDA_NAME_PREFIX}eval-srv-api-gemini"
                 },
             )
 
@@ -1201,6 +1233,22 @@ class EvalServiceStack(NestedStack):
                         resources=[f"arn:aws:sagemaker:{self.region}:{self.account_id}:notebook-instance/*"]
                     ),
             )
+        if "secretsmanager" in policies:
+            statements.append(
+                _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["secretsmanager:GetSecretValue","secretsmanager:DescribeSecret","secretsmanager:CreateSecret","secretsmanager:PutSecretValue","secretsmanager:DeleteSecret","secretsmanager:ListSecrets"],
+                        resources=[f"arn:aws:secretsmanager:{self.region}:{self.account_id}:secret:gemini-api-key/*"]
+                    ),
+            )
+            # Add permission to list all secrets (for debugging)
+            statements.append(
+                _iam.PolicyStatement(
+                        effect=_iam.Effect.ALLOW,
+                        actions=["secretsmanager:ListSecrets"],
+                        resources=["*"]
+                    ),
+            )
 
 
         return _iam.Role(
@@ -1252,7 +1300,7 @@ class EvalServiceStack(NestedStack):
             method, 
             _apigw.LambdaIntegration(
                 lambda_function,
-                #proxy=True
+                proxy=True
             ),
             authorizer=auth,
             authorization_type=_apigw.AuthorizationType.COGNITO

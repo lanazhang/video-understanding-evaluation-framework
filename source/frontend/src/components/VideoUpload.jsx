@@ -149,7 +149,7 @@ function VideoUpload({ onSuccess, onCancel }) {
 
     try {
       const data = await FetchPost(
-        '/util/manage-s3-presigned-url',
+        '/utils/manage-s3-presigned-url',
         {
           FileName: file.name,
           NumParts: chunks,
@@ -245,7 +245,7 @@ function VideoUpload({ onSuccess, onCancel }) {
 
       // Complete multipart upload
       const completeData = await FetchPost(
-        '/util/manage-s3-presigned-url',
+        '/utils/manage-s3-presigned-url',
         {
           TaskId: urlResp.taskId,
           FileName: file.name,
@@ -328,7 +328,7 @@ function VideoUpload({ onSuccess, onCancel }) {
     }
 
     try {
-      const data = await FetchPost('/video/add-video', payload, 'EvalService')
+      const data = await FetchPost('/videos/add-video', payload, 'EvalService')
 
       console.log('Add video response:', data)
 

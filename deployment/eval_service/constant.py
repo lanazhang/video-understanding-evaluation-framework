@@ -19,6 +19,7 @@ LAMBDA_LAYER_SOURCE_S3_KEY_SCENE_DETECT="layer/scenedetect_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_MOVIEPY="layer/moviepy_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_OPENCV="layer/opencv_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_BOTO3="layer/boto3_layer.zip"
+LAMBDA_LAYER_SOURCE_S3_KEY_GOOGLE="layer/google_layer.zip"
 
 DYNAMO_VIDEO_TABLE="bedrock_video_eval_video"
 DYNAMO_VIDEO_ANALYZE_TABLE="bedrock_video_eval_analyze_table"

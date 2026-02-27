@@ -35,7 +35,12 @@ function TaskList({
   sortOrder,
   setSortOrder
 }) {
-  const completedTasks = analyzeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
+  // Filter to show only MME (Multimodal Embedding) type tasks
+  const mmeTasks = analyzeTasks.filter(t => 
+    t.Type === 'nova-mme' || t.Type === 'tlabs-mme'
+  )
+  
+  const completedTasks = mmeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
 
   return (
     <div className="task-list">
@@ -67,7 +72,7 @@ function TaskList({
       
       {loadingTasks ? (
         <div className="task-list__loading">Loading tasks...</div>
-      ) : analyzeTasks.length > 0 ? (
+      ) : mmeTasks.length > 0 ? (
         <div className="task-list__items">
           {completedTasks.length > 0 && (
             <div className="task-list__select-all">
@@ -89,7 +94,7 @@ function TaskList({
               </label>
             </div>
           )}
-          {analyzeTasks.map((task) => {
+          {mmeTasks.map((task) => {
             const isExpanded = expandedTaskId === task.Id
             const isSelected = selectedTasks.some(t => t.Id === task.Id)
             const canCompare = task.Status === 'completed' && task.Result && task.Result.S3VectorIndex

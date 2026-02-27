@@ -49,7 +49,7 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
   const fetchVideos = async () => {
     setLoadingVideos(true)
     try {
-      const data = await FetchPost('/video/get-videos', {}, 'EvalService')
+      const data = await FetchPost('/videos/get-videos', {}, 'EvalService')
       // FetchPost returns parsed JSON directly, check for videos array
       if (data.videos !== undefined) {
         setVideos(data.videos || [])

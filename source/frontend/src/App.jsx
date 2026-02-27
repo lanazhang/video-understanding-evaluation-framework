@@ -10,6 +10,7 @@ import EvaluationManagement from './components/EvaluationManagement'
 import EvaluationDetail from './components/EvaluationDetail'
 import AnalyzeView from './components/AnalyzeView/AnalyzeView'
 import Introduction from './components/Introduction/Introduction'
+import Settings from './components/Settings/Settings'
 import { evalAPI } from './utils/api'
 import { FetchPost } from './utils/apiHelper'
 import logoIcon from './assets/icons/logo.svg'
@@ -17,6 +18,7 @@ import videoIcon from './assets/icons/video.svg'
 import documentIcon from './assets/icons/document.svg'
 import checkIcon from './assets/icons/check.svg'
 import infoIcon from './assets/icons/info.svg'
+import settingsIcon from './assets/icons/settings.svg'
 
 // Wrapper component for video analyze route
 function VideoAnalyzeRoute({ currentUser }) {
@@ -29,7 +31,7 @@ function VideoAnalyzeRoute({ currentUser }) {
   useEffect(() => {
     const fetchVideo = async () => {
       try {
-        const data = await FetchPost('/video/get-videos', {}, 'EvalService')
+        const data = await FetchPost('/videos/get-videos', {}, 'EvalService')
         
         // Handle Lambda proxy response format
         if (data.videos !== undefined) {
@@ -201,6 +203,7 @@ function AppContent({ currentUser, setCurrentUser }) {
     if (path.includes('/ground-truth')) return 'ground-truth'
     if (path.includes('/evaluation') && !path.includes('/evaluation/')) return 'evaluation'
     if (path.includes('/evaluation/')) return 'evaluation'
+    if (path.includes('/settings')) return 'settings'
     if (path.includes('/introduction')) return 'introduction'
     if (path === '/' || path === '/video-eval-mock' || path === '/video-eval-mock/') return 'introduction'
     
@@ -258,6 +261,8 @@ function AppContent({ currentUser, setCurrentUser }) {
       // Increment reset key to force remount of EvaluationManagement
       setEvalResetKey(prev => prev + 1)
       navigate('/evaluation')
+    } else if (menu === 'settings') {
+      navigate('/settings')
     }
   }
 
@@ -312,6 +317,16 @@ function AppContent({ currentUser, setCurrentUser }) {
         
         <div className="sidebar-footer">
           <button 
+            className={activeMenu === 'settings' ? 'active' : ''}
+            onClick={() => handleMenuClick('settings')}
+            title="Settings"
+          >
+            <span className="menu-icon">
+              <img src={settingsIcon} alt="Settings" />
+            </span>
+            <span className="menu-text">Settings</span>
+          </button>
+          <button 
             className={activeMenu === 'introduction' ? 'active' : ''}
             onClick={() => handleMenuClick('introduction')}
             title="Introduction"
@@ -344,10 +359,11 @@ function AppContent({ currentUser, setCurrentUser }) {
           <Route path="/" element={<Introduction />} />
           <Route path="/videos" element={<VideoManagement key={videoResetKey} currentUser={currentUser} />} />
           <Route path="/introduction" element={<Introduction />} />
-          <Route path="/video/:videoId/analyze" element={<VideoAnalyzeRoute currentUser={currentUser} />} />
+          <Route path="/videos/:videoId/analyze" element={<VideoAnalyzeRoute currentUser={currentUser} />} />
           <Route path="/ground-truth" element={<GroundTruthManagement key={gtResetKey} currentUser={currentUser} initialVideoFilter={gtVideoFilter} />} />
           <Route path="/evaluation" element={<EvaluationManagement key={evalResetKey} currentUser={currentUser} initialGTFilter={evalGTFilter} />} />
           <Route path="/evaluation/:id" element={<EvaluationDetailRoute currentUser={currentUser} />} />
+          <Route path="/settings" element={<Settings currentUser={currentUser} />} />
         </Routes>
       </div>
     </div>
@@ -359,7 +375,7 @@ function App() {
 
   return (
     <BrowserRouter basename="/video-eval-mock">
-      <Authenticator>
+      <Authenticator hideSignUp={true}>
         {({ user }) => {
           if (user && !currentUser) {
             setCurrentUser(user)

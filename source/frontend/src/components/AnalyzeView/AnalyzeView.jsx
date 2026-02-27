@@ -36,6 +36,7 @@ function AnalyzeView({ video, onBack }) {
     minDurationSec: 4,
     embeddingScope: ['clip'],
     embeddingOption: ['visual', 'audio', 'transcription'],
+    taskName: '',
     description: ''
   })
   const [creating, setCreating] = useState(false)
@@ -48,6 +49,25 @@ function AnalyzeView({ video, onBack }) {
   const selectedModel = modelGroups
     .find(group => group.groupName === 'Multimodal Embedding')
     ?.models.find(model => model.modelId === createParams.modelId)
+  
+  // Generate default task name based on model, type, and dimension
+  const generateDefaultTaskName = () => {
+    if (selectedModel?.parameterType === 'nova-mme') {
+      const modelShortName = selectedModel.displayName.replace(/\s+/g, '-').toLowerCase()
+      return `${modelShortName}-${createParams.embedMode.toLowerCase()}-${createParams.embeddingDim}d`
+    } else if (selectedModel?.parameterType === 'twelvelabs') {
+      const modelShortName = selectedModel.displayName.replace(/\s+/g, '-').toLowerCase()
+      return `${modelShortName}-${createParams.segmentationMethod}`
+    }
+    return ''
+  }
+  
+  // Update task name when relevant parameters change
+  useEffect(() => {
+    if (!createParams.taskName || createParams.taskName === generateDefaultTaskName()) {
+      setCreateParams(prev => ({ ...prev, taskName: generateDefaultTaskName() }))
+    }
+  }, [createParams.modelId, createParams.embedMode, createParams.embeddingDim, createParams.segmentationMethod])
   
   // Update embeddingDim when model changes
   useEffect(() => {
@@ -309,7 +329,7 @@ function AnalyzeView({ video, onBack }) {
         payload = {
           VideoId: video.Id || video.id,
           ModelId: createParams.modelId,
-          Description: createParams.description,
+          Description: createParams.taskName || createParams.description,
           Request: {
             DurationS: durationS,
             EmbedMode: createParams.embedMode,
@@ -334,7 +354,7 @@ function AnalyzeView({ video, onBack }) {
         payload = {
           VideoId: video.Id || video.id,
           ModelId: createParams.modelId,
-          Description: createParams.description,
+          Description: createParams.taskName || createParams.description,
           Request: {
             segmentation: segmentationConfig,
             embeddingScope: createParams.embeddingScope,
@@ -349,13 +369,28 @@ function AnalyzeView({ video, onBack }) {
 
       const data = await FetchPost(selectedModel.api, payload, 'EvalService')
       
-      if (data.statusCode === 200) {
+      // Handle both Lambda proxy response format and direct response
+      let responseBody
+      let isSuccess = false
+      
+      if (data.statusCode !== undefined) {
+        // Lambda proxy format with statusCode
+        isSuccess = data.statusCode === 200
+        responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+      } else if (data.task_id || data.message) {
+        // Direct response format (already parsed)
+        isSuccess = true
+        responseBody = data
+      }
+      
+      if (isSuccess) {
         if (selectedModel?.parameterType === 'nova-mme') {
           setCreateParams(prev => ({
             ...prev,
             durationS: 5,
             embedMode: 'AUDIO_VIDEO_COMBINED',
             embeddingDim: 1024,
+            taskName: '',
             description: ''
           }))
         } else if (selectedModel?.parameterType === 'twelvelabs') {
@@ -365,16 +400,15 @@ function AnalyzeView({ video, onBack }) {
             minDurationSec: 4,
             embeddingScope: ['clip'],
             embeddingOption: ['visual', 'audio', 'transcription'],
+            taskName: '',
             description: ''
           }))
         }
         setCreateError(null)
         loadAnalyzeTasks()
       } else {
-        const errorMessage = typeof data.body === 'object' && data.body.error 
-          ? data.body.error 
-          : data.body
-        setCreateError(errorMessage || 'Failed to start embedding task')
+        const errorMessage = responseBody?.error || responseBody?.message || 'Failed to start embedding task'
+        setCreateError(errorMessage)
       }
     } catch (err) {
       console.error('Error creating embedding:', err)

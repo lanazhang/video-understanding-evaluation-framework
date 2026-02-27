@@ -74,85 +74,92 @@ function AnalysisTaskSelector({
             <p>Loading analyze tasks...</p>
           ) : tasksError ? (
             <div className="alert alert-error">{tasksError}</div>
-          ) : analyzeTasks.length === 0 ? (
-            <p className="no-data">No analyze tasks available. Please create one from the Analyze view first.</p>
-          ) : (
-            <>
-              <div className="analyze-task-section">
-                <h3>Select Index</h3>
-                <div className="analyze-task-list">
-                  {analyzeTasks.map(task => (
-                    <div
-                      key={task.Id}
-                      className={`analyze-task-item ${selectedAnalyzeTask?.Id === task.Id ? 'selected' : ''}`}
-                      onClick={() => handleAnalyzeTaskClick(task)}
-                    >
-                      <div className="task-info">
-                        <input
-                          type="radio"
-                          name="analyzeTask"
-                          checked={selectedAnalyzeTask?.Id === task.Id}
-                          onChange={() => handleAnalyzeTaskClick(task)}
-                          className="task-radio"
-                        />
-                        <div className="task-details">
-                          <div className="task-name">
-                            {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {task.ModelId}
-                          </div>
-                          <div className="task-meta">
-                            Status: {task.Status} • Created {new Date(task.CreatedAt).toLocaleDateString()}
+          ) : (() => {
+            // Filter to only show MME tasks (nova-mme and twelvelabs-mme)
+            const mmeTasks = analyzeTasks.filter(task => 
+              task.Type === 'nova-mme' || task.Type === 'twelvelabs-mme'
+            )
+            
+            return mmeTasks.length === 0 ? (
+              <p className="no-data">No multimodal embedding tasks available. Please create one from the Analyze view first.</p>
+            ) : (
+              <>
+                <div className="analyze-task-section">
+                  <h3>Select Index</h3>
+                  <div className="analyze-task-list">
+                    {mmeTasks.map(task => (
+                      <div
+                        key={task.Id}
+                        className={`analyze-task-item ${selectedAnalyzeTask?.Id === task.Id ? 'selected' : ''}`}
+                        onClick={() => handleAnalyzeTaskClick(task)}
+                      >
+                        <div className="task-info">
+                          <input
+                            type="radio"
+                            name="analyzeTask"
+                            checked={selectedAnalyzeTask?.Id === task.Id}
+                            onChange={() => handleAnalyzeTaskClick(task)}
+                            className="task-radio"
+                          />
+                          <div className="task-details">
+                            <div className="task-name">
+                              {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {task.ModelId}
+                            </div>
+                            <div className="task-meta">
+                              Status: {task.Status} • Created {new Date(task.CreatedAt).toLocaleDateString()}
+                            </div>
                           </div>
                         </div>
+                        {selectedAnalyzeTask?.Id === task.Id && (
+                          <div className="selection-checkmark">✓</div>
+                        )}
                       </div>
-                      {selectedAnalyzeTask?.Id === task.Id && (
-                        <div className="selection-checkmark">✓</div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {selectedAnalyzeTask && searchResults.length > 0 && (
-                <div className="search-section">
-                  <div className="search-section-header">
-                    <div className="search-section-info">
-                      <h3>Search Index</h3>
-                      <p className="search-description">
-                        Search the selected index to find relevant video segments for evaluation.
-                      </p>
-                    <button 
-                      className="btn-open-search"
-                      onClick={handleOpenSearchModal}
-                    >
-                      Edit Results ({searchResults.length})
-                    </button>
-                  </div>
-
-                  </div>
-
-                  <div className="search-summary">
-                    <div className="summary-stats">
-                      <div className="stat-item">
-                        <span className="stat-label">Queries:</span>
-                        <span className="stat-value">{allSearches.length}</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Total Segments:</span>
-                        <span className="stat-value">{searchResults.length}</span>
-                      </div>
+                {selectedAnalyzeTask && searchResults.length > 0 && (
+                  <div className="search-section">
+                    <div className="search-section-header">
+                      <div className="search-section-info">
+                        <h3>Search Index</h3>
+                        <p className="search-description">
+                          Search the selected index to find relevant video segments for evaluation.
+                        </p>
+                      <button 
+                        className="btn-open-search"
+                        onClick={handleOpenSearchModal}
+                      >
+                        Edit Results ({searchResults.length})
+                      </button>
                     </div>
-                    <div className="search-queries-list">
-                      {allSearches.map((search, idx) => (
-                        <div key={idx} className="query-chip">
-                          "{search.query}" ({search.results.length})
+
+                    </div>
+
+                    <div className="search-summary">
+                      <div className="summary-stats">
+                        <div className="stat-item">
+                          <span className="stat-label">Queries:</span>
+                          <span className="stat-value">{allSearches.length}</span>
                         </div>
-                      ))}
+                        <div className="stat-item">
+                          <span className="stat-label">Total Segments:</span>
+                          <span className="stat-value">{searchResults.length}</span>
+                        </div>
+                      </div>
+                      <div className="search-queries-list">
+                        {allSearches.map((search, idx) => (
+                          <div key={idx} className="query-chip">
+                            "{search.query}" ({search.results.length})
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )
+          })()}
         </div>
       )}
 

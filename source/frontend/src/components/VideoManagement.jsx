@@ -53,7 +53,7 @@ function VideoManagement({ currentUser }) {
         group: ''
       }
       
-      const data = await FetchPost('/video/get-videos', payload, 'EvalService')
+      const data = await FetchPost('/videos/get-videos', payload, 'EvalService')
       
       console.log('API Response:', data)
       
@@ -115,7 +115,7 @@ function VideoManagement({ currentUser }) {
     }
 
     try {
-      const data = await FetchPost('/video/delete-video', { Id: id }, 'EvalService')
+      const data = await FetchPost('/videos/delete-video', { Id: id }, 'EvalService')
       
       // FetchPost returns the parsed response body directly
       if (data.error) {

@@ -406,3 +406,38 @@ class ServicePreStack(NestedStack):
             ),
             role=lambda_util_provision_invoke_role
         )    
+
+        # 5th invoke: google (for Gemini API)
+        resource = custom_resources.AwsCustomResource(self,
+            id=f"util-pre-provision-invoke-res5",
+            log_retention=RetentionDays.ONE_WEEK,
+            on_create=custom_resources.AwsSdkCall(
+                service="Lambda",
+                action="invoke",
+                physical_resource_id=custom_resources.PhysicalResourceId.of("Trigger"),
+                parameters={
+                    "FunctionName": lambda_util_provision.function_name,
+                    "InvocationType": "RequestResponse",
+                    "Payload": json.dumps(
+                        {
+                            "RequestType":"Create",
+                            "Layers": [
+                                {
+                                    "name": "google",
+                                    "packages": [
+                                        {
+                                            "name":"google-generativeai",
+                                            "version":"3.0.0",
+                                        }
+                                    ],
+                                    "s3_bucket":self.s3_data_bucket_name,
+                                    "s3_key":LAMBDA_LAYER_SOURCE_S3_KEY_GOOGLE
+                                },
+                            ]
+                        }
+                    )
+                },
+                output_paths=["Payload"]
+            ),
+            role=lambda_util_provision_invoke_role
+        )    

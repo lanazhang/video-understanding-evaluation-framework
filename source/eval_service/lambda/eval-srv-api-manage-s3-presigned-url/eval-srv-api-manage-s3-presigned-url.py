@@ -18,6 +18,14 @@ CORS_HEADERS = {
 
 def lambda_handler(event, context):
     
+    # Parse body from API Gateway proxy integration
+    if 'body' in event:
+        body_raw = event['body']
+        if isinstance(body_raw, str):
+            event = json.loads(body_raw)
+        else:
+            event = body_raw
+    
     action = event.get("Action", "create")
     task_id = event.get("TaskId", str(uuid.uuid4()))
     file_name = event.get("FileName", task_id)

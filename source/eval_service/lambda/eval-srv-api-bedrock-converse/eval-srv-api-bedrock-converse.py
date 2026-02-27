@@ -1,9 +1,18 @@
 import json
 import boto3
+from botocore.config import Config
 import os
+import time
+from datetime import datetime, timezone
+from decimal import Decimal
 
 DYNAMO_VIDEO_TABLE = os.environ.get("DYNAMO_VIDEO_TABLE")
+DYNAMO_VIDEO_ANALYZE_TABLE = os.environ.get("DYNAMO_VIDEO_ANALYZE_TABLE")
 DEFAULT_BEDROCK_CONVERSE_MODEL_ID = os.environ.get("DEFAULT_BEDROCK_CONVERSE_MODEL_ID", "us.amazon.nova-pro-v1:0")
+
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # seconds
 
 # CORS headers for all responses
 CORS_HEADERS = {
@@ -12,10 +21,44 @@ CORS_HEADERS = {
     'Access-Control-Allow-Methods': 'POST,OPTIONS'
 }
 
-bedrock_runtime = boto3.client('bedrock-runtime')
+# Configure boto3 with extended timeouts for large video processing
+boto_config = Config(
+    read_timeout=900,  # 15 minutes
+    connect_timeout=60,
+    retries={'max_attempts': 3, 'mode': 'adaptive'}
+)
+
+bedrock_runtime = boto3.client('bedrock-runtime', config=boto_config)
 dynamodb = boto3.resource('dynamodb')
 
 video_table = dynamodb.Table(DYNAMO_VIDEO_TABLE)
+analyze_table = dynamodb.Table(DYNAMO_VIDEO_ANALYZE_TABLE) if DYNAMO_VIDEO_ANALYZE_TABLE else None
+
+def retry_with_backoff(func, max_retries=MAX_RETRIES, delay=RETRY_DELAY):
+    """
+    Retry a function with exponential backoff
+    """
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except Exception as e:
+            if attempt == max_retries - 1:
+                # Last attempt failed, raise the exception
+                raise
+            print(f"Attempt {attempt + 1} failed: {str(e)}")
+            wait_time = delay * (2 ** attempt)  # Exponential backoff
+            print(f"Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+
+def convert_floats_to_decimal(obj):
+    """Convert float values to Decimal for DynamoDB compatibility"""
+    if isinstance(obj, list):
+        return [convert_floats_to_decimal(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: convert_floats_to_decimal(value) for key, value in obj.items()}
+    elif isinstance(obj, float):
+        return Decimal(str(obj))
+    return obj
 
 def lambda_handler(event, context):
     """
@@ -80,6 +123,9 @@ def lambda_handler(event, context):
         model_id = body.get("ModelId") or body.get("model_id") or DEFAULT_BEDROCK_CONVERSE_MODEL_ID
         temperature = body.get("Temperature") or body.get("temperature")
         max_tokens = body.get("MaxTokens") or body.get("max_tokens")
+        top_p = body.get("TopP") or body.get("top_p")
+        tool_config = body.get("ToolConfig") or body.get("tool_config")  # Optional tool config from frontend
+        task_id = body.get("TaskId") or body.get("task_id")  # Task ID for updating DynamoDB
         
         # Get AWS account ID for bucket owner
         sts_client = boto3.client('sts')
@@ -111,15 +157,15 @@ def lambda_handler(event, context):
         print(f"Using S3 video location: {s3_uri}")
         
         # Determine if we should use tool configuration based on model
-        # Tool config works for Nova Lite and Nova Pro, but not Nova 2 Lite
-        use_tool_config = 'nova-2' not in model_id.lower()
+        # Tool config works for Nova Pro, but not Nova Lite v1 or Nova 2 models
+        use_tool_config = 'nova-2' not in model_id.lower() and 'nova-lite-v1' not in model_id.lower()
         
         # Build the prompt
         if use_tool_config:
-            # For Nova Lite and Nova Pro, use original prompt with tool config
+            # For Nova Pro, use original prompt with tool config
             prompt_text = input_prompt
         else:
-            # For Nova 2 Lite, enhance prompt with JSON format instructions
+            # For Nova Lite v1 and Nova 2 models, enhance prompt with JSON format instructions
             prompt_text = f"""{input_prompt}
 
 Please provide your response in the following JSON format:
@@ -162,6 +208,8 @@ Return only the JSON object, no additional text."""
             inference_config["temperature"] = float(temperature)
         if max_tokens is not None:
             inference_config["maxTokens"] = int(max_tokens)
+        if top_p is not None:
+            inference_config["topP"] = float(top_p)
         
         # Build converse parameters
         converse_params = {
@@ -172,60 +220,66 @@ Return only the JSON object, no additional text."""
         if inference_config:
             converse_params["inferenceConfig"] = inference_config
         
-        # Add tool configuration for Nova Lite and Nova Pro
+        # Add tool configuration - use provided config or default for Nova Pro only
         if use_tool_config:
-            tool_config = {
-                "toolChoice": {
-                    "tool": {
-                        "name": "video_scene_analysis"
-                    }
-                },
-                "tools": [
-                    {
-                        "toolSpec": {
-                            "name": "video_scene_analysis",
-                            "description": "Analyze video and return structured scene information with timestamps",
-                            "inputSchema": {
-                                "json": {
-                                    "type": "object",
-                                    "properties": {
-                                        "scenes": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "start_time": {
-                                                        "type": "string",
-                                                        "description": "Start timestamp in format MM:SS or HH:MM:SS"
+            if tool_config:
+                # Use tool config provided from frontend
+                converse_params["toolConfig"] = tool_config
+                print(f"Using custom tool config from request for model: {model_id}")
+            else:
+                # Use default tool config
+                tool_config = {
+                    "toolChoice": {
+                        "tool": {
+                            "name": "video_scene_analysis"
+                        }
+                    },
+                    "tools": [
+                        {
+                            "toolSpec": {
+                                "name": "video_scene_analysis",
+                                "description": "Analyze video and return structured scene information with timestamps",
+                                "inputSchema": {
+                                    "json": {
+                                        "type": "object",
+                                        "properties": {
+                                            "scenes": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "start_time": {
+                                                            "type": "string",
+                                                            "description": "Start timestamp in format MM:SS or HH:MM:SS"
+                                                        },
+                                                        "end_time": {
+                                                            "type": "string",
+                                                            "description": "End timestamp in format MM:SS or HH:MM:SS"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "description": "Description of what happens in this scene"
+                                                        }
                                                     },
-                                                    "end_time": {
-                                                        "type": "string",
-                                                        "description": "End timestamp in format MM:SS or HH:MM:SS"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "description": "Description of what happens in this scene"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "start_time",
-                                                    "end_time",
-                                                    "description"
-                                                ]
+                                                    "required": [
+                                                        "start_time",
+                                                        "end_time",
+                                                        "description"
+                                                    ]
+                                                }
                                             }
-                                        }
-                                    },
-                                    "required": [
-                                        "scenes"
-                                    ]
+                                        },
+                                        "required": [
+                                            "scenes"
+                                        ]
+                                    }
                                 }
                             }
                         }
-                    }
-                ]
-            }
-            converse_params["toolConfig"] = tool_config
-            print(f"Using tool config for model: {model_id}")
+                    ]
+                }
+                converse_params["toolConfig"] = tool_config
+                print(f"Using default tool config for model: {model_id}")
         else:
             print(f"Using prompt-based JSON for model: {model_id}")
         
@@ -233,7 +287,11 @@ Return only the JSON object, no additional text."""
         print(f"Calling Bedrock Converse API with model: {model_id}")
         print(f"Inference config: {json.dumps(inference_config)}")
         
-        response = bedrock_runtime.converse(**converse_params)
+        # Wrap the API call with retry logic
+        def converse_with_retry():
+            return bedrock_runtime.converse(**converse_params)
+        
+        response = retry_with_backoff(converse_with_retry)
         
         print(f"Bedrock response received")
         
@@ -276,6 +334,45 @@ Return only the JSON object, no additional text."""
         
         print(f"Response: {json.dumps(result)}")
         
+        # Update DynamoDB task record if task_id is provided
+        if task_id and analyze_table:
+            try:
+                completed_timestamp = datetime.now(timezone.utc).isoformat()
+                
+                # Get the task item
+                task_response = analyze_table.get_item(Key={'Id': task_id, 'Type': 'video-understanding'})
+                if 'Item' in task_response:
+                    task_item = task_response['Item']
+                    
+                    # Update Result section
+                    task_item['CompletedTs'] = completed_timestamp
+                    task_item['Status'] = 'completed'
+                    task_item['Result']['Response'] = result.get('content', '')
+                    
+                    # Add response metadata
+                    task_item['Result']['ResponseMetadata'] = {
+                        'inputTokens': result['usage'].get('inputTokens', 0),
+                        'outputTokens': result['usage'].get('outputTokens', 0),
+                        'stopReason': result.get('stopReason', 'unknown')
+                    }
+                    
+                    # Calculate processing time
+                    from dateutil import parser
+                    started = parser.isoparse(task_item['StartedTs'])
+                    completed = parser.isoparse(completed_timestamp)
+                    processing_time = (completed - started).total_seconds()
+                    task_item['Result']['ProcessingTimeS'] = processing_time
+                    
+                    # Convert floats to Decimal
+                    task_item = convert_floats_to_decimal(task_item)
+                    
+                    # Save updated task
+                    analyze_table.put_item(Item=task_item)
+                    print(f"Updated task {task_id} in DynamoDB with status: completed")
+            except Exception as db_error:
+                print(f"Error updating DynamoDB: {str(db_error)}")
+                # Don't fail the lambda if DB update fails
+        
         # Return response directly without storing to DynamoDB
         return {
             'statusCode': 200,
@@ -292,6 +389,24 @@ Return only the JSON object, no additional text."""
         print(f"Error: {str(e)}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
+        
+        # Update DynamoDB task record to failed if task_id is provided
+        if 'task_id' in locals() and task_id and analyze_table:
+            try:
+                completed_timestamp = datetime.now(timezone.utc).isoformat()
+                task_response = analyze_table.get_item(Key={'Id': task_id, 'Type': 'video-understanding'})
+                if 'Item' in task_response:
+                    task_item = task_response['Item']
+                    task_item['CompletedTs'] = completed_timestamp
+                    task_item['Status'] = 'failed'
+                    task_item['Result']['ErrorMessage'] = str(e)
+                    
+                    task_item = convert_floats_to_decimal(task_item)
+                    analyze_table.put_item(Item=task_item)
+                    print(f"Updated task {task_id} in DynamoDB with status: failed")
+            except Exception as db_error:
+                print(f"Error updating DynamoDB on failure: {str(db_error)}")
+        
         return {
             'statusCode': 500,
             'headers': CORS_HEADERS,

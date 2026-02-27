@@ -314,18 +314,8 @@
 
 /* Tasks Section - Matching TaskList Style */
 .video-understanding-form .tasks-section {
-  margin-bottom: 32px;
-  padding: 32px;
-  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-  border-radius: 16px;
-  border: 2px solid #e5e7eb;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-}
-
-.video-understanding-form .tasks-section:hover {
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
+  margin-bottom: 20px;
+  padding: 10px;
 }
 
 .video-understanding-form .tasks-header {
@@ -612,6 +602,28 @@
   border: 1px solid #e5e7eb;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.video-understanding-form .task-detail-row--error {
+  background: #fee2e2;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fca5a5;
+}
+
+.video-understanding-form .task-detail-row--error .task-detail-label {
+  color: #991b1b;
+}
+
+.video-understanding-form .task-detail-value--error {
+  color: #dc2626;
+  font-weight: 500;
+  background: white;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #fca5a5;
+  font-family: monospace;
+  font-size: 12px;
 }
 
 .video-understanding-form .task-detail-label {

@@ -535,6 +535,12 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                               <span className="task-detail-value">{formatDate(task.CompletedTs)}</span>
                             </div>
                           )}
+                          {task.Status === 'failed' && task.Result?.Error && (
+                            <div className="task-detail-row task-detail-row--full task-detail-row--error">
+                              <span className="task-detail-label">Error:</span>
+                              <span className="task-detail-value task-detail-value--error">{task.Result.Error}</span>
+                            </div>
+                          )}
                           <div className="task-detail-row task-detail-row--full">
                             <span className="task-detail-label">Prompt:</span>
                             <span className="task-detail-value">{task.Request?.Prompt || task.Request?.InputPrompt || 'N/A'}</span>

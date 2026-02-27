@@ -1,4 +1,5 @@
-.task-detail {
+/* Ground Truth Task Detail - Scoped Styles */
+.gt-task-detail.task-detail {
   width: 100%;
   height: 100vh;
   display: flex;
@@ -8,7 +9,7 @@
   box-sizing: border-box;
 }
 
-.task-detail-header {
+.gt-task-detail .task-detail-header {
   display: flex;
   align-items: center;
   gap: 20px;
@@ -643,7 +644,7 @@
 }
 
 .label-card:hover {
-  border-color: #646cff;
+  border-color: #f48836;
   box-shadow: 0 2px 8px rgba(100, 108, 255, 0.1);
 }
 
@@ -657,8 +658,8 @@
 }
 
 .label-card.selected {
-  background-color: #e8eaff;
-  border-color: #646cff;
+  background-color: #ffffff;
+  border-color: #f48836;
   border-width: 3px;
   box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
 }
@@ -1185,12 +1186,12 @@
 
 .label-item:hover {
   background-color: #f0f0f0;
-  border-color: #646cff;
+  border-color: #f57c00;
 }
 
 .label-item.active {
   background-color: #e8eaff;
-  border-color: #646cff;
+  border-color: #f57c00;
 }
 
 .label-item.reviewed {
@@ -1263,7 +1264,7 @@
 }
 
 .btn-review:hover {
-  background-color: #1976d2;
+  background-color: #f44336;
 }
 
 .review-options {

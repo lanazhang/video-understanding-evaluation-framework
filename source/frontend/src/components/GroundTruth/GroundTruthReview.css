@@ -275,6 +275,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
+  accent-color: #f97316;
 }
 
 .bulk-action-buttons {
@@ -332,17 +333,17 @@
   align-items: center;
   gap: 12px;
   padding: 10px;
-  background: #f8f9fa;
+  background: #fff7ed;
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: 2px solid #fed7aa;
   font-size: 0.85em;
   transition: all 0.2s ease;
 }
 
 .review-result-item.selected {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  background: #ffedd5;
+  border-color: #fb923c;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
 }
 
 .segment-checkbox {
@@ -350,12 +351,17 @@
   height: 18px;
   cursor: pointer;
   flex-shrink: 0;
+  accent-color: #f97316;
 }
 
 .review-result-item .result-rank {
-  font-weight: 600;
-  color: #6c757d;
+  font-weight: 700;
+  color: #ea580c;
   min-width: 30px;
+  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-align: center;
 }
 
 .review-result-item .result-time-link {

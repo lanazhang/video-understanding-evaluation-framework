@@ -369,7 +369,7 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
 
   // Render readonly mode
   return (
-    <div className="task-detail">
+    <div className="gt-task-detail task-detail">
       <div className="task-detail-header">
         <button className="btn-back" onClick={onBack}>
           <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />

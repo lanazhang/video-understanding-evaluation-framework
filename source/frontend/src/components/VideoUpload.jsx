@@ -27,6 +27,8 @@ function VideoUpload({ onSuccess, onCancel }) {
     EmbeddingScope: ['clip'],
     EmbeddingOption: ['visual', 'audio', 'transcription']
   })
+  const [isNovaConfigExpanded, setIsNovaConfigExpanded] = useState(false)
+  const [isTwelveLabsConfigExpanded, setIsTwelveLabsConfigExpanded] = useState(false)
   const [alert, setAlert] = useState(null)
   const [status, setStatus] = useState(null) // null, generateurl, uploading, loading
   const [numChunks, setNumChunks] = useState(null)
@@ -504,72 +506,87 @@ function VideoUpload({ onSuccess, onCancel }) {
             {/* Nova MME Configuration */}
             {selectedEmbeddings.some(m => m.displayName.includes('Nova')) && (
               <div className="mme-config-panel nova-mme-config">
-                <h4 className="config-title">Nova MME Configuration</h4>
-                <div className="config-grid">
-                  <div className="config-field">
-                    <label htmlFor="durationS">Segment Duration</label>
-                    <div className="input-with-unit">
-                      <input
-                        type="number"
-                        id="durationS"
-                        min="1"
-                        max="600"
-                        value={novaMmeConfig.durationS}
+                <div 
+                  className="config-title-collapsible"
+                  onClick={() => setIsNovaConfigExpanded(!isNovaConfigExpanded)}
+                >
+                  <h4 className="config-title">Nova MME Configuration</h4>
+                  <span className="collapse-icon">{isNovaConfigExpanded ? '▼' : '▶'}</span>
+                </div>
+                {isNovaConfigExpanded && (
+                  <div className="config-grid">
+                    <div className="config-field">
+                      <label htmlFor="durationS">Segment Duration</label>
+                      <div className="input-with-unit">
+                        <input
+                          type="number"
+                          id="durationS"
+                          min="1"
+                          max="600"
+                          value={novaMmeConfig.durationS}
+                          onChange={(e) => setNovaMmeConfig(prev => ({
+                            ...prev,
+                            durationS: parseInt(e.target.value) || 5
+                          }))}
+                          disabled={isUploading}
+                        />
+                        <span className="unit">sec</span>
+                      </div>
+                    </div>
+                    
+                    <div className="config-field">
+                      <label htmlFor="embedMode">Embedding Mode</label>
+                      <select
+                        id="embedMode"
+                        value={novaMmeConfig.embedMode}
                         onChange={(e) => setNovaMmeConfig(prev => ({
                           ...prev,
-                          durationS: parseInt(e.target.value) || 5
+                          embedMode: e.target.value
                         }))}
                         disabled={isUploading}
-                      />
-                      <span className="unit">sec</span>
+                      >
+                        <option value="AUDIO_VIDEO_COMBINED">Combined</option>
+                        <option value="AUDIO_VIDEO_SEPARATE">Separate</option>
+                        <option value="VIDEO_ONLY">Video Only</option>
+                        <option value="AUDIO_ONLY">Audio Only</option>
+                      </select>
+                    </div>
+                    
+                    <div className="config-field">
+                      <label htmlFor="embeddingDim">Dimension</label>
+                      <select
+                        id="embeddingDim"
+                        value={novaMmeConfig.embeddingDim}
+                        onChange={(e) => setNovaMmeConfig(prev => ({
+                          ...prev,
+                          embeddingDim: parseInt(e.target.value)
+                        }))}
+                        disabled={isUploading}
+                      >
+                        <option value={3072}>3072</option>
+                        <option value={1024}>1024</option>
+                        <option value={384}>384</option>
+                        <option value={256}>256</option>
+                      </select>
                     </div>
                   </div>
-                  
-                  <div className="config-field">
-                    <label htmlFor="embedMode">Embedding Mode</label>
-                    <select
-                      id="embedMode"
-                      value={novaMmeConfig.embedMode}
-                      onChange={(e) => setNovaMmeConfig(prev => ({
-                        ...prev,
-                        embedMode: e.target.value
-                      }))}
-                      disabled={isUploading}
-                    >
-                      <option value="AUDIO_VIDEO_COMBINED">Combined</option>
-                      <option value="AUDIO_VIDEO_SEPARATE">Separate</option>
-                      <option value="VIDEO_ONLY">Video Only</option>
-                      <option value="AUDIO_ONLY">Audio Only</option>
-                    </select>
-                  </div>
-                  
-                  <div className="config-field">
-                    <label htmlFor="embeddingDim">Dimension</label>
-                    <select
-                      id="embeddingDim"
-                      value={novaMmeConfig.embeddingDim}
-                      onChange={(e) => setNovaMmeConfig(prev => ({
-                        ...prev,
-                        embeddingDim: parseInt(e.target.value)
-                      }))}
-                      disabled={isUploading}
-                    >
-                      <option value={3072}>3072</option>
-                      <option value={1024}>1024</option>
-                      <option value={384}>384</option>
-                      <option value={256}>256</option>
-                    </select>
-                  </div>
-                </div>
+                )}
               </div>
             )}
             
             {/* TwelveLabs Configuration */}
             {selectedEmbeddings.some(m => m.displayName.toLowerCase().includes('twelve')) && (
               <div className="mme-config-panel twelvelabs-config">
-                <h4 className="config-title">TwelveLabs Configuration</h4>
+                <div 
+                  className="config-title-collapsible"
+                  onClick={() => setIsTwelveLabsConfigExpanded(!isTwelveLabsConfigExpanded)}
+                >
+                  <h4 className="config-title">TwelveLabs Configuration</h4>
+                  <span className="collapse-icon">{isTwelveLabsConfigExpanded ? '▼' : '▶'}</span>
+                </div>
                 
-                <div className="config-grid-tlabs">
+                {isTwelveLabsConfigExpanded && (
+                  <div className="config-grid-tlabs">
                   <div className="config-field">
                     <label>Segmentation</label>
                     <select
@@ -662,6 +679,7 @@ function VideoUpload({ onSuccess, onCancel }) {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             )}
           </div>

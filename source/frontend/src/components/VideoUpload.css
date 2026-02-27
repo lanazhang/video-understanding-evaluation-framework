@@ -30,13 +30,13 @@
 }
 
 .drag-drop-zone:hover {
-  border-color: #0066cc;
-  background-color: #f8f9ff;
+  border-color: #f97316;
+  background-color: #fff7ed;
 }
 
 .drag-drop-zone.dragging {
-  border-color: #0066cc;
-  background-color: #e7f3ff;
+  border-color: #f97316;
+  background-color: #ffedd5;
   border-style: solid;
 }
 
@@ -64,7 +64,7 @@
 }
 
 .drag-drop-zone.dragging .upload-icon {
-  color: #0066cc;
+  color: #f97316;
 }
 
 .drop-zone-text {
@@ -75,7 +75,7 @@
 }
 
 .drop-zone-primary {
-  color: #0066cc;
+  color: #f97316;
   font-weight: 600;
 }
 
@@ -127,7 +127,7 @@
 .form-group input[type="text"]:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: #f97316;
 }
 
 .form-group input[type="file"] {
@@ -202,7 +202,7 @@
 
 .progress-fill {
   height: 100%;
-  background-color: #0066cc;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   transition: width 0.3s ease;
 }
 
@@ -241,12 +241,15 @@
 }
 
 .btn-primary {
-  background-color: #0066cc;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #0052a3;
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
 }
 
 .btn-secondary:disabled,
@@ -278,8 +281,8 @@
 }
 
 .embedding-checkbox:hover {
-  background-color: #e7f3ff;
-  border-color: #0066cc;
+  background-color: #fff7ed;
+  border-color: #f97316;
 }
 
 .embedding-checkbox input[type="checkbox"] {
@@ -288,7 +291,7 @@
   cursor: pointer;
   margin: 0;
   flex-shrink: 0;
-  accent-color: #0066cc;
+  accent-color: #f97316;
 }
 
 .embedding-checkbox input[type="checkbox"]:disabled {
@@ -297,12 +300,12 @@
 }
 
 .embedding-checkbox input[type="checkbox"]:checked {
-  accent-color: #0066cc;
+  accent-color: #f97316;
 }
 
 .embedding-checkbox:has(input[type="checkbox"]:checked) {
-  background-color: #e7f3ff;
-  border-color: #0066cc;
+  background-color: #fff7ed;
+  border-color: #f97316;
 }
 
 .embedding-checkbox span {
@@ -315,7 +318,7 @@
 }
 
 .embedding-checkbox:has(input[type="checkbox"]:checked) span {
-  color: #0066cc;
+  color: #f97316;
   font-weight: 600;
   padding-left:10px;
 }
@@ -367,8 +370,8 @@
 .config-field input[type="number"]:focus,
 .config-field select:focus {
   outline: none;
-  border-color: #0066cc;
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .config-field input[type="number"]:disabled,
@@ -452,6 +455,7 @@
   height: 16px;
   cursor: pointer;
   margin: 0;
+  accent-color: #f97316;
 }
 
 .checkbox-label span {
@@ -481,6 +485,35 @@
   font-size: 13px;
   font-weight: 600;
   color: #333;
+}
+
+.config-title-collapsible {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+  transition: all 0.2s ease;
+}
+
+.config-title-collapsible:hover {
+  opacity: 0.8;
+}
+
+.config-title-collapsible .config-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+  flex: 1;
+}
+
+.collapse-icon {
+  font-size: 12px;
+  color: #f97316;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+  margin-left: 8px;
 }
 
 .config-grid {
@@ -574,8 +607,8 @@
 .mme-config-panel .config-field input[type="number"]:focus,
 .mme-config-panel .config-field select:focus {
   outline: none;
-  border-color: #0066cc;
-  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
 }
 
 .mme-config-panel .checkbox-group {
@@ -605,8 +638,8 @@
 }
 
 .mme-config-panel .checkbox-label:hover {
-  border-color: #0066cc;
-  background: #e7f3ff;
+  border-color: #f97316;
+  background: #fff7ed;
 }
 
 .mme-config-panel .checkbox-label input[type="checkbox"] {
@@ -614,9 +647,10 @@
   height: 14px;
   cursor: pointer;
   margin: 0;
+  accent-color: #f97316;
 }
 
 .mme-config-panel .checkbox-label input[type="checkbox"]:checked + span {
-  color: #0066cc;
+  color: #f97316;
   font-weight: 600;
 }

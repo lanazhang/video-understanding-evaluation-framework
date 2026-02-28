@@ -530,13 +530,13 @@
 }
 
 .label-source-badge.source-embedding {
-  background: #dbeafe;
-  color: #2563eb;
+  background: #fcf1e7;
+  color: #f97316;
 }
 
 .label-source-badge.source-video-understanding {
-  background: #fce7f3;
-  color: #db2777;
+  background: #fcf1e7;
+  color: #f97316;
 }
 
 .label-card-actions {

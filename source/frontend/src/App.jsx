@@ -377,8 +377,10 @@ function App() {
     <BrowserRouter basename="/video-eval-mock">
       <Authenticator hideSignUp={true}>
         {({ user }) => {
-          if (user && !currentUser) {
-            setCurrentUser(user)
+          // Update currentUser when user changes, but only if different
+          if (user && user !== currentUser) {
+            // Use setTimeout to defer the state update to avoid updating during render
+            setTimeout(() => setCurrentUser(user), 0)
           }
           
           return (

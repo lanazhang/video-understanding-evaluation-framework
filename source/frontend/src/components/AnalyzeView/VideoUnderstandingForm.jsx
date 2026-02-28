@@ -17,7 +17,6 @@ function VideoUnderstandingForm({ video, onSuccess }) {
   const [editableToolConfig, setEditableToolConfig] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [response, setResponse] = useState(null)
   
   // Video Understanding Tasks state
   const [videoUnderstandingTasks, setVideoUnderstandingTasks] = useState([])
@@ -252,7 +251,6 @@ function VideoUnderstandingForm({ video, onSuccess }) {
 
     setLoading(true)
     setError(null)
-    setResponse(null)
 
     try {
       const selectedModelConfig = models.find(m => m.modelId === selectedModel)
@@ -333,7 +331,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
       if (data.statusCode !== undefined) {
         if (data.statusCode === 200 || data.statusCode === 202) {
           const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-          setResponse(responseBody)
+          // Task submitted successfully - don't show response, user should refresh task list
           setError(null)
           
           // Reload tasks and scroll to top
@@ -357,7 +355,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
         if (data.message.toLowerCase().includes('error') || data.message.toLowerCase().includes('failed')) {
           setError(data.message)
         } else {
-          setResponse(data)
+          // Don't show response section
           setError(null)
           
           // Reload tasks and scroll to top
@@ -371,7 +369,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
           }
         }
       } else {
-        setResponse(data)
+        // Don't show response section
         setError(null)
         
         // Reload tasks and scroll to top
@@ -394,7 +392,6 @@ function VideoUnderstandingForm({ video, onSuccess }) {
 
   const handleClear = () => {
     setError(null)
-    setResponse(null)
     setTaskName(generateDefaultTaskName())
   }
 
@@ -461,7 +458,12 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                     <div className="task-item-header">
                       <div className="task-item-info">
                         <span className={`task-status task-status--${task.Status}`}>{task.Status}</span>
-                        <span className="task-item-detail">{task.Description || task.TaskName || task.ModelId || 'N/A'}</span>
+                        <span className="task-item-detail" title={task.Status === 'failed' && (task.Result?.ErrorMessage || task.Result?.Error) ? (task.Result.ErrorMessage || task.Result.Error) : ''}>
+                          {task.Description || task.TaskName || task.ModelId || 'N/A'}
+                          {task.Status === 'failed' && (task.Result?.ErrorMessage || task.Result?.Error) && (
+                            <span className="task-error-indicator" title={task.Result.ErrorMessage || task.Result.Error}>⚠️</span>
+                          )}
+                        </span>
                       </div>
                       <div className="task-item-actions">
                         {task.Status === 'completed' && (
@@ -535,10 +537,10 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                               <span className="task-detail-value">{formatDate(task.CompletedTs)}</span>
                             </div>
                           )}
-                          {task.Status === 'failed' && task.Result?.Error && (
+                          {task.Status === 'failed' && (task.Result?.ErrorMessage || task.Result?.Error) && (
                             <div className="task-detail-row task-detail-row--full task-detail-row--error">
                               <span className="task-detail-label">Error:</span>
-                              <span className="task-detail-value task-detail-value--error">{task.Result.Error}</span>
+                              <span className="task-detail-value task-detail-value--error">{task.Result.ErrorMessage || task.Result.Error}</span>
                             </div>
                           )}
                           <div className="task-detail-row task-detail-row--full">
@@ -779,76 +781,6 @@ function VideoUnderstandingForm({ video, onSuccess }) {
         {error && (
           <div className="alert alert-error">
             {error}
-          </div>
-        )}
-
-        {response && (
-          <div className="response-section">
-            <h3>Response</h3>
-            <div className="response-content">
-              {(() => {
-                let content = response.response?.content || response.response?.message || response.message || 'No content available'
-                
-                if (typeof content === 'string') {
-                  try {
-                    const parsed = JSON.parse(content)
-                    
-                    if (parsed.scenes && Array.isArray(parsed.scenes)) {
-                      return (
-                        <div className="scenes-list">
-                          {parsed.scenes.map((scene, index) => (
-                            <div key={index} className="scene-item">
-                              <div className="scene-header">
-                                <span className="scene-number">Scene {index + 1}</span>
-                                <span className="scene-time">
-                                  {scene.start_time} - {scene.end_time}
-                                </span>
-                              </div>
-                              <div className="scene-description">
-                                {scene.description}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    }
-                    
-                    if (typeof parsed === 'string') {
-                      try {
-                        const doubleParsed = JSON.parse(parsed)
-                        if (doubleParsed.scenes && Array.isArray(doubleParsed.scenes)) {
-                          return (
-                            <div className="scenes-list">
-                              {doubleParsed.scenes.map((scene, index) => (
-                                <div key={index} className="scene-item">
-                                  <div className="scene-header">
-                                    <span className="scene-number">Scene {index + 1}</span>
-                                    <span className="scene-time">
-                                      {scene.start_time} - {scene.end_time}
-                                    </span>
-                                  </div>
-                                  <div className="scene-description">
-                                    {scene.description}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        }
-                      } catch (e2) {
-                        // Not double-encoded JSON
-                      }
-                    }
-                    
-                    return <pre className="response-text">{JSON.stringify(parsed, null, 2)}</pre>
-                  } catch (e) {
-                    return <div className="response-text">{content}</div>
-                  }
-                }
-                
-                return <div className="response-text">{JSON.stringify(content, null, 2)}</div>
-              })()}
-            </div>
           </div>
         )}
       </div>

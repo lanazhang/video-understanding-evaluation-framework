@@ -1,6 +1,3 @@
-.video-understanding-form {
-}
-
 .video-understanding-form form {
   display: flex;
   flex-direction: column;
@@ -494,6 +491,21 @@
   text-overflow: ellipsis;
   min-width: 0;
   flex-shrink: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-understanding-form .task-error-indicator {
+  font-size: 16px;
+  flex-shrink: 0;
+  cursor: help;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .video-understanding-form .task-item-actions {

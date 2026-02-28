@@ -170,6 +170,58 @@ export const modelGroups = [
         }
       },
       {
+        displayName: 'Nova 2 Omni',
+        modelId: 'us.amazon.nova-2-omni-v1:0',
+        api: '/model/start-video-understanding',
+        apiType: 'bedrock_converse',
+        toolConfig: {
+          toolChoice: {
+            tool: {
+              name: 'video_analysis'
+            }
+          },
+          tools: [{
+            toolSpec: {
+              name: 'video_analysis',
+              description: 'Analyze video and return structured information with key moments',
+              inputSchema: {
+                json: {
+                  type: 'object',
+                  properties: {
+                    description: {
+                      type: 'string',
+                      description: 'A high-level summary of the entire video content.'
+                    },
+                    key_moments: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          description: {
+                            type: 'string',
+                            description: 'A detailed description of what happens in this moment.'
+                          },
+                          start_time: {
+                            type: 'number',
+                            description: 'Start time of the moment in seconds.'
+                          },
+                          end_time: {
+                            type: 'number',
+                            description: 'End time of the moment in seconds.'
+                          }
+                        },
+                        required: ['description', 'start_time', 'end_time']
+                      }
+                    }
+                  },
+                  required: ['description', 'key_moments']
+                }
+              }
+            }
+          }]
+        }
+      },
+      {
         displayName: 'TwelveLabs Pegasus',
         modelId: 'twelvelabs.pegasus-1-2-v1:0',
         api: '/model/start-video-understanding',

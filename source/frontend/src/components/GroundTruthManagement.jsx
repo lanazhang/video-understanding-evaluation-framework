@@ -7,6 +7,7 @@ import checkIcon from '../assets/icons/check.svg'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import GroundTruthTaskDetail from './GroundTruthTaskDetail'
 import CreateGroundTruthInline from './CreateGroundTruthInline'
+import CreateGroundTruthWizard from './CreateGroundTruth/CreateGroundTruthWizard'
 
 function GroundTruthManagement({ currentUser, initialVideoFilter = null }) {
   const [groundTruths, setGroundTruths] = useState([])
@@ -244,7 +245,7 @@ function GroundTruthManagement({ currentUser, initialVideoFilter = null }) {
   // If creating new task
   if (showCreateForm) {
     return (
-      <CreateGroundTruthInline 
+      <CreateGroundTruthWizard 
         currentUser={currentUser}
         onCancel={handleCancelCreate}
         onSuccess={handleCreateSuccess}

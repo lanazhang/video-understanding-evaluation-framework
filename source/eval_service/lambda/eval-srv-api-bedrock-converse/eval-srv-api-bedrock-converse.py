@@ -166,7 +166,67 @@ def lambda_handler(event, context):
             prompt_text = input_prompt
         else:
             # For Nova Lite v1 and Nova 2 models, enhance prompt with JSON format instructions
-            prompt_text = f"""{input_prompt}
+            # If tool_config is provided, extract the schema from it
+            if tool_config:
+                # Extract JSON schema from tool config
+                try:
+                    tools = tool_config.get('tools', [])
+                    if tools and len(tools) > 0:
+                        tool_spec = tools[0].get('toolSpec', {})
+                        json_schema = tool_spec.get('inputSchema', {}).get('json', {})
+                        tool_description = tool_spec.get('description', '')
+                        
+                        prompt_text = f"""{input_prompt}
+
+{tool_description}
+
+Extract information in JSON format according to the given schema.
+Follow these guidelines:
+- Ensure that every field is populated.
+- Provide timestamps in the format specified in the schema.
+- The description field should be a detailed account of what happens in each moment/scene.
+- Do not make up events not present in the video.
+
+JSON Schema:
+{json.dumps(json_schema, indent=2)}
+
+Return only the JSON object, no additional text."""
+                    else:
+                        # Fallback if tool config structure is unexpected
+                        prompt_text = f"""{input_prompt}
+
+Please provide your response in the following JSON format:
+{{
+  "scenes": [
+    {{
+      "start_time": "MM:SS or HH:MM:SS",
+      "end_time": "MM:SS or HH:MM:SS",
+      "description": "Description of what happens in this scene"
+    }}
+  ]
+}}
+
+Return only the JSON object, no additional text."""
+                except Exception as schema_error:
+                    print(f"Error extracting schema from tool config: {str(schema_error)}")
+                    # Fallback to default format
+                    prompt_text = f"""{input_prompt}
+
+Please provide your response in the following JSON format:
+{{
+  "scenes": [
+    {{
+      "start_time": "MM:SS or HH:MM:SS",
+      "end_time": "MM:SS or HH:MM:SS",
+      "description": "Description of what happens in this scene"
+    }}
+  ]
+}}
+
+Return only the JSON object, no additional text."""
+            else:
+                # No tool config provided, use default format
+                prompt_text = f"""{input_prompt}
 
 Please provide your response in the following JSON format:
 {{

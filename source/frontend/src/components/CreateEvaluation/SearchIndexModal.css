@@ -120,6 +120,27 @@
   display: block;
 }
 
+.index-metadata-display {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.metadata-separator {
+  color: #999;
+  font-weight: 300;
+}
+
+.metadata-value {
+  color: #333;
+  font-weight: 500;
+}
+
 /* Search Controls Panel */
 .search-controls-panel {
   flex: 1;
@@ -132,14 +153,19 @@
 
 /* Search Controls */
 .search-controls {
-  align-items: left;
-  gap: 16px;
   margin-bottom: 20px;
-  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.search-inputs-row {
+  display: flex;
+  gap: 0;
+  align-items: center;
   width: 100%;
 }
 
 .search-controls .search-text-input {
+  flex: 1;
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
@@ -163,7 +189,6 @@
   font-weight: 600;
   transition: all 0.2s ease;
   text-align: center;
-  margin-left: 10px;
 }
 
 .search-controls .search-topk-input:focus {
@@ -185,7 +210,6 @@
   transition: all 0.3s ease;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
-  margin-left: 10px;
 }
 
 .search-controls .btn-search:hover:not(:disabled) {
@@ -201,9 +225,15 @@
   transform: none;
 }
 
-.search-controls .btn-clear-searches {
-  flex: 0 0 auto;
-  padding: 12px 18px;
+.clear-button-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.clear-button-row .btn-clear-searches {
+  padding: 10px 18px;
   background: white;
   color: #dc2626;
   border: 2px solid #dc2626;
@@ -213,10 +243,9 @@
   font-weight: 600;
   transition: all 0.3s ease;
   white-space: nowrap;
-  margin-left: 10px;
 }
 
-.search-controls .btn-clear-searches:hover {
+.clear-button-row .btn-clear-searches:hover {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: white;
   transform: translateY(-1px);
@@ -444,45 +473,4 @@
   cursor: not-allowed;
   box-shadow: none;
   opacity: 0.6;
-}
-
-/* Two-column layout overrides */
-.search-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.search-inputs-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.search-text-input {
-  flex: 0 0 calc(80% - 6px);
-}
-
-.search-topk-input {
-  flex: 0 0 calc(20% - 6px);
-  text-align: center;
-}
-
-.search-buttons-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.btn-search {
-  flex: 0 0 auto;
-  padding: 12px 20px;
-  white-space: nowrap;
-}
-
-.btn-clear-searches {
-  flex: 0 0 auto;
-  padding: 12px 16px;
-  white-space: nowrap;
 }

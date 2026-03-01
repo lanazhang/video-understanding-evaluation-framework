@@ -12,6 +12,32 @@ function ManualLabel({ video, allResults, setAllResults, isMaximized, resetTrigg
   const videoPlayerRef = useRef(null)
   const timelineRef = useRef(null)
 
+  // Separate labels into unreviewed (from MME/video understanding) and verified (manual + confirmed)
+  const unreviewedLabels = allResults.filter(r => 
+    (r.source === 'embedding' || r.source === 'video-understanding') && !r.verified
+  )
+  const verifiedLabels = allResults.filter(r => 
+    r.source === 'manual' || r.verified === true
+  )
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('Label verification status:')
+    allResults.forEach((r, i) => {
+      console.log(`  [${i}] source: ${r.source}, verified: ${r.verified}, query: ${r.query}`)
+    })
+  }, [allResults])
+  
+  // Default to unreviewed tab if unreviewed labels exist, otherwise verified
+  const [activeTab, setActiveTab] = useState(unreviewedLabels.length > 0 ? 'unreviewed' : 'verified')
+  
+  // Update active tab when unreviewed labels change
+  useEffect(() => {
+    if (unreviewedLabels.length > 0 && activeTab === 'verified' && verifiedLabels.length === 0) {
+      setActiveTab('unreviewed')
+    }
+  }, [unreviewedLabels.length, verifiedLabels.length, activeTab])
+  
   // Show all labels in the manual label list (from all sources) to allow editing
   const manualLabels = allResults
   
@@ -145,7 +171,9 @@ function ManualLabel({ video, allResults, setAllResults, isMaximized, resetTrigg
       EndSec: typeof endTime === 'number' ? parseFloat(endTime.toFixed(2)) : endTime,
       query: label.trim(),
       Distance: 0,
-      source: editingIndex !== null ? manualLabels[editingIndex].source : 'manual'
+      source: editingIndex !== null ? manualLabels[editingIndex].source : 'manual',
+      verified: true, // Always mark as verified when manually added or edited
+      reviewStatus: 'reviewed' // Mark as reviewed for ground truth
     }
 
     if (editingIndex !== null) {
@@ -208,6 +236,22 @@ function ManualLabel({ video, allResults, setAllResults, isMaximized, resetTrigg
       setEndTime(null)
       setLabel('')
     }
+  }
+
+  const handleConfirmLabel = (index) => {
+    const labelToConfirm = manualLabels[index]
+    
+    // Update the label to mark it as verified and reviewed
+    const updatedAllResults = allResults.map(result => {
+      if (result.StartSec === labelToConfirm.StartSec && 
+          result.EndSec === labelToConfirm.EndSec && 
+          result.query === labelToConfirm.query &&
+          result.source === labelToConfirm.source) {
+        return { ...result, verified: true, reviewStatus: 'reviewed' }
+      }
+      return result
+    })
+    setAllResults(updatedAllResults)
   }
 
   const handleReset = () => {
@@ -335,12 +379,6 @@ function ManualLabel({ video, allResults, setAllResults, isMaximized, resetTrigg
               className="timeline-track" 
               onClick={handleTimelineClick}
             >
-              {/* Current playhead */}
-              <div 
-                className="timeline-playhead" 
-                style={{ left: `${getTimelinePosition(currentTime)}%` }}
-              />
-              
               {/* Start marker */}
               {startTime !== null && (
                 <div 
@@ -375,21 +413,24 @@ function ManualLabel({ video, allResults, setAllResults, isMaximized, resetTrigg
               )}
               
               {/* Existing labels on timeline */}
-              {manualLabels.map((labelItem, index) => (
+              {manualLabels.map((labelItem, index) => {
+                const isVerified = labelItem.verified === true || labelItem.source === 'manual'
+                return (
                 <div
                   key={index}
-                  className={`timeline-existing-label ${editingIndex === index ? 'editing' : ''}`}
+                  className={`timeline-existing-label ${isVerified ? 'verified' : 'unreviewed'} ${editingIndex === index ? 'editing' : ''}`}
                   style={{
                     left: `${getTimelinePosition(labelItem.StartSec)}%`,
                     width: `${getTimelinePosition(labelItem.EndSec) - getTimelinePosition(labelItem.StartSec)}%`
                   }}
-                  title={labelItem.query}
+                  title={`${labelItem.query} (${isVerified ? 'Verified' : 'Unreviewed'})`}
                   onClick={(e) => {
                     e.stopPropagation()
                     handleEditLabel(index)
                   }}
                 />
-              ))}
+                )
+              })}
             </div>
             <div className="timeline-time-labels">
               <span>0:00</span>
@@ -512,48 +553,123 @@ function ManualLabel({ video, allResults, setAllResults, isMaximized, resetTrigg
           <span className="label-count">{manualLabels.length}</span>
         </div>
         
-        {manualLabels.length === 0 ? (
-          <div className="no-labels-message">
-            No labels created yet. Click on the video or timeline to start.
-          </div>
-        ) : (
-          <div className="manual-labels-list">
-            {[...manualLabels]
-              .sort((a, b) => b.StartSec - a.StartSec)
-              .map((labelItem, displayIndex) => {
-                const originalIndex = manualLabels.findIndex(l => l === labelItem)
-                const sourceLabel = labelItem.source === 'manual' ? 'Manual' : 
-                                   labelItem.source === 'embedding' ? 'Embedding' : 
-                                   labelItem.source === 'video-understanding' ? 'Video' : 'Other'
-                return (
-              <div 
-                key={originalIndex} 
-                className={`manual-label-card ${editingIndex === originalIndex ? 'editing' : ''}`}
-                onClick={() => handleSeekToLabel(labelItem.StartSec, labelItem.EndSec, labelItem.query, originalIndex)}
-              >
-                <span className="label-number">#{originalIndex + 1}</span>
-                <span className={`label-source-badge source-${labelItem.source}`}>{sourceLabel}</span>
-                <div className="label-text">{labelItem.query}</div>
-                <div className="label-time-compact">
-                  {formatTime(labelItem.StartSec)} - {formatTime(labelItem.EndSec)}
+        {/* Tabs */}
+        <div className="labels-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'unreviewed' ? 'active' : ''}`}
+            onClick={() => setActiveTab('unreviewed')}
+          >
+            Unreviewed ({unreviewedLabels.length})
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'verified' ? 'active' : ''}`}
+            onClick={() => setActiveTab('verified')}
+          >
+            Verified ({verifiedLabels.length})
+          </button>
+        </div>
+
+        {/* Unreviewed Tab Content */}
+        {activeTab === 'unreviewed' && (
+          unreviewedLabels.length === 0 ? (
+            <div className="no-labels-message">
+              No unreviewed labels. Import labels from MME or Video Understanding.
+            </div>
+          ) : (
+            <div className="manual-labels-list">
+              {[...unreviewedLabels]
+                .sort((a, b) => a.StartSec - b.StartSec)
+                .map((labelItem) => {
+                  const originalIndex = manualLabels.findIndex(l => l === labelItem)
+                  const sourceLabel = labelItem.source === 'embedding' ? 'MME' : 
+                                     labelItem.source === 'video-understanding' ? 'Video Understanding' : 'Imported'
+                  return (
+                <div 
+                  key={originalIndex} 
+                  className={`manual-label-card unreviewed ${editingIndex === originalIndex ? 'editing' : ''}`}
+                  onClick={() => handleSeekToLabel(labelItem.StartSec, labelItem.EndSec, labelItem.query, originalIndex)}
+                >
+                  <span className="label-number">#{originalIndex + 1}</span>
+                  <span className={`label-source-badge source-${labelItem.source}`}>{sourceLabel}</span>
+                  <div className="label-text">{labelItem.query}</div>
+                  <div className="label-time-compact">
+                    {formatTime(labelItem.StartSec)} - {formatTime(labelItem.EndSec)}
+                  </div>
+                  <span className="label-duration">{formatDuration(labelItem.EndSec - labelItem.StartSec)}</span>
+                  <div className="label-card-actions">
+                    <button 
+                      className="btn-confirm-label"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleConfirmLabel(originalIndex)
+                      }}
+                      title="Confirm and move to verified"
+                    >
+                      ✓
+                    </button>
+                    <button 
+                      className="btn-remove-label"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveLabel(originalIndex)
+                      }}
+                      title="Remove label"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-                <span className="label-duration">{formatDuration(labelItem.EndSec - labelItem.StartSec)}</span>
-                <div className="label-card-actions">
-                  <button 
-                    className="btn-remove-label"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleRemoveLabel(originalIndex)
-                    }}
-                    title="Remove label"
-                  >
-                    ✕
-                  </button>
+                  )
+                })}
+            </div>
+          )
+        )}
+
+        {/* Verified Tab Content */}
+        {activeTab === 'verified' && (
+          verifiedLabels.length === 0 ? (
+            <div className="no-labels-message">
+              No verified labels yet. Create manual labels or confirm imported ones.
+            </div>
+          ) : (
+            <div className="manual-labels-list">
+              {[...verifiedLabels]
+                .sort((a, b) => a.StartSec - b.StartSec)
+                .map((labelItem) => {
+                  const originalIndex = manualLabels.findIndex(l => l === labelItem)
+                  const sourceLabel = labelItem.source === 'manual' ? 'Manual' : 
+                                     labelItem.source === 'embedding' ? 'Embedding' : 
+                                     labelItem.source === 'video-understanding' ? 'Video' : 'Other'
+                  return (
+                <div 
+                  key={originalIndex} 
+                  className={`manual-label-card ${editingIndex === originalIndex ? 'editing' : ''}`}
+                  onClick={() => handleSeekToLabel(labelItem.StartSec, labelItem.EndSec, labelItem.query, originalIndex)}
+                >
+                  <span className="label-number">#{originalIndex + 1}</span>
+                  <span className={`label-source-badge source-${labelItem.source}`}>{sourceLabel}</span>
+                  <div className="label-text">{labelItem.query}</div>
+                  <div className="label-time-compact">
+                    {formatTime(labelItem.StartSec)} - {formatTime(labelItem.EndSec)}
+                  </div>
+                  <span className="label-duration">{formatDuration(labelItem.EndSec - labelItem.StartSec)}</span>
+                  <div className="label-card-actions">
+                    <button 
+                      className="btn-remove-label"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveLabel(originalIndex)
+                      }}
+                      title="Remove label"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-              </div>
-                )
-              })}
-          </div>
+                  )
+                })}
+            </div>
+          )
         )}
       </div>
     </div>

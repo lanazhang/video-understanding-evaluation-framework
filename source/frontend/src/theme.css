@@ -1,4 +1,4 @@
-/* Global Theme Variables - Orange & Blue as Separate Themes */
+/* Global Theme Variables - Orange & Green Themes */
 :root {
   /* Orange Theme - Primary Actions, Highlights, Active States */
   --orange-primary: #f97316;
@@ -31,22 +31,22 @@
   --green-shadow-hover: rgba(16, 185, 129, 0.35);
   --green-border: #6ee7b7;
   
-  /* Blue Theme - For Evaluation Metrics Only */
-  --blue-primary: #3b82f6;
-  --blue-light: #60a5fa;
-  --blue-lighter: #93c5fd;
-  --blue-dark: #2563eb;
-  --blue-darker: #1d4ed8;
-  --blue-bg-lightest: #eff6ff;
-  --blue-bg-light: #dbeafe;
-  --blue-bg-medium: #bfdbfe;
-  --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  --blue-gradient-light: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  --blue-gradient-hover: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  --blue-shadow: rgba(59, 130, 246, 0.25);
-  --blue-shadow-light: rgba(96, 165, 250, 0.2);
-  --blue-shadow-hover: rgba(59, 130, 246, 0.35);
-  --blue-border: #93c5fd;
+  /* Metrics Theme - Using Green for Evaluation Metrics */
+  --blue-primary: var(--green-primary);
+  --blue-light: var(--green-light);
+  --blue-lighter: var(--green-lighter);
+  --blue-dark: var(--green-dark);
+  --blue-darker: var(--green-darker);
+  --blue-bg-lightest: var(--green-bg-lightest);
+  --blue-bg-light: var(--green-bg-light);
+  --blue-bg-medium: var(--green-bg-medium);
+  --blue-gradient: var(--green-gradient);
+  --blue-gradient-light: var(--green-gradient-light);
+  --blue-gradient-hover: var(--green-gradient-hover);
+  --blue-shadow: var(--green-shadow);
+  --blue-shadow-light: var(--green-shadow-light);
+  --blue-shadow-hover: var(--green-shadow-hover);
+  --blue-border: var(--green-border);
   
   /* Status Colors using Orange/Green themes */
   --status-success-bg: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);

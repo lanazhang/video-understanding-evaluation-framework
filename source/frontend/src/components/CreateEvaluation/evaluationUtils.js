@@ -1,6 +1,6 @@
 // Utility functions for evaluation calculations
 
-export const calculateEvaluationMetrics = (groundTruthLabels, searchResults, searchQuery, allSearches = []) => {
+export const calculateEvaluationMetrics = (groundTruthLabels, searchResults, searchQuery, allSearches = [], bufferTime = 0) => {
   // Filter ground truth labels to only include those marked as true_positive or reviewed
   // Other labels (false_positive, unreviewed, etc.) should not be used for metrics calculation
   const validGTLabels = groundTruthLabels.filter(
@@ -16,9 +16,16 @@ export const calculateEvaluationMetrics = (groundTruthLabels, searchResults, sea
     Label: searchQuery
   }))
 
-  // Check if two temporal segments overlap
+  // Check if two temporal segments overlap (with buffer time)
   const hasOverlap = (gt, pred) => {
-    return Math.max(gt.StartTs, pred.StartTs) < Math.min(gt.EndTs, pred.EndTs)
+    const buffer = parseFloat(bufferTime) || 0
+    // Apply buffer: extend both ranges by buffer amount
+    const gtStart = gt.StartTs - buffer
+    const gtEnd = gt.EndTs + buffer
+    const predStart = pred.StartTs - buffer
+    const predEnd = pred.EndTs + buffer
+    
+    return Math.max(gtStart, predStart) < Math.min(gtEnd, predEnd)
   }
 
   // Calculate IoU (Intersection over Union) for temporal segments (for display purposes)
@@ -136,8 +143,12 @@ export const calculateEvaluationMetrics = (groundTruthLabels, searchResults, sea
     ? 2 * (precision * recall) / (precision + recall) 
     : 0
   const meanIoU = truePositives > 0 ? totalIoU / truePositives : 0
-  const accuracy = validGTLabels.length > 0
-    ? truePositives / validGTLabels.length
+  
+  // Accuracy = (TP + TN) / (TP + TN + FP + FN)
+  // Since TN is 0 in temporal overlap scenarios, accuracy = TP / (TP + FP + FN)
+  const totalPredictions = truePositives + falsePositives + falseNegatives
+  const accuracy = totalPredictions > 0
+    ? truePositives / totalPredictions
     : 0
 
   // Calculate proper mAP (Mean Average Precision)

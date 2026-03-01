@@ -26,6 +26,8 @@ export const modelGroups = [
         modelId: 'us.amazon.nova-2-lite-v1:0',
         api: '/model/start-video-understanding',
         apiType: 'bedrock_converse',
+        maxDurationMinutes: 60,
+        maxSizeGB: 2,
         toolConfig: {
           toolChoice: {
             tool: {
@@ -35,7 +37,7 @@ export const modelGroups = [
           tools: [{
             toolSpec: {
               name: 'video_analysis',
-              description: 'Analyze video and return structured information with key moments',
+              description: 'Analyze video and return structured information with key moments. Each moment should represent a meaningful scene or segment, NOT individual seconds. Group related content into coherent time ranges (e.g., 5-30 seconds per moment depending on content).',
               inputSchema: {
                 json: {
                   type: 'object',
@@ -55,11 +57,11 @@ export const modelGroups = [
                           },
                           start_time: {
                             type: 'number',
-                            description: 'Start time of the moment in seconds.'
+                            description: 'Start time of the moment in seconds. Each moment should span multiple seconds representing a complete scene or action, not just 1 second.'
                           },
                           end_time: {
                             type: 'number',
-                            description: 'End time of the moment in seconds.'
+                            description: 'End time of the moment in seconds. Should be significantly later than start_time to represent a meaningful scene duration.'
                           }
                         },
                         required: ['description', 'start_time', 'end_time']
@@ -78,6 +80,8 @@ export const modelGroups = [
         modelId: 'amazon.nova-lite-v1:0',
         api: '/model/start-video-understanding',
         apiType: 'bedrock_converse',
+        maxDurationMinutes: 60,
+        maxSizeGB: 2,
         toolConfig: {
           toolChoice: {
             tool: {
@@ -99,15 +103,15 @@ export const modelGroups = [
                         properties: {
                           start_time: {
                             type: 'string',
-                            description: 'Start timestamp in format MM:SS or HH:MM:SS'
+                            description: 'Start time of the moment in seconds. Each moment should span multiple seconds representing a complete scene or action, not just 1 second.'
                           },
                           end_time: {
                             type: 'string',
-                            description: 'End timestamp in format MM:SS or HH:MM:SS'
+                            description: 'Start time of the moment in seconds. Each moment should span multiple seconds representing a complete scene or action, not just 1 second.'
                           },
                           description: {
                             type: 'string',
-                            description: 'Description of what happens in this scene'
+                            description: 'Start time of the moment in seconds. Each moment should span multiple seconds representing a complete scene or action, not just 1 second.'
                           }
                         },
                         required: ['start_time', 'end_time', 'description']
@@ -126,6 +130,8 @@ export const modelGroups = [
         modelId: 'amazon.nova-pro-v1:0',
         api: '/model/start-video-understanding',
         apiType: 'bedrock_converse',
+        maxDurationMinutes: 60,
+        maxSizeGB: 2,
         toolConfig: {
           toolChoice: {
             tool: {
@@ -174,6 +180,8 @@ export const modelGroups = [
         modelId: 'us.amazon.nova-2-omni-v1:0',
         api: '/model/start-video-understanding',
         apiType: 'bedrock_converse',
+        maxDurationMinutes: 60,
+        maxSizeGB: 2,
         toolConfig: {
           toolChoice: {
             tool: {
@@ -226,6 +234,8 @@ export const modelGroups = [
         modelId: 'twelvelabs.pegasus-1-2-v1:0',
         api: '/model/start-video-understanding',
         apiType: 'tlabs_pegasus',
+        maxDurationMinutes: 60,
+        maxSizeGB: 2,
         toolConfig: {
           responseFormat: {
             jsonSchema: {
@@ -239,12 +249,12 @@ export const modelGroups = [
                       type: 'object',
                       properties: {
                         start_time: {
-                          type: 'string',
-                          description: 'Start timestamp in format MM:SS or HH:MM:SS'
+                          type: 'number',
+                          description: 'Start time in seconds, rounded to 2 decimal places (e.g., 23.45)'
                         },
                         end_time: {
-                          type: 'string',
-                          description: 'End timestamp in format MM:SS or HH:MM:SS'
+                          type: 'number',
+                          description: 'End time in seconds, rounded to 2 decimal places (e.g., 27.89)'
                         },
                         description: {
                           type: 'string',
@@ -267,6 +277,8 @@ export const modelGroups = [
         api: '/model/start-video-understanding',
         apiType: 'gemini',
         enabled: true,
+        maxDurationMinutes: 120,
+        maxSizeGB: 2,
         toolConfig: {
           responseSchema: {
             type: 'object',
@@ -281,12 +293,12 @@ export const modelGroups = [
                   type: 'object',
                   properties: {
                     start_time: {
-                      type: 'string',
-                      description: 'Start timestamp in format MM:SS or HH:MM:SS'
+                      type: 'number',
+                      description: 'Start time in decimal seconds (e.g., 23.5 for 23.5 seconds)'
                     },
                     end_time: {
-                      type: 'string',
-                      description: 'End timestamp in format MM:SS or HH:MM:SS'
+                      type: 'number',
+                      description: 'End time in decimal seconds (e.g., 27.8 for 27.8 seconds)'
                     },
                     description: {
                       type: 'string',
@@ -307,6 +319,8 @@ export const modelGroups = [
         api: '/model/start-video-understanding',
         apiType: 'gemini',
         enabled: true,
+        maxDurationMinutes: 120,
+        maxSizeGB: 2,
         toolConfig: {
           responseSchema: {
             type: 'object',
@@ -321,12 +335,12 @@ export const modelGroups = [
                   type: 'object',
                   properties: {
                     start_time: {
-                      type: 'string',
-                      description: 'Start timestamp in format MM:SS or HH:MM:SS'
+                      type: 'number',
+                      description: 'Start time in decimal seconds (e.g., 23.5 for 23.5 seconds)'
                     },
                     end_time: {
-                      type: 'string',
-                      description: 'End timestamp in format MM:SS or HH:MM:SS'
+                      type: 'number',
+                      description: 'End time in decimal seconds (e.g., 27.8 for 27.8 seconds)'
                     },
                     description: {
                       type: 'string',

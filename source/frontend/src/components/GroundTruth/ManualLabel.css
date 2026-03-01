@@ -104,14 +104,7 @@
 }
 
 .timeline-playhead {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #3b82f6;
-  pointer-events: none;
-  z-index: 3;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  display: none;
 }
 
 .timeline-marker {
@@ -169,12 +162,36 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
+.timeline-existing-label.unreviewed {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.5) 0%, rgba(249, 115, 22, 0.5) 100%);
+  border-color: #fb923c;
+  box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
+}
+
+.timeline-existing-label.verified {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.5) 0%, rgba(5, 150, 105, 0.5) 100%);
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 .timeline-existing-label:hover {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.7) 0%, rgba(5, 150, 105, 0.7) 100%);
   border-color: #059669;
   z-index: 6;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
   transform: scaleY(1.1);
+}
+
+.timeline-existing-label.unreviewed:hover {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.7) 0%, rgba(249, 115, 22, 0.7) 100%);
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.5);
+}
+
+.timeline-existing-label.verified:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.7) 0%, rgba(5, 150, 105, 0.7) 100%);
+  border-color: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
 }
 
 .timeline-existing-label.editing {
@@ -430,7 +447,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 16px 20px 12px 20px;
   border-bottom: 2px solid #e5e7eb;
   background: linear-gradient(to bottom, #fafafa 0%, white 100%);
   position: sticky;
@@ -458,6 +475,43 @@
   font-weight: 700;
 }
 
+/* Tabs */
+.labels-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 20px;
+  background: white;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 54px;
+  z-index: 9;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.tab-button.active {
+  color: #f97316;
+  border-bottom-color: #f97316;
+  background: #fff7ed;
+}
+
 .no-labels-message {
   padding: 40px 20px;
   text-align: center;
@@ -477,7 +531,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  background: white;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   padding: 2px;
@@ -495,6 +549,21 @@
   border-color: #fbbf24;
   border-width: 3px;
   box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.manual-label-card.unreviewed {
+  border-color: silver;
+  border-width: 1px;
+  background: white;
+}
+
+.manual-label-card.unreviewed:hover {
+  border-color: #9ca3af;
+}
+
+.manual-label-card.unreviewed.editing {
+  border-color: #f97316;
+  border-width: 2px;
 }
 
 .label-card-header {
@@ -545,6 +614,30 @@
   flex-shrink: 0;
   margin-left: auto;
   padding: 0px 5px 10px 0px;
+}
+
+.btn-confirm-label {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #10b981;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  background: white;
+  color: #10b981;
+}
+
+.btn-confirm-label:hover {
+  background: #d1fae5;
+  border-color: #059669;
+  color: #059669;
+  transform: scale(1.1);
 }
 
 .btn-remove-label {

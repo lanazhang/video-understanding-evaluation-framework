@@ -2,7 +2,7 @@
 .video-upload-inline {
   margin-bottom: 24px;
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: transparent;
   border: 1px solid #dee2e6;
   border-radius: 8px;
 }
@@ -277,7 +277,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: #f8f9fa;
+  background-color: transparent;
 }
 
 .embedding-checkbox:hover {
@@ -304,7 +304,7 @@
 }
 
 .embedding-checkbox:has(input[type="checkbox"]:checked) {
-  background-color: #fff7ed;
+  background-color: transparent;
   border-color: #f97316;
 }
 

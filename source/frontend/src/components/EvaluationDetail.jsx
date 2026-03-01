@@ -99,10 +99,15 @@ function EvaluationDetail({ task, onBack }) {
         Distance: label.Score || 0
       }))
 
+      // Use the stored buffer time from the evaluation task
+      const bufferTime = task.BufferTime !== undefined ? task.BufferTime : 0
+
       const result = calculateEvaluationMetrics(
         groundTruth.Labels || [],
         searchResults,
-        ''
+        '',
+        [],
+        bufferTime
       )
       
       // Add all ground truth labels to gtMatches, marking non-true_positive ones as TN
@@ -284,6 +289,12 @@ function EvaluationDetail({ task, onBack }) {
               <span className="summary-label">Status:</span>
               <span className={`status-badge ${task.Status}`}>{task.Status}</span>
             </div>
+            {task.BufferTime !== undefined && task.BufferTime !== null && (
+              <div className="summary-item">
+                <span className="summary-label">Buffer Time:</span>
+                <span className="summary-value">{task.BufferTime.toFixed(2)}s</span>
+              </div>
+            )}
           </div>
 
           {metrics && (
@@ -553,6 +564,7 @@ function EvaluationDetail({ task, onBack }) {
           video={task.video}
           groundTruthLabels={groundTruth.Labels || []}
           evaluationLabels={task.Labels || []}
+          matchingDetails={matchingDetails}
           onClose={handleCloseVideoModal}
         />
       )}

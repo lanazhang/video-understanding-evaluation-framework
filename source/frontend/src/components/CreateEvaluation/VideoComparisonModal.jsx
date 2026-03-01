@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './VideoComparisonModal.css'
 
-function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onClose }) {
+function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matchingDetails, onClose }) {
   const videoRef = useRef(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -9,6 +9,22 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
   const [hoveredSegment, setHoveredSegment] = useState(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [selectedRange, setSelectedRange] = useState(null)
+
+  // Create a map of evaluation label indices to their status
+  const evalStatusMap = {}
+  if (matchingDetails && matchingDetails.predMatches) {
+    matchingDetails.predMatches.forEach(match => {
+      evalStatusMap[match.predIndex] = match.status
+    })
+  }
+
+  // Create a map of ground truth label indices to their status
+  const gtStatusMap = {}
+  if (matchingDetails && matchingDetails.gtMatches) {
+    matchingDetails.gtMatches.forEach(match => {
+      gtStatusMap[match.gtIndex] = match.status
+    })
+  }
 
   useEffect(() => {
     const videoElement = videoRef.current
@@ -64,7 +80,7 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
     setHoveredSegment(null)
   }
 
-  const handleSegmentClick = (startTime, endTime, label, type, e) => {
+  const handleSegmentClick = (startTime, endTime, label, type, status, e) => {
     e.stopPropagation()
     
     // Set selected range info
@@ -72,7 +88,8 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
       type,
       label,
       startTime,
-      endTime
+      endTime,
+      status
     })
     
     if (videoRef.current) {
@@ -134,20 +151,22 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
                 {groundTruthLabels.map((label, idx) => {
                   const startPercent = (label.StartTs / duration) * 100
                   const widthPercent = ((label.EndTs - label.StartTs) / duration) * 100
+                  const status = gtStatusMap[idx] || null
                   return (
                     <div
                       key={idx}
-                      className="timeline-segment gt-segment"
+                      className={`timeline-segment gt-segment ${status ? `status-${status.toLowerCase()}` : ''}`}
                       style={{
                         left: `${startPercent}%`,
                         width: `${widthPercent}%`
                       }}
-                      onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'N/A', 'Ground Truth', e)}
+                      onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'N/A', 'Ground Truth', status, e)}
                       onMouseEnter={(e) => handleSegmentHover({
                         type: 'Ground Truth',
                         label: label.Label || 'N/A',
                         start: label.StartTs,
-                        end: label.EndTs
+                        end: label.EndTs,
+                        status
                       }, e)}
                       onMouseMove={(e) => setTooltipPosition({ x: e.clientX, y: e.clientY })}
                       onMouseLeave={handleSegmentLeave}
@@ -167,20 +186,22 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
                 {evaluationLabels.map((label, idx) => {
                   const startPercent = (label.StartTs / duration) * 100
                   const widthPercent = ((label.EndTs - label.StartTs) / duration) * 100
+                  const status = evalStatusMap[idx] || null
                   return (
                     <div
                       key={idx}
-                      className="timeline-segment eval-segment"
+                      className={`timeline-segment eval-segment ${status ? `status-${status.toLowerCase()}` : ''}`}
                       style={{
                         left: `${startPercent}%`,
                         width: `${widthPercent}%`
                       }}
-                      onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'Search Result', 'Evaluation Result', e)}
+                      onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'Search Result', 'Evaluation Result', status, e)}
                       onMouseEnter={(e) => handleSegmentHover({
                         type: 'Evaluation Result',
                         label: label.Label || 'Search Result',
                         start: label.StartTs,
-                        end: label.EndTs
+                        end: label.EndTs,
+                        status
                       }, e)}
                       onMouseMove={(e) => setTooltipPosition({ x: e.clientX, y: e.clientY })}
                       onMouseLeave={handleSegmentLeave}
@@ -189,11 +210,6 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
                 })}
               </div>
             </div>
-            
-            <div 
-              className="timeline-playhead"
-              style={{ left: `${(currentTime / duration) * 100}%` }}
-            />
             
             <div className="timeline-time-display">
               {formatTime(currentTime)} / {formatTime(duration)}
@@ -206,6 +222,11 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
                 <span className={`range-type-badge ${selectedRange.type === 'Ground Truth' ? 'gt-badge' : 'eval-badge'}`}>
                   {selectedRange.type}
                 </span>
+                {selectedRange.status && (
+                  <span className={`status-badge ${selectedRange.status.toLowerCase()}`}>
+                    {selectedRange.status}
+                  </span>
+                )}
                 <button 
                   className="btn-clear-selection"
                   onClick={() => setSelectedRange(null)}
@@ -243,7 +264,14 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, onCl
                 top: `${tooltipPosition.y + 10}px`
               }}
             >
-              <div className="tooltip-type">{hoveredSegment.type}</div>
+              <div className="tooltip-type">
+                {hoveredSegment.type}
+                {hoveredSegment.status && (
+                  <span className={`status-badge ${hoveredSegment.status.toLowerCase()}`}>
+                    {hoveredSegment.status}
+                  </span>
+                )}
+              </div>
               <div className="tooltip-label">{hoveredSegment.label}</div>
               <div className="tooltip-time">
                 {hoveredSegment.start.toFixed(2)}s - {hoveredSegment.end.toFixed(2)}s

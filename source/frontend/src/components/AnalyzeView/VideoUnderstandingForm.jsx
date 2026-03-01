@@ -4,6 +4,72 @@ import { FetchPost } from '../../utils/apiHelper'
 import refreshIcon from '../../assets/icons/refresh.svg'
 import './VideoUnderstandingForm.css'
 
+// Helper function to parse duration string to minutes
+const parseDurationToMinutes = (durationStr) => {
+  if (!durationStr) return 0
+  
+  // Convert to string if it's a number
+  const str = String(durationStr)
+  
+  // Handle formats like "00:01:30", "01:30", "90s", "1.5m", etc.
+  const parts = str.split(':')
+  
+  if (parts.length === 3) {
+    // HH:MM:SS
+    const hours = parseInt(parts[0], 10) || 0
+    const minutes = parseInt(parts[1], 10) || 0
+    const seconds = parseInt(parts[2], 10) || 0
+    return hours * 60 + minutes + seconds / 60
+  } else if (parts.length === 2) {
+    // MM:SS
+    const minutes = parseInt(parts[0], 10) || 0
+    const seconds = parseInt(parts[1], 10) || 0
+    return minutes + seconds / 60
+  }
+  
+  // Try to parse as seconds with 's' suffix
+  const secondsMatch = str.match(/^(\d+(?:\.\d+)?)s?$/i)
+  if (secondsMatch) {
+    return parseFloat(secondsMatch[1]) / 60
+  }
+  
+  // Try to parse as minutes with 'm' suffix
+  const minutesMatch = str.match(/^(\d+(?:\.\d+)?)m$/i)
+  if (minutesMatch) {
+    return parseFloat(minutesMatch[1])
+  }
+  
+  return 0
+}
+
+// Helper function to parse size string to GB
+const parseSizeToGB = (sizeStr) => {
+  if (!sizeStr) return 0
+  
+  // Convert to string if it's a number
+  const str = String(sizeStr)
+  
+  // Handle formats like "1.5 GB", "500 MB", "1500000 KB", etc.
+  const match = str.match(/^(\d+(?:\.\d+)?)\s*(GB|MB|KB|B)?$/i)
+  if (!match) return 0
+  
+  const value = parseFloat(match[1])
+  const unit = (match[2] || 'B').toUpperCase()
+  
+  switch (unit) {
+    case 'GB':
+      return value
+    case 'MB':
+      return value / 1024
+    case 'KB':
+      return value / (1024 * 1024)
+    case 'B':
+      return value / (1024 * 1024 * 1024)
+    default:
+      return 0
+  }
+}
+
 function VideoUnderstandingForm({ video, onSuccess }) {
   const [selectedModel, setSelectedModel] = useState('')
   const [taskName, setTaskName] = useState('')
@@ -38,6 +104,32 @@ function VideoUnderstandingForm({ video, onSuccess }) {
 
   // Get selected model config
   const selectedModelConfig = models.find(m => m.modelId === selectedModel)
+  
+  // Check if video exceeds model limits
+  const checkVideoExceedsLimits = () => {
+    if (!selectedModelConfig || !video) return false
+    
+    const maxDurationMinutes = selectedModelConfig.maxDurationMinutes
+    const maxSizeGB = selectedModelConfig.maxSizeGB
+    
+    if (maxDurationMinutes) {
+      const videoDurationMinutes = parseDurationToMinutes(video.Duration || video.duration)
+      if (videoDurationMinutes > maxDurationMinutes) {
+        return true
+      }
+    }
+    
+    if (maxSizeGB) {
+      const videoSizeGB = parseSizeToGB(video.Size || video.size)
+      if (videoSizeGB > maxSizeGB) {
+        return true
+      }
+    }
+    
+    return false
+  }
+  
+  const videoExceedsLimits = checkVideoExceedsLimits()
   
   // Helper function to get model display name
   const getModelDisplayName = (modelId) => {
@@ -247,6 +339,28 @@ function VideoUnderstandingForm({ video, onSuccess }) {
     if (!taskName.trim()) {
       setError('Please enter a task name')
       return
+    }
+    
+    // Validate video duration and size against model limits
+    if (selectedModelConfig) {
+      const maxDurationMinutes = selectedModelConfig.maxDurationMinutes
+      const maxSizeGB = selectedModelConfig.maxSizeGB
+      
+      if (maxDurationMinutes) {
+        const videoDurationMinutes = parseDurationToMinutes(video.Duration || video.duration)
+        if (videoDurationMinutes > maxDurationMinutes) {
+          setError(`Video duration (${Math.round(videoDurationMinutes)} minutes) exceeds the model limit of ${maxDurationMinutes} minutes. Please select a shorter video or a different model.`)
+          return
+        }
+      }
+      
+      if (maxSizeGB) {
+        const videoSizeGB = parseSizeToGB(video.Size || video.size)
+        if (videoSizeGB > maxSizeGB) {
+          setError(`Video size (${videoSizeGB.toFixed(2)} GB) exceeds the model limit of ${maxSizeGB} GB. Please select a smaller video or a different model.`)
+          return
+        }
+      }
     }
 
     setLoading(true)
@@ -580,6 +694,36 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                 </option>
               ))}
             </select>
+            
+            {/* Show model limits and video stats */}
+            {selectedModelConfig && (selectedModelConfig.maxDurationMinutes || selectedModelConfig.maxSizeGB) && (
+              <div className="model-limits-info">
+                <div className="limits-row">
+                  {selectedModelConfig.maxDurationMinutes && (
+                    <div className="limit-item">
+                      <span className="limit-label">Max Duration:</span>
+                      <span className="limit-value">{selectedModelConfig.maxDurationMinutes} min</span>
+                      {video && (video.Duration || video.duration) && (
+                        <span className={`video-stat ${parseDurationToMinutes(video.Duration || video.duration) > selectedModelConfig.maxDurationMinutes ? 'video-stat--warning' : ''}`}>
+                          (Video: {Math.round(parseDurationToMinutes(video.Duration || video.duration))} min)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {selectedModelConfig.maxSizeGB && (
+                    <div className="limit-item">
+                      <span className="limit-label">Max Size:</span>
+                      <span className="limit-value">{selectedModelConfig.maxSizeGB} GB</span>
+                      {video && (video.Size || video.size) && (
+                        <span className={`video-stat ${parseSizeToGB(video.Size || video.size) > selectedModelConfig.maxSizeGB ? 'video-stat--warning' : ''}`}>
+                          (Video: {parseSizeToGB(video.Size || video.size).toFixed(2)} GB)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="form-group">
@@ -762,8 +906,9 @@ function VideoUnderstandingForm({ video, onSuccess }) {
           <div className="form-actions">
             <button
               type="submit"
-              disabled={loading || !inputPrompt.trim() || !taskName.trim()}
+              disabled={loading || !inputPrompt.trim() || !taskName.trim() || videoExceedsLimits}
               className="btn-submit"
+              title={videoExceedsLimits ? 'Video exceeds model limits' : ''}
             >
               {loading ? 'Processing...' : 'Start Task'}
             </button>
@@ -846,6 +991,40 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                     onClick={() => setActiveTab('formatted')}
                   >
                     Formatted Result
+                    {(() => {
+                      // Calculate total count for formatted results
+                      let content = reviewTask.Result?.Response?.content || reviewTask.Result?.Response?.message || reviewTask.Result?.Response || reviewTask.Result?.message
+                      if (typeof content === 'string') {
+                        try {
+                          const parsed = JSON.parse(content)
+                          let count = 0
+                          
+                          // Direct array
+                          if (Array.isArray(parsed)) {
+                            count = parsed.length
+                          }
+                          // TwelveLabs Pegasus format
+                          else if (parsed.name === 'video_analysis' && parsed.scenes) {
+                            count = parsed.scenes.length
+                          }
+                          // Gemini format
+                          else if (parsed.scenes && Array.isArray(parsed.scenes)) {
+                            count = parsed.scenes.length
+                          }
+                          // Nova format
+                          else if (parsed.key_moments && Array.isArray(parsed.key_moments)) {
+                            count = parsed.key_moments.length
+                          }
+                          
+                          if (count > 0) {
+                            return <span className="result-count"> ({count})</span>
+                          }
+                        } catch (e) {
+                          // Ignore parse errors
+                        }
+                      }
+                      return null
+                    })()}
                   </button>
                   <button
                     className={`review-tab ${activeTab === 'raw' ? 'review-tab--active' : ''}`}

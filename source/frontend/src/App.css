@@ -549,13 +549,13 @@
 }
 
 .status.in-progress {
-  background-color: #d1ecf1;
-  color: #0c5460;
+  background-color: var(--orange-bg-light);
+  color: var(--orange-darker);
 }
 
 .status.created {
-  background-color: #e7f3ff;
-  color: #004085;
+  background-color: var(--green-bg-light);
+  color: var(--green-darker);
 }
 
 .status.in_review {
@@ -564,8 +564,8 @@
 }
 
 .status.reviewed {
-  background-color: #d1ecf1;
-  color: #0c5460;
+  background-color: var(--green-bg-light);
+  color: var(--green-darker);
 }
 
 .status.approved {

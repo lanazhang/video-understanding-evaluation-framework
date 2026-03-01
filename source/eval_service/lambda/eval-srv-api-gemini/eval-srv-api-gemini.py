@@ -273,8 +273,9 @@ def lambda_handler(event, context):
             # Add structured output configuration if schema provided
             if response_schema:
                 config["response_mime_type"] = "application/json"
-                config["response_schema"] = response_schema
-                print(f"Using structured output with schema: {json.dumps(response_schema)}")
+                # Use jsonSchema key for structured output
+                config["response_schema"] = {"type": "object", "properties": response_schema} if isinstance(response_schema, dict) and "type" not in response_schema else response_schema
+                print(f"Using structured output with schema: {json.dumps(config['response_schema'])}")
             else:
                 # Even without schema, request JSON output
                 config["response_mime_type"] = "application/json"

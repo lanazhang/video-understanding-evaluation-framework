@@ -353,11 +353,6 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
   }
 
   const handleProceedToReview = () => {
-    if (!allResults || allResults.length === 0) {
-      alert('No results to review. Please create at least one label.')
-      return
-    }
-
     if (onNext) {
       onNext(allSearches, allResults)
     }
@@ -461,6 +456,16 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
             </div>
           )
         }
+
+        {!isMaximized && (
+          <div className="step-instruction-banner">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M10 6V10M10 14H10.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span>Use AI models to generate labels efficiently, or skip to the next step for full manual labeling</span>
+          </div>
+        )}
 
         {!isMaximized && (
           <div className="label-creator-tabs">
@@ -942,7 +947,6 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
           <button 
             className="btn-primary"
             onClick={handleProceedToReview}
-            disabled={!allResults || allResults.length === 0}
           >
             Next: Review Labels
           </button>

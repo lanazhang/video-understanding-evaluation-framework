@@ -65,10 +65,15 @@ function SegmentDetailModal({ segment, selectedVideo, onClose }) {
                     <span className="segment-detail-label">Label:</span>
                     <span className="segment-detail-value">{segment.gtLabel.Label || 'No label'}</span>
                   </div>
-                  {segment.gtLabel.Score !== undefined && (
+                  {segment.gtLabel.ReviewResult && (
                     <div className="segment-detail-row">
-                      <span className="segment-detail-label">Score:</span>
-                      <span className="segment-detail-value">{segment.gtLabel.Score.toFixed(4)}</span>
+                      <span className="segment-detail-label">Result:</span>
+                      <span className={`segment-result-badge ${segment.gtLabel.ReviewResult}`}>
+                        {segment.gtLabel.ReviewResult === 'true_positive' ? 'TP' :
+                         segment.gtLabel.ReviewResult === 'false_positive' ? 'FP' :
+                         segment.gtLabel.ReviewResult === 'false_negative' ? 'FN' :
+                         segment.gtLabel.ReviewResult === 'true_negative' ? 'TN' : '—'}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -97,10 +102,15 @@ function SegmentDetailModal({ segment, selectedVideo, onClose }) {
                     <span className="segment-detail-label">Label:</span>
                     <span className="segment-detail-value">{segment.predLabel.Label || 'No label'}</span>
                   </div>
-                  {segment.predLabel.Score !== undefined && (
+                  {segment.predLabel.ReviewResult && (
                     <div className="segment-detail-row">
-                      <span className="segment-detail-label">Distance:</span>
-                      <span className="segment-detail-value">{segment.predLabel.Score.toFixed(4)}</span>
+                      <span className="segment-detail-label">Result:</span>
+                      <span className={`segment-result-badge ${segment.predLabel.ReviewResult}`}>
+                        {segment.predLabel.ReviewResult === 'true_positive' ? 'TP' :
+                         segment.predLabel.ReviewResult === 'false_positive' ? 'FP' :
+                         segment.predLabel.ReviewResult === 'false_negative' ? 'FN' :
+                         segment.predLabel.ReviewResult === 'true_negative' ? 'TN' : '—'}
+                      </span>
                     </div>
                   )}
                 </div>

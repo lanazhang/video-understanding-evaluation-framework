@@ -20,6 +20,7 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
   const [selectedAnalyzeTask, setSelectedAnalyzeTask] = useState(null)
   const [evaluationName, setEvaluationName] = useState('')
   const [evaluationDescription, setEvaluationDescription] = useState('')
+  const [bufferTime, setBufferTime] = useState(1.00) // Buffer time in seconds with 2 decimal places
   const [evaluationMetrics, setEvaluationMetrics] = useState(null)
   const [matchingDetails, setMatchingDetails] = useState(null)
   const [selectedSegment, setSelectedSegment] = useState(null)
@@ -147,22 +148,47 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
       setError('Please select an analyze task')
       return
     }
-    if (results.length === 0) {
+    
+    // For video understanding tasks, extract labels from the task result
+    let finalResults = results
+    let finalSearches = searches
+    
+    if (selectedAnalyzeTask.Type === 'video-understanding') {
+      // Parse labels from video understanding task
+      const parsedLabels = parseVideoUnderstandingLabels(selectedAnalyzeTask)
+      if (parsedLabels.length > 0) {
+        finalResults = parsedLabels
+        finalSearches = [{
+          taskId: selectedAnalyzeTask.Id,
+          taskName: selectedAnalyzeTask.Name || selectedAnalyzeTask.Description || selectedAnalyzeTask.ModelId,
+          taskType: 'video-understanding',
+          query: selectedAnalyzeTask.Request?.Prompt || selectedAnalyzeTask.Request?.InputPrompt || 'Video Understanding',
+          topK: parsedLabels.length,
+          results: parsedLabels
+        }]
+      }
+    }
+    
+    // For embedding tasks, require search results
+    if ((selectedAnalyzeTask.Type === 'nova-mme' || selectedAnalyzeTask.Type === 'tlabs-mme') && finalResults.length === 0) {
       setError('Please run a search and get valid results before proceeding')
       return
     }
-    setError(null)
-    setSearchResults(results)
-    setAllSearches(searches)
     
-    // Set default evaluation name
-    setEvaluationName(`${selectedVideo.Name} Evaluation`)
+    setError(null)
+    setSearchResults(finalResults)
+    setAllSearches(finalSearches)
     
     // Generate comprehensive default description
-    const modelType = selectedAnalyzeTask.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'
+    const modelType = selectedAnalyzeTask.Type === 'nova-mme' ? 'Nova MME' : 
+                      selectedAnalyzeTask.Type === 'tlabs-mme' ? 'TwelveLabs' : 
+                      'Video Understanding'
     const modelId = selectedAnalyzeTask.ModelId
-    const searchQueries = searches.map(s => `"${s.query}"`).join(', ')
-    const numResults = results.length
+    
+    // Set default evaluation name: video name + model name
+    setEvaluationName(`${selectedVideo.Name} - ${modelId}`)
+    const searchQueries = finalSearches.map(s => `"${s.query}"`).join(', ')
+    const numResults = finalResults.length
     const gtDescription = selectedGroundTruth.Description ? `\n\nGround Truth: ${selectedGroundTruth.Description}` : ''
     
     const defaultDescription = `Evaluation of ${modelType} model (${modelId}) performance against ground truth "${selectedGroundTruth.Name}".\n\nSearch queries: ${searchQueries}\nTotal results found: ${numResults} segments${gtDescription}`
@@ -172,13 +198,81 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     // Calculate metrics immediately when entering step 3
     const result = calculateEvaluationMetrics(
       selectedGroundTruth.Labels || [],
-      results,
-      searches.map(s => s.query).join(', '),
-      searches
+      finalResults,
+      finalSearches.map(s => s.query).join(', '),
+      finalSearches,
+      bufferTime // Pass buffer time to calculation
     )
     setEvaluationMetrics(result.metrics)
     setMatchingDetails(result.details)
     setStep(3)
+  }
+
+  // Helper function to parse video understanding task labels
+  const parseVideoUnderstandingLabels = (task) => {
+    if (!task.Result || !task.Result.Response) return []
+    
+    try {
+      let content = task.Result.Response.content || task.Result.Response.message || task.Result.Response
+      
+      if (typeof content === 'string') {
+        try {
+          content = JSON.parse(content)
+        } catch {
+          return []
+        }
+      }
+      
+      const labels = []
+      
+      // Try to parse as array of items with timestamps
+      if (Array.isArray(content)) {
+        for (const [index, item] of content.entries()) {
+          if (item.start_time !== undefined && item.end_time !== undefined) {
+            labels.push({
+              StartSec: parseFloat(item.start_time),
+              EndSec: parseFloat(item.end_time),
+              Distance: 0,
+              query: item.description || item.text || `Item ${index + 1}`,
+              source: 'video-understanding'
+            })
+          }
+        }
+      }
+      // Try to parse as object with scenes array
+      else if (content.scenes && Array.isArray(content.scenes)) {
+        content.scenes.forEach((scene, index) => {
+          if (scene.start_time !== undefined && scene.end_time !== undefined) {
+            labels.push({
+              StartSec: parseFloat(scene.start_time),
+              EndSec: parseFloat(scene.end_time),
+              Distance: 0,
+              query: scene.description || `Scene ${index + 1}`,
+              source: 'video-understanding'
+            })
+          }
+        })
+      }
+      // Try to parse as object with moments array
+      else if (content.moments && Array.isArray(content.moments)) {
+        content.moments.forEach((moment, index) => {
+          if (moment.start_time !== undefined && moment.end_time !== undefined) {
+            labels.push({
+              StartSec: parseFloat(moment.start_time),
+              EndSec: parseFloat(moment.end_time),
+              Distance: 0,
+              query: moment.description || `Moment ${index + 1}`,
+              source: 'video-understanding'
+            })
+          }
+        })
+      }
+      
+      return labels
+    } catch (error) {
+      console.error('Error parsing video understanding labels:', error)
+      return []
+    }
   }
 
   const handlePreviousStep = () => {
@@ -231,7 +325,8 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
         Status: 'completed',
         CompletedAt: new Date().toISOString(),
         Labels: labels,
-        EvaluationMetrics: evaluationMetrics
+        EvaluationMetrics: evaluationMetrics,
+        BufferTime: parseFloat(bufferTime.toFixed(2))
       }
 
       await evalAPI.upsertEvaluationTask(payload)
@@ -299,6 +394,8 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
         <EvaluationReport
           evaluationName={evaluationName}
           evaluationDescription={evaluationDescription}
+          bufferTime={bufferTime}
+          onBufferTimeChange={setBufferTime}
           selectedVideo={selectedVideo}
           selectedGroundTruth={selectedGroundTruth}
           selectedAnalyzeTask={selectedAnalyzeTask}
@@ -312,6 +409,17 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
           onSegmentClick={handleSegmentClick}
           onPrevious={handlePreviousStep}
           onSave={handleGenerateReport}
+          onRecalculate={() => {
+            const result = calculateEvaluationMetrics(
+              selectedGroundTruth.Labels || [],
+              searchResults,
+              allSearches.map(s => s.query).join(', '),
+              allSearches,
+              bufferTime
+            )
+            setEvaluationMetrics(result.metrics)
+            setMatchingDetails(result.details)
+          }}
         />
       )}
 

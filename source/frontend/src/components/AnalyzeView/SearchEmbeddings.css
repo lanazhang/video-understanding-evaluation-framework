@@ -783,7 +783,7 @@
   flex: 1;
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--green-dark);
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -795,8 +795,8 @@
 }
 
 .search-embeddings-wrapper .time-range-link:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--green-bg-light);
+  color: var(--green-darker);
 }
 
 .search-embeddings-wrapper .result-distance {

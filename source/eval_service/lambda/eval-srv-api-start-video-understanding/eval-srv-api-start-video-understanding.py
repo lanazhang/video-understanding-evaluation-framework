@@ -199,10 +199,14 @@ def lambda_handler(event, context):
             api_payload["ToolConfig"] = tool_config
             api_payload["tool_config"] = tool_config
         
-        # Add response format for TwelveLabs Pegasus
-        if api_type == "tlabs_pegasus" and response_format:
-            api_payload["ResponseFormat"] = response_format
-            api_payload["response_format"] = response_format
+        # Add response format and tool_config for TwelveLabs Pegasus
+        if api_type == "tlabs_pegasus":
+            if response_format:
+                api_payload["ResponseFormat"] = response_format
+                api_payload["response_format"] = response_format
+            if tool_config:
+                api_payload["ToolConfig"] = tool_config
+                api_payload["tool_config"] = tool_config
         
         # Add API key and response schema for Gemini
         if api_type == "gemini":

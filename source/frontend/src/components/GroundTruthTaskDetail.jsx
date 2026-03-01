@@ -2,22 +2,21 @@ import { useState, useEffect, useRef } from 'react'
 import './GroundTruthTaskDetail.css'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import { FetchPost } from '../utils/apiHelper'
-import EmbeddingSearch from './GroundTruth/EmbeddingSearch'
+import GroundTruthStepIndicator from './CreateGroundTruth/GroundTruthStepIndicator'
+import LabelCreator from './CreateGroundTruth/LabelCreator'
+import ManualLabel from './GroundTruth/ManualLabel'
 import GroundTruthReview from './GroundTruth/GroundTruthReview'
 
 function GroundTruthTaskDetail({ task, onBack, currentUser }) {
   const [selectedLabel, setSelectedLabel] = useState(null)
   const [isEditMode, setIsEditMode] = useState(task.openInEditMode || false)
-  const [editStep, setEditStep] = useState('search') // 'search' or 'review'
+  const [editStep, setEditStep] = useState(2) // Start at step 2 (Create Labels) since video is already selected
   const [allSearches, setAllSearches] = useState([])
   const [allResults, setAllResults] = useState([])
-  const [editingSegment, setEditingSegment] = useState(null)
-  const [activeTab, setActiveTab] = useState('unreviewed')
-  const [segments, setSegments] = useState([])
+  const [activeTab, setActiveTab] = useState('manual')
+  const [isMaximized, setIsMaximized] = useState(false)
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
   const [isEditingName, setIsEditingName] = useState(false)
   const [tempName, setTempName] = useState('')
   const videoRef = useRef(null)
@@ -32,9 +31,9 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
           EndSec: label.EndTs,
           query: label.Label || '',
           Distance: label.Score,
-          reviewStatus: label.ReviewResult || 'unreviewed'
+          reviewStatus: label.ReviewResult || 'reviewed' // Mark existing as reviewed
         }))
-      setSegments(initialSegments)
+      setAllResults(initialSegments)
     }
     setEditName(task.Name || task.taskName || '')
     setEditDescription(task.Description || task.description || '')
@@ -65,10 +64,7 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
 
   const handleLabelClick = (label) => {
     setSelectedLabel(label)
-    if (videoRef.current) {
-      videoRef.current.currentTime = label.StartTs
-      videoRef.current.play()
-    }
+    handleTimeRangeClick(label.StartTs, label.EndTs)
   }
 
   const handleTimeRangeClick = (startSec, endSec) => {
@@ -152,7 +148,7 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
 
   const handleEditLabels = () => {
     setIsEditMode(true)
-    setEditStep('search')
+    setEditStep(2) // Start at Create Labels step
     setEditName(task.Name || task.taskName || '')
     setEditDescription(task.Description || task.description || '')
     // Initialize allResults with existing labels
@@ -162,129 +158,70 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
         EndSec: label.EndTs,
         query: label.Label || '',
         Distance: label.Score || 0,
-        reviewStatus: label.ReviewResult || 'reviewed', // Mark existing labels as reviewed
-        source: 'manual' // Mark as manual since they're existing labels
+        reviewStatus: label.ReviewResult || 'reviewed',
+        source: 'manual'
       }))
       setAllResults(existingResults)
-      setAllSearches([]) // No searches initially
+      setAllSearches([])
     }
   }
 
   const handleCancelEdit = () => {
     setIsEditMode(false)
-    setEditStep('search')
-    setEditingSegment(null)
+    setEditStep(2)
     setAllSearches([])
     setAllResults([])
     setEditName(task.Name || task.taskName || '')
     setEditDescription(task.Description || task.description || '')
+    setIsMaximized(false)
   }
 
-  const handleNextToReview = (searches, results) => {
+  const handleLabelsNext = (searches, results) => {
     setAllSearches(searches)
     setAllResults(results)
-    setEditStep('review')
+    setEditStep(3) // Go to Review Labels step
   }
 
-  const handleBackToSearch = () => {
-    setEditStep('search')
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+  }
+
+  const handleReviewLabelsNext = () => {
+    setEditStep(4) // Go to Save step
+  }
+
+  const handleReviewLabelsPrevious = () => {
+    setEditStep(2) // Back to Create Labels
+  }
+
+  const handleReviewPrevious = () => {
+    setEditStep(3) // Back to Review Labels
   }
 
   const handleSaveFromReview = async () => {
     // This will be called from GroundTruthReview component
     // The save logic is handled there, we just need to exit edit mode
     setIsEditMode(false)
-    setEditStep('search')
+    setEditStep(2)
+    setIsMaximized(false)
     // Refresh the task data
     if (onBack) {
       onBack() // Go back to list to refresh
     }
   }
 
-  const handleConfirmSegment = (segment) => {
-    setSegments(segments.map(seg => 
-      seg === segment ? { ...seg, reviewStatus: 'reviewed' } : seg
-    ))
-    setEditingSegment(null)
-  }
-
-  const handleDeclineSegment = (segment) => {
-    setSegments(segments.filter(seg => seg !== segment))
-    setEditingSegment(null)
-  }
-
-  const handleEditSegment = (segment) => {
-    setEditingSegment(segment)
-  }
-
-  const handleSaveSegmentEdit = (originalSegment, updates) => {
-    setSegments(segments.map(seg => 
-      seg === originalSegment ? { ...seg, ...updates } : seg
-    ))
-    setEditingSegment(null)
-  }
-
-  const handleCancelSegmentEdit = () => {
-    setEditingSegment(null)
-  }
-
-  const handleSaveChanges = async () => {
-    if (!editName.trim()) {
-      setError('Please enter a name for the ground truth')
-      return
-    }
-
-    setSaving(true)
-    setError(null)
-
-    try {
-      // Convert segments back to labels format
-      const labels = segments.map(seg => ({
-        StartTs: parseFloat(parseFloat(seg.StartSec || 0).toFixed(3)),
-        EndTs: parseFloat(parseFloat(seg.EndSec || 0).toFixed(3)),
-        Score: parseFloat(seg.Distance || 0),
-        Label: seg.query,
-        ReviewResult: seg.reviewStatus || 'unreviewed'
-      }))
-
-      const payload = {
-        Id: task.Id || task.id,
-        Name: editName.trim(),
-        Description: editDescription.trim(),
-        CreatedBy: task.CreatedBy || task.createdBy,
-        VideoId: task.VideoId || task.videoId,
-        Labels: labels
-      }
-
-      const data = await FetchPost('/gt/upsert-ground-truth', payload, 'EvalService')
-
-      console.log('Ground truth update response:', data)
-
-      if (data.statusCode === 200 || data.message) {
-        setIsEditMode(false)
-        setEditingSegment(null)
-        // Update task properties
-        task.Labels = labels
-        task.Name = editName.trim()
-        task.taskName = editName.trim()
-        task.Description = editDescription.trim()
-        task.description = editDescription.trim()
-        alert('Ground truth updated successfully!')
-      } else {
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        const errorMessage = responseBody?.error || data.error || data.body || 'Failed to update ground truth'
-        setError('Failed to update ground truth: ' + errorMessage)
-      }
-    } catch (err) {
-      console.error('Error updating ground truth:', err)
-      setError('Error updating ground truth: ' + err.message)
-    } finally {
-      setSaving(false)
+  const getStepTitle = () => {
+    switch (editStep) {
+      case 2:
+        return 'Create Labels'
+      case 3:
+        return 'Review Labels'
+      case 4:
+        return 'Save'
+      default:
+        return 'Edit Ground Truth'
     }
   }
-
-  const unreviewedSegments = segments.filter(seg => seg.reviewStatus === 'unreviewed')
-  const reviewedSegments = segments.filter(seg => seg.reviewStatus === 'reviewed')
 
   const sortedLabels = [...(task.Labels || [])].sort((a, b) => a.StartTs - b.StartTs)
 
@@ -320,51 +257,88 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
 
   // Render edit mode
   if (isEditMode) {
-    if (editStep === 'search') {
-      return (
-        <div className="edit-ground-truth-container">
-          <div className="edit-header">
-            <button className="btn-back" onClick={handleCancelEdit}>
-              <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-              Cancel
-            </button>
-            <h1>Edit Ground Truth - Add/Search Labels</h1>
-          </div>
-          <EmbeddingSearch 
-            video={task.video}
-            onNext={handleNextToReview}
-            currentUser={currentUser}
-            initialSearches={allSearches}
-            initialResults={allResults}
-          />
+    return (
+      <div className="edit-ground-truth-container">
+        <div className="wizard-header">
+          <button className="btn-back" onClick={handleCancelEdit}>
+            <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+            Cancel
+          </button>
+          <h1>Edit Ground Truth - {getStepTitle()}</h1>
         </div>
-      )
-    } else {
-      return (
-        <div className="edit-ground-truth-container">
-          <div className="edit-header">
-            <button className="btn-back" onClick={handleBackToSearch}>
-              <img src={arrowLeftIcon} alt="Back" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-              Back to Search
-            </button>
-            <h1>Edit Ground Truth - Review & Save</h1>
-          </div>
-          <GroundTruthReview
-            video={task.video}
-            allSearches={allSearches}
-            allResults={allResults}
-            onPrevious={handleBackToSearch}
-            onUpdate={(updatedSearches, updatedResults) => {
-              setAllSearches(updatedSearches)
-              setAllResults(updatedResults)
-            }}
-            onSave={handleSaveFromReview}
-            currentUser={currentUser}
-            existingGroundTruth={task}
-          />
+
+        <GroundTruthStepIndicator currentStep={editStep} />
+
+        <div className={`wizard-content ${(editStep === 2 && activeTab === 'manual') || editStep === 3 ? 'full-height' : ''}`}>
+          {editStep === 2 && task.video && (
+            <LabelCreator
+              video={task.video}
+              currentUser={currentUser}
+              initialSearches={allSearches}
+              initialResults={allResults}
+              onNext={handleLabelsNext}
+              onTabChange={handleTabChange}
+            />
+          )}
+
+          {editStep === 3 && task.video && (
+            <div className={`review-labels-step ${isMaximized ? 'maximized' : ''}`}>
+              <div className="review-labels-controls">
+                <button 
+                  className="btn-maximize"
+                  onClick={() => setIsMaximized(!isMaximized)}
+                  title={isMaximized ? 'Exit fullscreen' : 'Maximize'}
+                >
+                  {isMaximized ? (
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8 3H3V8M12 3H17V8M8 17H3V12M12 17H17V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 8V3H8M17 8V3H12M3 12V17H8M17 12V17H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                  <span>{isMaximized ? 'Exit Fullscreen' : 'Maximize'}</span>
+                </button>
+              </div>
+              <ManualLabel
+                video={task.video}
+                allResults={allResults}
+                setAllResults={setAllResults}
+                isMaximized={isMaximized}
+                resetTrigger={0}
+              />
+              {!isMaximized && (
+                <div className="review-labels-actions">
+                  <button className="btn-secondary" onClick={handleReviewLabelsPrevious}>
+                    Previous
+                  </button>
+                  <button className="btn-primary" onClick={handleReviewLabelsNext}>
+                    Next: Save Ground Truth
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {editStep === 4 && task.video && (
+            <GroundTruthReview
+              video={task.video}
+              allSearches={allSearches}
+              allResults={allResults}
+              onPrevious={handleReviewPrevious}
+              onUpdate={(updatedSearches, updatedResults) => {
+                setAllSearches(updatedSearches)
+                setAllResults(updatedResults)
+              }}
+              onSave={handleSaveFromReview}
+              currentUser={currentUser}
+              existingGroundTruth={task}
+            />
+          )}
         </div>
-      )
-    }
+      </div>
+    )
   }
 
   // Render readonly mode
@@ -445,22 +419,33 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
                 <div className="metadata-item">
                   <span className="metadata-label">Resolution</span>
                   <span className="metadata-value">
-                    {task.video?.Width && task.video?.Height 
-                      ? `${task.video.Width}x${task.video.Height}` 
-                      : 'N/A'}
+                    {task.video?.Resolution && Array.isArray(task.video.Resolution)
+                      ? `${task.video.Resolution[0]}x${task.video.Resolution[1]}`
+                      : task.video?.Width && task.video?.Height 
+                        ? `${task.video.Width}x${task.video.Height}` 
+                        : 'N/A'}
                   </span>
                 </div>
                 <div className="metadata-item">
                   <span className="metadata-label">FPS</span>
-                  <span className="metadata-value">{task.video?.FrameRate || 'N/A'}</span>
+                  <span className="metadata-value">
+                    {task.video?.Fps 
+                      ? (typeof task.video.Fps === 'number' ? task.video.Fps.toFixed(2) : task.video.Fps)
+                      : task.video?.FrameRate || 'N/A'}
+                  </span>
                 </div>
                 <div className="metadata-item">
                   <span className="metadata-label">File Size</span>
-                  <span className="metadata-value">{formatFileSize(task.video?.FileSize)}</span>
+                  <span className="metadata-value">
+                    {formatFileSize(task.video?.Size || task.video?.FileSize)}
+                  </span>
                 </div>
                 <div className="metadata-item">
                   <span className="metadata-label">Format</span>
-                  <span className="metadata-value">{task.video?.Format || 'N/A'}</span>
+                  <span className="metadata-value">
+                    {task.video?.Format || 
+                     (task.video?.Name ? task.video.Name.split('.').pop().toUpperCase() : 'N/A')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -554,172 +539,6 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function SegmentItem({ result, index, isEditing, onEdit, onSaveEdit, onCancelEdit, onTimeClick, onConfirm, onDecline, formatDuration, showConfirm, isReviewed, videoPlayerRef }) {
-  const [editStartSec, setEditStartSec] = useState(parseFloat(result.StartSec || 0).toFixed(2))
-  const [editEndSec, setEditEndSec] = useState(parseFloat(result.EndSec || 0).toFixed(2))
-  const [editQuery, setEditQuery] = useState(result.query)
-
-  const handleSave = () => {
-    onSaveEdit({
-      StartSec: parseFloat(editStartSec),
-      EndSec: parseFloat(editEndSec),
-      query: editQuery
-    })
-  }
-
-  const handleCaptureStart = () => {
-    if (videoPlayerRef.current) {
-      const currentTime = videoPlayerRef.current.currentTime
-      setEditStartSec(currentTime.toFixed(2))
-    }
-  }
-
-  const handleCaptureEnd = () => {
-    if (videoPlayerRef.current) {
-      const currentTime = videoPlayerRef.current.currentTime
-      setEditEndSec(currentTime.toFixed(2))
-    }
-  }
-
-  const handleCancel = () => {
-    onCancelEdit()
-  }
-
-  if (isEditing) {
-    return (
-      <div className={`review-result-item editing ${isReviewed ? 'reviewed' : ''}`}>
-        <span className="result-rank">#{index + 1}</span>
-        <div className="edit-time-inputs">
-          <div className="time-input-group">
-            <input
-              type="number"
-              step="0.01"
-              value={editStartSec}
-              onChange={(e) => setEditStartSec(e.target.value)}
-              className="edit-time-input"
-              placeholder="Start"
-            />
-            <button
-              className="btn-capture-time"
-              onClick={handleCaptureStart}
-              title="Capture current video time"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 1.16667V7L10.5 8.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </button>
-          </div>
-          <span>-</span>
-          <div className="time-input-group">
-            <input
-              type="number"
-              step="0.01"
-              value={editEndSec}
-              onChange={(e) => setEditEndSec(e.target.value)}
-              className="edit-time-input"
-              placeholder="End"
-            />
-            <button
-              className="btn-capture-time"
-              onClick={handleCaptureEnd}
-              title="Capture current video time"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 1.16667V7L10.5 8.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <input
-          type="text"
-          value={editQuery}
-          onChange={(e) => setEditQuery(e.target.value)}
-          className="edit-query-input"
-          placeholder="Label"
-        />
-        <span className="result-duration">
-          {formatDuration(parseFloat(editEndSec || 0) - parseFloat(editStartSec || 0))}
-        </span>
-        <span className="result-distance">
-          {result.Distance?.toFixed(4) || 'N/A'}
-        </span>
-        <div className="segment-actions">
-          <button 
-            className="btn-save-edit"
-            onClick={handleSave}
-            title="Save changes"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button 
-            className="btn-cancel-edit"
-            onClick={handleCancel}
-            title="Cancel"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className={`review-result-item ${isReviewed ? 'reviewed' : ''}`}>
-      <span className="result-rank">#{index + 1}</span>
-      <button 
-        className="result-time-link"
-        onClick={() => onTimeClick(result.StartSec, result.EndSec)}
-      >
-        {parseFloat(result.StartSec || 0).toFixed(2)}s - {parseFloat(result.EndSec || 0).toFixed(2)}s
-      </button>
-      <span className="result-query-tag">"{result.query}"</span>
-      <span className="result-duration">
-        {formatDuration(parseFloat(result.EndSec || 0) - parseFloat(result.StartSec || 0))}
-      </span>
-      <span className="result-distance">
-        {result.Distance?.toFixed(4) || 'N/A'}
-      </span>
-      <div className="segment-actions">
-        {showConfirm && (
-          <button 
-            className="btn-confirm-segment"
-            onClick={onConfirm}
-            title="Confirm segment"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        )}
-        <button 
-          className="btn-decline-segment"
-          onClick={onDecline}
-          title={isReviewed ? "Remove segment" : "Decline segment"}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        <button 
-          className="btn-edit-segment"
-          onClick={onEdit}
-          title="Edit segment"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11.3333 2.00004C11.5084 1.82494 11.716 1.68605 11.9441 1.59129C12.1722 1.49653 12.4165 1.44775 12.6633 1.44775C12.9101 1.44775 13.1544 1.49653 13.3825 1.59129C13.6106 1.68605 13.8183 1.82494 13.9933 2.00004C14.1684 2.17513 14.3073 2.38282 14.4021 2.61091C14.4968 2.839 14.5456 3.08334 14.5456 3.33004C14.5456 3.57674 14.4968 3.82107 14.4021 4.04916C14.3073 4.27725 14.1684 4.48494 13.9933 4.66004L5.00001 13.6534L1.33334 14.6667L2.34668 11L11.3333 2.00004Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
       </div>
     </div>
   )

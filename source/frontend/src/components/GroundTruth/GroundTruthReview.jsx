@@ -23,13 +23,16 @@ function GroundTruthReview({ video, allSearches, allResults, onPrevious, onSave,
       const groundTruthId = existingGroundTruth?.Id || existingGroundTruth?.id || crypto.randomUUID()
 
       // Combine all results into labels
-      const labels = allResults.map(result => ({
+      let labels = allResults.map(result => ({
         StartTs: parseFloat(parseFloat(result.StartSec || 0).toFixed(3)),
         EndTs: parseFloat(parseFloat(result.EndSec || 0).toFixed(3)),
         Score: parseFloat(result.Distance || 0),
         Label: result.query,
         ReviewResult: result.reviewStatus || 'unreviewed'
       }))
+
+      // Merge overlapping time ranges
+      labels = mergeOverlappingLabels(labels)
 
       // Get unique task IDs and model IDs from all searches
       const searchQueries = allSearches.map(s => s.query).join(', ')
@@ -74,6 +77,53 @@ function GroundTruthReview({ video, allSearches, allResults, onPrevious, onSave,
     } finally {
       setSaving(false)
     }
+  }
+
+  // Function to merge overlapping time ranges
+  const mergeOverlappingLabels = (labels) => {
+    if (labels.length === 0) return labels
+
+    // Sort labels by start time
+    const sorted = [...labels].sort((a, b) => a.StartTs - b.StartTs)
+    const merged = []
+
+    let current = { ...sorted[0] }
+
+    for (let i = 1; i < sorted.length; i++) {
+      const next = sorted[i]
+
+      // Check if current and next overlap
+      if (next.StartTs <= current.EndTs) {
+        // Merge: extend current to cover next
+        current.EndTs = Math.max(current.EndTs, next.EndTs)
+        
+        // Combine labels
+        if (current.Label && next.Label && current.Label !== next.Label) {
+          current.Label = `${current.Label}, ${next.Label}`
+        } else if (!current.Label && next.Label) {
+          current.Label = next.Label
+        }
+        
+        // Take the better score (lower distance is better)
+        current.Score = Math.min(current.Score, next.Score)
+        
+        // If any segment is reviewed as true_positive, keep that status
+        if (next.ReviewResult === 'true_positive' || current.ReviewResult === 'true_positive') {
+          current.ReviewResult = 'true_positive'
+        } else if (next.ReviewResult === 'reviewed' || current.ReviewResult === 'reviewed') {
+          current.ReviewResult = 'reviewed'
+        }
+      } else {
+        // No overlap, push current and start new
+        merged.push(current)
+        current = { ...next }
+      }
+    }
+
+    // Push the last segment
+    merged.push(current)
+
+    return merged
   }
 
   return (

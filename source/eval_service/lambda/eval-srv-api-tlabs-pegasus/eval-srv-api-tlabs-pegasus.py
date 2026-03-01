@@ -137,16 +137,28 @@ def lambda_handler(event, context):
         
         # Add responseFormat - check both direct parameter and tool_config
         if response_format:
+            # Ensure the format uses jsonSchema instead of schema, and remove type field
+            if "schema" in response_format and "jsonSchema" not in response_format:
+                response_format["jsonSchema"] = response_format.pop("schema")
+            # Remove type field if present as it's not permitted
+            if "type" in response_format:
+                response_format.pop("type")
             pegasus_request["responseFormat"] = response_format
             print(f"Using response format from direct parameter: {json.dumps(response_format)}")
         elif tool_config and "responseFormat" in tool_config:
-            pegasus_request["responseFormat"] = tool_config["responseFormat"]
-            print(f"Using response format from tool_config: {json.dumps(tool_config['responseFormat'])}")
+            tool_response_format = tool_config["responseFormat"].copy()
+            # Ensure the format uses jsonSchema instead of schema, and remove type field
+            if "schema" in tool_response_format and "jsonSchema" not in tool_response_format:
+                tool_response_format["jsonSchema"] = tool_response_format.pop("schema")
+            # Remove type field if present as it's not permitted
+            if "type" in tool_response_format:
+                tool_response_format.pop("type")
+            pegasus_request["responseFormat"] = tool_response_format
+            print(f"Using response format from tool_config: {json.dumps(tool_response_format)}")
         else:
             # Even without explicit format, request JSON output with default structure
             pegasus_request["responseFormat"] = {
-                "type": "json",
-                "schema": {
+                "jsonSchema": {
                     "type": "object",
                     "properties": {
                         "summary": {

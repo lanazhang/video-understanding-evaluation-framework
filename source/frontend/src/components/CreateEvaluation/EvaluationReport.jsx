@@ -1,6 +1,11 @@
+import { useState } from 'react'
+import VideoComparisonModal from './VideoComparisonModal'
+
 function EvaluationReport({
   evaluationName,
   evaluationDescription,
+  bufferTime,
+  onBufferTimeChange,
   selectedVideo,
   selectedGroundTruth,
   selectedAnalyzeTask,
@@ -13,8 +18,18 @@ function EvaluationReport({
   onDescriptionChange,
   onSegmentClick,
   onPrevious,
-  onSave
+  onSave,
+  onRecalculate
 }) {
+  const [showVideoModal, setShowVideoModal] = useState(false)
+
+  // Convert search results to evaluation labels format
+  const evaluationLabels = searchResults.map(result => ({
+    StartTs: parseFloat(result.StartSec || 0),
+    EndTs: parseFloat(result.EndSec || 0),
+    Label: result.query || 'Search Result'
+  }))
+
   return (
     <div className="step-content">
       <div className="form-section">
@@ -55,7 +70,9 @@ function EvaluationReport({
           <div className="summary-item">
             <span className="summary-label">Analyze Task:</span>
             <span className="summary-value">
-              {selectedAnalyzeTask?.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {selectedAnalyzeTask?.ModelId}
+              {selectedAnalyzeTask?.Type === 'nova-mme' ? 'Nova MME' : 
+               selectedAnalyzeTask?.Type === 'tlabs-mme' ? 'TwelveLabs' : 
+               'Video Understanding'} - {selectedAnalyzeTask?.ModelId}
             </span>
           </div>
           <div className="summary-item">
@@ -69,6 +86,34 @@ function EvaluationReport({
           <div className="summary-item">
             <span className="summary-label">Ground Truth Labels:</span>
             <span className="summary-value">{selectedGroundTruth?.Labels?.length || 0} labels</span>
+          </div>
+        </div>
+
+        <div className="form-group form-group-inline">
+          <label>Buffer Time (seconds):</label>
+          <div className="inline-input-wrapper">
+            <input
+              type="number"
+              value={bufferTime}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0
+                onBufferTimeChange(parseFloat(value.toFixed(2)))
+              }}
+              onBlur={() => {
+                if (onRecalculate) {
+                  onRecalculate()
+                }
+              }}
+              step="0.01"
+              min="0"
+              max="10"
+              placeholder="1.00"
+              className="form-input"
+              style={{ maxWidth: '120px' }}
+            />
+            <small className="form-help-inline">
+              Buffer added before/after each range for overlap comparison
+            </small>
           </div>
         </div>
 
@@ -135,6 +180,12 @@ function EvaluationReport({
         {matchingDetails && (
           <div className="overlap-section">
             <h3>Segment Matching Details</h3>
+            <button 
+              className="btn-open-video-comparison"
+              onClick={() => setShowVideoModal(true)}
+            >
+              Compare on Video Timeline
+            </button>
             <p className="overlap-description">
               Segments are matched based on any temporal overlap. IoU (Intersection over Union) is calculated for display purposes.
             </p>
@@ -241,6 +292,16 @@ function EvaluationReport({
           {loading ? 'Saving...' : 'Save Evaluation'}
         </button>
       </div>
+
+      {showVideoModal && (
+        <VideoComparisonModal
+          video={selectedVideo}
+          groundTruthLabels={selectedGroundTruth?.Labels || []}
+          evaluationLabels={evaluationLabels}
+          matchingDetails={matchingDetails}
+          onClose={() => setShowVideoModal(false)}
+        />
+      )}
     </div>
   )
 }

@@ -1,0 +1,424 @@
+/* Multi-Evaluation Comparison Modal */
+.multi-eval-comparison-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.multi-eval-comparison-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 1400px;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.multi-eval-comparison-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.multi-eval-comparison-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.multi-eval-comparison-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.eval-timeline-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eval-label-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.eval-label-model {
+  font-size: 10px;
+  color: #999;
+  font-family: 'Courier New', monospace;
+}
+
+.range-task-name {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #666;
+}
+
+.tooltip-task-name {
+  font-size: 11px;
+  color: #d1d5db;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .multi-eval-comparison-modal-content {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .multi-eval-comparison-modal-body {
+    padding: 16px;
+  }
+
+  .eval-label-name {
+    font-size: 10px;
+  }
+
+  .eval-label-model {
+    font-size: 9px;
+  }
+}
+
+/* Timeline playhead styling - HIDDEN */
+.timeline-playhead {
+  display: none;
+}
+
+/* Timelines section with padding */
+.timelines-section {
+  margin-top: 24px;
+  position: relative;
+  padding: 0 15px;
+}
+
+.timeline-row {
+  margin-bottom: 8px;
+}
+
+.timeline-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timeline-track {
+  position: relative;
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.timeline-segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.timeline-segment:hover {
+  transform: scaleY(1.4);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gt-segment {
+  background: rgba(59, 130, 246, 0.7);
+  border-left: 2px solid rgba(96, 165, 250, 0.9);
+  border-right: 2px solid rgba(37, 99, 235, 0.9);
+}
+
+.gt-segment:hover {
+  background: rgba(59, 130, 246, 0.9);
+  border-left: 2px solid rgba(147, 197, 253, 1);
+  border-right: 2px solid rgba(29, 78, 216, 1);
+}
+
+.eval-segment {
+  background: rgba(34, 197, 94, 0.7);
+  border-left: 2px solid rgba(74, 222, 128, 0.9);
+  border-right: 2px solid rgba(22, 163, 74, 0.9);
+}
+
+.eval-segment:hover {
+  background: rgba(34, 197, 94, 0.9);
+  border-left: 2px solid rgba(134, 239, 172, 1);
+  border-right: 2px solid rgba(21, 128, 61, 1);
+}
+
+/* Status-based segment styling */
+.timeline-segment.status-tp {
+  background: rgba(34, 197, 94, 0.7);
+  border-left: 2px solid rgba(74, 222, 128, 0.9);
+  border-right: 2px solid rgba(22, 163, 74, 0.9);
+}
+
+.timeline-segment.status-tp:hover {
+  background: rgba(34, 197, 94, 0.9);
+  border-left: 2px solid rgba(134, 239, 172, 1);
+  border-right: 2px solid rgba(21, 128, 61, 1);
+}
+
+.timeline-segment.status-fp {
+  background: rgba(249, 115, 22, 0.7);
+  border-left: 2px solid rgba(251, 146, 60, 0.9);
+  border-right: 2px solid rgba(234, 88, 12, 0.9);
+}
+
+.timeline-segment.status-fp:hover {
+  background: rgba(249, 115, 22, 0.9);
+  border-left: 2px solid rgba(251, 191, 36, 1);
+  border-right: 2px solid rgba(194, 65, 12, 1);
+}
+
+.timeline-segment.status-fn {
+  background: rgba(239, 68, 68, 0.7);
+  border-left: 2px solid rgba(248, 113, 113, 0.9);
+  border-right: 2px solid rgba(220, 38, 38, 0.9);
+}
+
+.timeline-segment.status-fn:hover {
+  background: rgba(239, 68, 68, 0.9);
+  border-left: 2px solid rgba(252, 165, 165, 1);
+  border-right: 2px solid rgba(185, 28, 28, 1);
+}
+
+.timeline-segment.status-tn {
+  background: rgba(156, 163, 175, 0.7);
+  border-left: 2px solid rgba(209, 213, 219, 0.9);
+  border-right: 2px solid rgba(107, 114, 128, 0.9);
+}
+
+.timeline-segment.status-tn:hover {
+  background: rgba(156, 163, 175, 0.9);
+  border-left: 2px solid rgba(229, 231, 235, 1);
+  border-right: 2px solid rgba(75, 85, 99, 1);
+}
+
+.timeline-time-display {
+  text-align: right;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #666;
+  font-family: monospace;
+}
+
+/* Tooltip */
+.segment-tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  z-index: 1001;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-width: 300px;
+}
+
+.tooltip-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 4px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tooltip-type .status-badge {
+  margin-left: auto;
+}
+
+.tooltip-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tooltip-time {
+  font-size: 12px;
+  color: #d1d5db;
+  font-family: monospace;
+}
+
+/* Video player section */
+.video-player-section {
+  margin-bottom: 32px;
+}
+
+.video-player {
+  width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+  background: #000;
+}
+
+.no-video-message {
+  padding: 60px 20px;
+  text-align: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  color: #999;
+  font-size: 16px;
+}
+
+/* Selected Range Info */
+.selected-range-info {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.range-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.range-type-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gt-badge {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+}
+
+.eval-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.btn-close-modal:hover {
+  color: #f97316;
+}
+
+.btn-clear-selection {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.btn-clear-selection:hover {
+  color: #666;
+}
+
+.range-info-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.range-info-item {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.range-info-label {
+  color: #666;
+  font-weight: 500;
+  min-width: 90px;
+}
+
+.range-info-value {
+  color: #1a1a1a;
+  font-weight: 400;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  min-width: 32px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge.tp {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: 1px solid #059669;
+}
+
+.status-badge.fp {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: 1px solid #ea580c;
+}
+
+.status-badge.fn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 1px solid #dc2626;
+}
+
+.status-badge.tn {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  border: 1px solid #4b5563;
+}

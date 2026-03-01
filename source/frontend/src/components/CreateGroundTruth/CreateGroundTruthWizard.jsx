@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './CreateGroundTruthWizard.css'
-import { FetchPost } from '../../utils/apiHelper'
 import arrowLeftIcon from '../../assets/icons/arrow-left.svg'
 import GroundTruthStepIndicator from './GroundTruthStepIndicator'
 import VideoSelector from './VideoSelector'

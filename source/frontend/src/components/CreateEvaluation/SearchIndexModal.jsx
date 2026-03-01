@@ -135,7 +135,7 @@ function SearchIndexModal({
     <div className="search-modal-overlay" onClick={onClose}>
       <div className="search-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="search-modal-header">
-          <h2>Search Index</h2>
+          <h2>Search Embedding Index</h2>
           <button className="search-modal-close" onClick={onClose}>×</button>
         </div>
 
@@ -151,6 +151,39 @@ function SearchIndexModal({
               >
                 Your browser does not support the video tag.
               </video>
+              <div className="index-metadata-display">
+                <span className="metadata-value">{selectedAnalyzeTask?.ModelId || 'N/A'}</span>
+                {selectedAnalyzeTask?.Type === 'nova-mme' && (
+                  <>
+                    <span className="metadata-separator">•</span>
+                    <span className="metadata-value">Dim: {selectedAnalyzeTask?.Request?.EmbeddingDim || 'N/A'}</span>
+                    <span className="metadata-separator">•</span>
+                    <span className="metadata-value">{selectedAnalyzeTask?.Request?.EmbedMode || 'N/A'}</span>
+                    <span className="metadata-separator">•</span>
+                    <span className="metadata-value">{selectedAnalyzeTask?.Request?.DurationS || 'N/A'}s</span>
+                  </>
+                )}
+                {selectedAnalyzeTask?.Type === 'tlabs-mme' && (
+                  <>
+                    <span className="metadata-separator">•</span>
+                    <span className="metadata-value">
+                      {selectedAnalyzeTask?.Request?.Segmentation?.Method || 
+                       selectedAnalyzeTask?.Request?.segmentation?.method || 'N/A'}
+                    </span>
+                    {(selectedAnalyzeTask?.Request?.EmbeddingScope || selectedAnalyzeTask?.Request?.embeddingScope) && (
+                      <>
+                        <span className="metadata-separator">•</span>
+                        <span className="metadata-value">
+                          {(selectedAnalyzeTask?.Request?.EmbeddingScope || 
+                            selectedAnalyzeTask?.Request?.embeddingScope)?.join(', ') || 'N/A'}
+                        </span>
+                      </>
+                    )}
+                  </>
+                )}
+                <span className="metadata-separator">•</span>
+                <span className="metadata-value">{selectedAnalyzeTask?.Result?.EmbeddingCount || 0} embeddings</span>
+              </div>
             </div>
 
             {allSearches.length > 0 && (
@@ -202,8 +235,6 @@ function SearchIndexModal({
                   disabled={searchLoading}
                   title="Number of results to return (1-100)"
                 />
-              </div>
-              <div className="search-buttons-row">
                 <button 
                   className="btn-search"
                   onClick={handleSearch}
@@ -211,15 +242,6 @@ function SearchIndexModal({
                 >
                   {searchLoading ? 'Searching...' : allSearches.length > 0 ? 'Add Search' : 'Search'}
                 </button>
-                {allSearches.length > 0 && (
-                  <button 
-                    className="btn-clear-searches"
-                    onClick={handleClearSearches}
-                    title="Clear all searches"
-                  >
-                    Clear All
-                  </button>
-                )}
               </div>
             </div>
 

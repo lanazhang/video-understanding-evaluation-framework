@@ -31,8 +31,27 @@ boto_config = Config(
 bedrock_runtime = boto3.client('bedrock-runtime', config=boto_config)
 dynamodb = boto3.resource('dynamodb')
 
-video_table = dynamodb.Table(DYNAMO_VIDEO_TABLE)
-analyze_table = dynamodb.Table(DYNAMO_VIDEO_ANALYZE_TABLE) if DYNAMO_VIDEO_ANALYZE_TABLE else None
+# Initialize tables lazily to avoid errors during import
+video_table = None
+analyze_table = None
+
+def get_video_table():
+    """Lazy initialization of video table"""
+    global video_table
+    if video_table is None:
+        if not DYNAMO_VIDEO_TABLE:
+            raise ValueError("DYNAMO_VIDEO_TABLE environment variable not set")
+        video_table = dynamodb.Table(DYNAMO_VIDEO_TABLE)
+    return video_table
+
+def get_analyze_table():
+    """Lazy initialization of analyze table"""
+    global analyze_table
+    if analyze_table is None:
+        if not DYNAMO_VIDEO_ANALYZE_TABLE:
+            raise ValueError("DYNAMO_VIDEO_ANALYZE_TABLE environment variable not set")
+        analyze_table = dynamodb.Table(DYNAMO_VIDEO_ANALYZE_TABLE)
+    return analyze_table
 
 def retry_with_backoff(func, max_retries=MAX_RETRIES, delay=RETRY_DELAY):
     """
@@ -100,7 +119,7 @@ def lambda_handler(event, context):
             }
         
         # Get video details from video table
-        video_response = video_table.get_item(Key={'Id': video_id})
+        video_response = get_video_table().get_item(Key={'Id': video_id})
         if 'Item' not in video_response:
             return {
                 'statusCode': 404,
@@ -395,6 +414,7 @@ Return only the JSON object, no additional text."""
         print(f"Response: {json.dumps(result)}")
         
         # Update DynamoDB task record if task_id is provided
+        analyze_table = get_analyze_table()
         if task_id and analyze_table:
             try:
                 completed_timestamp = datetime.now(timezone.utc).isoformat()
@@ -417,9 +437,8 @@ Return only the JSON object, no additional text."""
                     }
                     
                     # Calculate processing time
-                    from dateutil import parser
-                    started = parser.isoparse(task_item['StartedTs'])
-                    completed = parser.isoparse(completed_timestamp)
+                    started = datetime.fromisoformat(task_item['StartedTs'].replace('Z', '+00:00'))
+                    completed = datetime.fromisoformat(completed_timestamp.replace('Z', '+00:00'))
                     processing_time = (completed - started).total_seconds()
                     task_item['Result']['ProcessingTimeS'] = processing_time
                     
@@ -427,7 +446,7 @@ Return only the JSON object, no additional text."""
                     task_item = convert_floats_to_decimal(task_item)
                     
                     # Save updated task
-                    analyze_table.put_item(Item=task_item)
+                    get_analyze_table().put_item(Item=task_item)
                     print(f"Updated task {task_id} in DynamoDB with status: completed")
             except Exception as db_error:
                 print(f"Error updating DynamoDB: {str(db_error)}")
@@ -454,7 +473,7 @@ Return only the JSON object, no additional text."""
         if 'task_id' in locals() and task_id and analyze_table:
             try:
                 completed_timestamp = datetime.now(timezone.utc).isoformat()
-                task_response = analyze_table.get_item(Key={'Id': task_id, 'Type': 'video-understanding'})
+                task_response = get_analyze_table().get_item(Key={'Id': task_id, 'Type': 'video-understanding'})
                 if 'Item' in task_response:
                     task_item = task_response['Item']
                     task_item['CompletedTs'] = completed_timestamp
@@ -462,7 +481,7 @@ Return only the JSON object, no additional text."""
                     task_item['Result']['ErrorMessage'] = str(e)
                     
                     task_item = convert_floats_to_decimal(task_item)
-                    analyze_table.put_item(Item=task_item)
+                    get_analyze_table().put_item(Item=task_item)
                     print(f"Updated task {task_id} in DynamoDB with status: failed")
             except Exception as db_error:
                 print(f"Error updating DynamoDB on failure: {str(db_error)}")

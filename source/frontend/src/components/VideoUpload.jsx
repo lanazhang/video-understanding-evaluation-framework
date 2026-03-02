@@ -330,7 +330,7 @@ function VideoUpload({ onSuccess, onCancel }) {
     }
 
     try {
-      const data = await FetchPost('/videos/add-video', payload, 'EvalService')
+      const data = await FetchPost('/video/add-video', payload, 'EvalService')
 
       console.log('Add video response:', data)
 

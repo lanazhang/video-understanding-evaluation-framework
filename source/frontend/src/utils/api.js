@@ -23,7 +23,7 @@ export const evalAPI = {
 
   deleteVideo: async (videoId) => {
     try {
-      return await FetchDelete(`/videos/${videoId}`, null, 'EvalService')
+      return await FetchDelete(`/video/${videoId}`, null, 'EvalService')
     } catch (error) {
       console.error('Error deleting video:', error)
       throw error
@@ -32,7 +32,7 @@ export const evalAPI = {
 
   getPresignedUrl: async (videoId, operation = 'getObject') => {
     try {
-      return await FetchGet(`/videos/${videoId}/presigned-url`, null, 'EvalService', { operation })
+      return await FetchGet(`/video/${videoId}/presigned-url`, null, 'EvalService', { operation })
     } catch (error) {
       console.error('Error getting presigned URL:', error)
       throw error
@@ -230,7 +230,7 @@ export const evalAPI = {
   // Video Management (new endpoints matching backend)
   addVideo: async (payload) => {
     try {
-      return await FetchPost('/videos/add-video', payload, 'EvalService')
+      return await FetchPost('/video/add-video', payload, 'EvalService')
     } catch (error) {
       console.error('Error adding video:', error)
       throw error
@@ -239,7 +239,7 @@ export const evalAPI = {
 
   getVideos: async (payload = {}) => {
     try {
-      return await FetchPost('/videos/get-videos', payload, 'EvalService')
+      return await FetchPost('/video/get-videos', payload, 'EvalService')
     } catch (error) {
       console.error('Error getting videos:', error)
       throw error
@@ -248,9 +248,19 @@ export const evalAPI = {
 
   deleteVideoById: async (videoId) => {
     try {
-      return await FetchPost('/videos/delete-video', { Id: videoId }, 'EvalService')
+      return await FetchPost('/video/delete-video', { Id: videoId }, 'EvalService')
     } catch (error) {
       console.error('Error deleting video:', error)
+      throw error
+    }
+  },
+
+  // Chatbot
+  chatbotConverse: async (payload) => {
+    try {
+      return await FetchPost('/chatbot/converse', payload, 'EvalService')
+    } catch (error) {
+      console.error('Error in chatbot conversation:', error)
       throw error
     }
   }

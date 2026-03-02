@@ -189,8 +189,8 @@
 .sidebar-footer {
   position: absolute;
   bottom: 16px;
-  left: 8px;
-  right: 8px;
+  left: 0;
+  right: 0;
   padding-top: 16px;
   border-top: 1px solid #e9ecef;
   display: flex;
@@ -199,8 +199,8 @@
 }
 
 .sidebar.expanded .sidebar-footer {
-  left: 16px;
-  right: 16px;
+  left: 0;
+  right: 0;
 }
 
 .sidebar-footer > button {
@@ -208,22 +208,27 @@
   align-items: center;
   gap: 12px;
   text-align: left;
-  padding: 12px;
+  padding: 12px 16px;
   border: none;
   background-color: transparent;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.95em;
   transition: all 0.2s ease;
   justify-content: flex-start;
   white-space: nowrap;
   overflow: hidden;
+  width: 100%;
 }
 
 .sidebar:not(.expanded) .sidebar-footer > button {
   justify-content: center;
-  padding: 10px;
-  margin-left: 5px;
+  padding: 10px 0;
+  gap: 0;
+}
+
+.sidebar:not(.expanded) .sidebar-footer > button .menu-icon {
+  margin: 0;
 }
 
 .sidebar-footer > button:hover {
@@ -245,13 +250,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
+  padding: 10px 16px;
   background: transparent;
   cursor: pointer;
   transition: all 0.2s;
   justify-content: flex-start;
   min-height: 52px;
-  margin-left: 5px;
+  border-radius: 0;
 }
 
 .sidebar-footer .profile-button:hover {
@@ -260,7 +265,12 @@
 
 .sidebar:not(.expanded) .sidebar-footer .profile-button {
   justify-content: center;
-  padding: 10px;
+  padding: 10px 0;
+  gap: 0;
+}
+
+.sidebar:not(.expanded) .sidebar-footer .profile-button .user-avatar {
+  margin: 0;
 }
 
 .sidebar-footer .user-menu {
@@ -324,6 +334,16 @@
 
 .sidebar button.active .menu-icon img {
   filter: brightness(0) invert(1);
+}
+
+.menu-separator {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 8px 12px;
+}
+
+.sidebar:not(.expanded) .menu-separator {
+  margin: 8px 8px;
 }
 
 .menu-text {

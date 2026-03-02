@@ -377,7 +377,14 @@ function AnalysisTaskSelector({
                           
                           if (typeof content === 'string') {
                             try {
-                              content = JSON.parse(content)
+                              // Check if content is wrapped in ```json``` code blocks
+                              let jsonContent = content
+                              const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+                              if (jsonBlockMatch) {
+                                jsonContent = jsonBlockMatch[1].trim()
+                              }
+                              
+                              content = JSON.parse(jsonContent)
                             } catch {
                               return (
                                 <div className="review-description">

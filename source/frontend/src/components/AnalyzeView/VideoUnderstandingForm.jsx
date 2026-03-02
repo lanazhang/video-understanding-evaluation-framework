@@ -84,6 +84,10 @@ function VideoUnderstandingForm({ video, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   
+  // Gemini API key state
+  const [hasGeminiKey, setHasGeminiKey] = useState(false)
+  const [checkingGeminiKey, setCheckingGeminiKey] = useState(false)
+  
   // Video Understanding Tasks state
   const [videoUnderstandingTasks, setVideoUnderstandingTasks] = useState([])
   const [loadingVUTasks, setLoadingVUTasks] = useState(false)
@@ -143,6 +147,27 @@ function VideoUnderstandingForm({ video, onSuccess }) {
       setSelectedModel(models[0].modelId)
     }
   }, [selectedModel, models])
+  
+  // Check for Gemini API key on mount
+  useEffect(() => {
+    checkGeminiApiKey()
+  }, [])
+  
+  const checkGeminiApiKey = async () => {
+    setCheckingGeminiKey(true)
+    try {
+      const data = await FetchPost('/utils/manage-api-key', {
+        operation: 'check'
+      }, 'EvalService')
+      
+      setHasGeminiKey(data.hasKey || false)
+    } catch (err) {
+      console.error('Error checking Gemini API key:', err)
+      setHasGeminiKey(false)
+    } finally {
+      setCheckingGeminiKey(false)
+    }
+  }
   
   // Generate default task name based on model
   const generateDefaultTaskName = () => {
@@ -271,6 +296,14 @@ function VideoUnderstandingForm({ video, onSuccess }) {
   const parseTimeToSeconds = (timeStr) => {
     if (typeof timeStr === 'number') return timeStr
     
+    if (typeof timeStr !== 'string') return 0
+    
+    // Handle decimal string format like "0.000", "5.100", "27.89"
+    const decimalMatch = timeStr.match(/^(\d+\.?\d*)$/)
+    if (decimalMatch) {
+      return parseFloat(decimalMatch[1])
+    }
+    
     // Handle formats like "00:00", "01:30", "02:15:30"
     const parts = timeStr.split(':').map(p => parseInt(p, 10))
     
@@ -283,9 +316,9 @@ function VideoUnderstandingForm({ video, onSuccess }) {
     }
     
     // Try to parse as number with 's' suffix
-    const numMatch = timeStr.match(/^(\d+)s?$/)
+    const numMatch = timeStr.match(/^(\d+\.?\d*)s$/)
     if (numMatch) {
-      return parseInt(numMatch[1], 10)
+      return parseFloat(numMatch[1])
     }
     
     return 0
@@ -299,28 +332,46 @@ function VideoUnderstandingForm({ video, onSuccess }) {
     const startSeconds = parseTimeToSeconds(startTime)
     const endSeconds = parseTimeToSeconds(endTime)
     
-    // Set video to start time and play
-    video.currentTime = startSeconds
-    video.muted = true
-    video.play()
+    // Remove any existing listeners
+    const oldTimeUpdateListener = video._sceneTimeUpdateListener
+    const oldSeekedListener = video._sceneSeekedListener
+    if (oldTimeUpdateListener) {
+      video.removeEventListener('timeupdate', oldTimeUpdateListener)
+    }
+    if (oldSeekedListener) {
+      video.removeEventListener('seeked', oldSeekedListener)
+    }
     
-    // Set up event listener to stop at end time
+    // Pause the video first
+    video.pause()
+    
+    // Set up listener to pause at end time
     const handleTimeUpdate = () => {
       if (video.currentTime >= endSeconds) {
         video.pause()
         video.removeEventListener('timeupdate', handleTimeUpdate)
+        video._sceneTimeUpdateListener = null
       }
     }
     
-    video.addEventListener('timeupdate', handleTimeUpdate)
-    
-    // Cleanup listener if video is paused manually
-    const handlePause = () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate)
-      video.removeEventListener('pause', handlePause)
+    // Set up listener to play after seek completes
+    const handleSeeked = () => {
+      video.removeEventListener('seeked', handleSeeked)
+      video._sceneSeekedListener = null
+      
+      video.play().catch(err => {
+        console.error('Play error:', err)
+      })
     }
     
-    video.addEventListener('pause', handlePause, { once: true })
+    video.addEventListener('timeupdate', handleTimeUpdate)
+    video._sceneTimeUpdateListener = handleTimeUpdate
+    
+    video.addEventListener('seeked', handleSeeked)
+    video._sceneSeekedListener = handleSeeked
+    
+    // Set the current time to trigger seek
+    video.currentTime = startSeconds
   }
 
   const handleSubmit = async (e) => {
@@ -338,6 +389,12 @@ function VideoUnderstandingForm({ video, onSuccess }) {
     
     if (!taskName.trim()) {
       setError('Please enter a task name')
+      return
+    }
+    
+    // Check if Gemini API key is required
+    if (selectedModelConfig && selectedModelConfig.apiType === 'gemini' && !hasGeminiKey) {
+      setError('Gemini API key is required for this model. Please go to Settings to add your Gemini API key.')
       return
     }
     
@@ -612,7 +669,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                             viewBox="0 0 16 16" 
                             fill="none" 
                             xmlns="http://www.w3.org/2000/svg"
-                            style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                            className={`svg-rotate ${isExpanded ? 'svg-rotate--expanded' : ''}`}
                           >
                             <path 
                               d="M4 6L8 10L12 6" 
@@ -724,6 +781,16 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                 </div>
               </div>
             )}
+            
+            {/* Show warning if Gemini model is selected but no API key is configured */}
+            {selectedModelConfig && selectedModelConfig.apiType === 'gemini' && !hasGeminiKey && (
+              <div className="alert alert-warning">
+                <strong>⚠️ Gemini API Key Required</strong>
+                <p>
+                  This model requires a Gemini API key. Please go to <a href="/settings">Settings</a> to add your API key before creating a task.
+                </p>
+              </div>
+            )}
           </div>
           
           <div className="form-group">
@@ -769,7 +836,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
               </button>
             </div>
             {useToolConfig && !(selectedModelConfig?.toolConfig || selectedModelConfig?.responseSchema || selectedModelConfig?.responseFormat) && (
-              <div className="alert alert-info" style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '4px', color: '#0369a1' }}>
+              <div className="alert alert-info">
                 The selected model ({selectedModel}) does not have a predefined tool configuration schema.
               </div>
             )}
@@ -798,7 +865,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                       viewBox="0 0 16 16" 
                       fill="none" 
                       xmlns="http://www.w3.org/2000/svg"
-                      style={{ transform: toolConfigExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                      className={`svg-rotate ${toolConfigExpanded ? 'svg-rotate--expanded' : ''}`}
                     >
                       <path 
                         d="M4 6L8 10L12 6" 
@@ -839,7 +906,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                   viewBox="0 0 16 16" 
                   fill="none" 
                   xmlns="http://www.w3.org/2000/svg"
-                  style={{ transform: inferenceConfigExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                  className={`svg-rotate ${inferenceConfigExpanded ? 'svg-rotate--expanded' : ''}`}
                 >
                   <path 
                     d="M4 6L8 10L12 6" 
@@ -906,9 +973,21 @@ function VideoUnderstandingForm({ video, onSuccess }) {
           <div className="form-actions">
             <button
               type="submit"
-              disabled={loading || !inputPrompt.trim() || !taskName.trim() || videoExceedsLimits}
+              disabled={
+                loading || 
+                !inputPrompt.trim() || 
+                !taskName.trim() || 
+                videoExceedsLimits ||
+                (selectedModelConfig?.apiType === 'gemini' && !hasGeminiKey)
+              }
               className="btn-submit"
-              title={videoExceedsLimits ? 'Video exceeds model limits' : ''}
+              title={
+                videoExceedsLimits 
+                  ? 'Video exceeds model limits' 
+                  : (selectedModelConfig?.apiType === 'gemini' && !hasGeminiKey)
+                    ? 'Gemini API key required - go to Settings to add your key'
+                    : ''
+              }
             >
               {loading ? 'Processing...' : 'Start Task'}
             </button>
@@ -944,6 +1023,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                 <video
                   ref={reviewVideoRef}
                   controls
+                  muted
                   className="review-video-player"
                   src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
                   poster={video.ThumbnailUri || video.thumbnailUri}
@@ -1044,7 +1124,14 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                         // If content is a string, try to parse it
                         if (typeof content === 'string') {
                           try {
-                            const parsed = JSON.parse(content)
+                            // Check if content is wrapped in ```json``` code blocks
+                            let jsonContent = content
+                            const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+                            if (jsonBlockMatch) {
+                              jsonContent = jsonBlockMatch[1].trim()
+                            }
+                            
+                            const parsed = JSON.parse(jsonContent)
                             
                             // Check for different response formats
                             
@@ -1213,7 +1300,7 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                               return (
                                 <div className="review-description">
                                   <h4>Response</h4>
-                                  <p style={{ whiteSpace: 'pre-wrap' }}>{content}</p>
+                                  <p className="text-pre-wrap">{content}</p>
                                 </div>
                               )
                             }

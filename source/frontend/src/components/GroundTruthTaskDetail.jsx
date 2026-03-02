@@ -7,7 +7,7 @@ import LabelCreator from './CreateGroundTruth/LabelCreator'
 import ManualLabel from './GroundTruth/ManualLabel'
 import GroundTruthReview from './GroundTruth/GroundTruthReview'
 
-function GroundTruthTaskDetail({ task, onBack, currentUser }) {
+function GroundTruthTaskDetail({ task, onBack, currentUser, onNavigateToEdit }) {
   const [selectedLabel, setSelectedLabel] = useState(null)
   const [isEditMode, setIsEditMode] = useState(task.openInEditMode || false)
   const [editStep, setEditStep] = useState(2) // Start at step 2 (Create Labels) since video is already selected
@@ -147,6 +147,13 @@ function GroundTruthTaskDetail({ task, onBack, currentUser }) {
   }
 
   const handleEditLabels = () => {
+    // If onNavigateToEdit is provided (from chatbot modal), use it to navigate away
+    if (onNavigateToEdit) {
+      onNavigateToEdit()
+      return
+    }
+    
+    // Otherwise, enter edit mode within the component (normal behavior)
     setIsEditMode(true)
     setEditStep(2) // Start at Create Labels step
     setEditName(task.Name || task.taskName || '')

@@ -30,7 +30,7 @@ function VideoSelector({ onVideoSelect }) {
         group: ''
       }
       
-      const data = await FetchPost('/videos/get-videos', payload, 'EvalService')
+      const data = await FetchPost('/video/get-videos', payload, 'EvalService')
       
       if (data.videos !== undefined) {
         setVideos(data.videos || [])

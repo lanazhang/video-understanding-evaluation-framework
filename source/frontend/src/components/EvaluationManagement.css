@@ -299,7 +299,7 @@
 
 .evaluation-name {
   font-weight: 600;
-  color: inherit;
+  color: var(--orange-primary);
   font-size: 14px;
 }
 

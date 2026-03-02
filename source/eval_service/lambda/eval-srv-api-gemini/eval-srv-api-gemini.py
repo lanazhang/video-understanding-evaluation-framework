@@ -180,9 +180,25 @@ def lambda_handler(event, context):
             # Initialize new client
             client = genai.Client(api_key=api_key)
             
-            # Upload video file
+            # Determine MIME type from file extension
+            file_extension = os.path.splitext(local_video_path)[1].lower()
+            mime_type_map = {
+                '.mp4': 'video/mp4',
+                '.avi': 'video/x-msvideo',
+                '.mov': 'video/quicktime',
+                '.wmv': 'video/x-ms-wmv',
+                '.flv': 'video/x-flv',
+                '.webm': 'video/webm',
+                '.mkv': 'video/x-matroska',
+                '.m4v': 'video/x-m4v'
+            }
+            mime_type = mime_type_map.get(file_extension, 'video/mp4')  # Default to mp4
+            print(f"Detected MIME type: {mime_type} for file: {local_video_path}")
+            
+            # Upload video file - open file and pass as file object with mime_type
             print(f"Uploading video to Gemini File API")
-            upload_result = client.files.upload(path=local_video_path)
+            with open(local_video_path, 'rb') as video_file_obj:
+                upload_result = client.files.upload(file=video_file_obj, config={'mime_type': mime_type})
             print(f"Upload result type: {type(upload_result)}, value: {upload_result}")
             
             # Handle different return types from upload

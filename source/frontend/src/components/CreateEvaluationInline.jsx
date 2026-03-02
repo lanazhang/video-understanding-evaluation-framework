@@ -50,7 +50,7 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
   const fetchVideos = async () => {
     setLoadingVideos(true)
     try {
-      const data = await FetchPost('/videos/get-videos', {}, 'EvalService')
+      const data = await FetchPost('/video/get-videos', {}, 'EvalService')
       // FetchPost returns parsed JSON directly, check for videos array
       if (data.videos !== undefined) {
         setVideos(data.videos || [])
@@ -336,7 +336,21 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
       }
     } catch (err) {
       console.error('Error creating evaluation:', err)
-      setError('Failed to create evaluation: ' + err.message)
+      // Check if the error response contains a specific error message
+      let errorMessage = 'Failed to create evaluation'
+      if (err.response?.body) {
+        try {
+          const errorBody = typeof err.response.body === 'string' 
+            ? JSON.parse(err.response.body) 
+            : err.response.body
+          errorMessage = errorBody.error || errorMessage
+        } catch (parseErr) {
+          // If parsing fails, use the original error message
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

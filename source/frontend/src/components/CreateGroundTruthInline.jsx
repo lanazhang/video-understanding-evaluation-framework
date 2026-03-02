@@ -40,7 +40,7 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
         group: ''
       }
       
-      const data = await FetchPost('/videos/get-videos', payload, 'EvalService')
+      const data = await FetchPost('/video/get-videos', payload, 'EvalService')
       
       // FetchPost returns parsed JSON directly, check for videos array
       if (data.videos !== undefined) {

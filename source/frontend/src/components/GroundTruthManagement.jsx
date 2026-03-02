@@ -36,6 +36,24 @@ function GroundTruthManagement({ currentUser, initialVideoFilter = null }) {
     }
   }, [initialVideoFilter])
 
+  useEffect(() => {
+    // Listen for navigation to specific ground truth detail
+    const handleNavigateToGTDetail = (event) => {
+      const { gtId } = event.detail
+      if (gtId && groundTruths.length > 0) {
+        const gt = groundTruths.find(g => g.id === gtId || g.Id === gtId)
+        if (gt) {
+          setSelectedTask(gt)
+        }
+      }
+    }
+
+    window.addEventListener('navigateToGTDetail', handleNavigateToGTDetail)
+    return () => {
+      window.removeEventListener('navigateToGTDetail', handleNavigateToGTDetail)
+    }
+  }, [groundTruths])
+
   const fetchGroundTruths = async () => {
     setLoading(true)
     setError(null)

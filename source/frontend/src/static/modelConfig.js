@@ -363,37 +363,37 @@ export const modelGroups = [
       {
         displayName: 'Nova 1 Lite',
         modelId: '',
-        api: '/videos/start-frame-nova-1-lite'
+        api: '/video/start-frame-nova-1-lite'
       },
       {
         displayName: 'Nova 2 Lite',
         modelId: '',
-        api: '/videos/start-frame-nova-2-lite'
+        api: '/video/start-frame-nova-2-lite'
       },
       {
         displayName: 'Nova 1 Pro',
         modelId: '',
-        api: '/videos/start-frame-nova-1-pro'
+        api: '/video/start-frame-nova-1-pro'
       },
       {
         displayName: 'Nova 2 Pro',
         modelId: '',
-        api: '/videos/start-frame-nova-2-pro'
+        api: '/video/start-frame-nova-2-pro'
       },
       {
         displayName: 'Llama',
         modelId: '',
-        api: '/videos/start-frame-llama'
+        api: '/video/start-frame-llama'
       },
       {
         displayName: 'OpenAI',
         modelId: '',
-        api: '/videos/start-frame-openai'
+        api: '/video/start-frame-openai'
       },
       {
         displayName: 'Gemini',
         modelId: '',
-        api: '/videos/start-frame-gemini'
+        api: '/video/start-frame-gemini'
       },
     ],
   },
@@ -403,22 +403,22 @@ export const modelGroups = [
       {
         displayName: 'Nova Lite 1',
         modelId: '',
-        api: '/videos/start-clip-nova-lite-1'
+        api: '/video/start-clip-nova-lite-1'
       },
       {
         displayName: 'Nova Lite 2',
         modelId: '',
-        api: '/videos/start-clip-nova-lite-2'
+        api: '/video/start-clip-nova-lite-2'
       },
       {
         displayName: 'Nova Pro 1',
         modelId: '',
-        api: '/videos/start-clip-nova-pro-1'
+        api: '/video/start-clip-nova-pro-1'
       },
       {
         displayName: 'Nova Pro 2',
         modelId: '',
-        api: '/videos/start-clip-nova-pro-2'
+        api: '/video/start-clip-nova-pro-2'
       },
     ],
   },

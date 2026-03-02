@@ -28,18 +28,16 @@ function Settings({ currentUser }) {
 
       console.log('Check API key response:', data)
 
-      if (data.statusCode === 200) {
-        const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        console.log('Parsed response body:', body)
-        setHasStoredKey(body.hasKey || false)
+      // FetchPost already parses the response, so data is the parsed body
+      if (data.success) {
+        setHasStoredKey(data.hasKey || false)
         
-        if (body.error) {
-          console.error('Error from Lambda:', body.error)
+        if (data.error) {
+          console.error('Error from Lambda:', data.error)
         }
-      } else if (data.statusCode === 400) {
-        const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        console.error('Authentication error:', body.message)
-        setMessage(body.message || 'Authentication error. Please try logging out and back in.')
+      } else {
+        console.error('Check failed:', data.message)
+        setMessage(data.message || 'Error checking stored key')
         setMessageType('error')
       }
     } catch (error) {
@@ -68,19 +66,16 @@ function Settings({ currentUser }) {
         username: username  // Temporary workaround
       }, 'EvalService')
 
-      if (data.statusCode === 200) {
-        const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
-        if (body.success) {
-          setMessage('API key saved successfully')
-          setMessageType('success')
-          setHasStoredKey(true)
-          setGeminiApiKey('')
-        } else {
-          setMessage(body.message || 'Failed to save API key')
-          setMessageType('error')
-        }
+      console.log('Save API key response:', data)
+
+      // FetchPost already parses the response body, so data is the parsed body
+      if (data.success) {
+        setMessage('API key saved successfully')
+        setMessageType('success')
+        setHasStoredKey(true)
+        setGeminiApiKey('')
       } else {
-        setMessage('Failed to save API key')
+        setMessage(data.message || 'Failed to save API key')
         setMessageType('error')
       }
     } catch (error) {
@@ -106,14 +101,16 @@ function Settings({ currentUser }) {
         username: username  // Temporary workaround
       }, 'EvalService')
 
-      if (data.statusCode === 200 || data.statusCode === 404) {
-        const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+      console.log('Delete API key response:', data)
+
+      // FetchPost already parses the response, so data is the parsed body
+      if (data.success) {
         setMessage('API key deleted successfully')
         setMessageType('success')
         setHasStoredKey(false)
         setGeminiApiKey('')
       } else {
-        setMessage('Failed to delete API key')
+        setMessage(data.message || 'Failed to delete API key')
         setMessageType('error')
       }
     } catch (error) {

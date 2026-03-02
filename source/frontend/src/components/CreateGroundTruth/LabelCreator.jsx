@@ -375,6 +375,14 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
   const parseTimeToSeconds = (timeStr) => {
     if (typeof timeStr === 'number') return timeStr
     
+    if (typeof timeStr !== 'string') return 0
+    
+    // Handle decimal string format like "0.000", "5.100", "27.89"
+    const decimalMatch = timeStr.match(/^(\d+\.?\d*)$/)
+    if (decimalMatch) {
+      return parseFloat(decimalMatch[1])
+    }
+    
     const parts = timeStr.split(':').map(p => parseInt(p, 10))
     
     if (parts.length === 2) {
@@ -383,9 +391,9 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
       return parts[0] * 3600 + parts[1] * 60 + parts[2]
     }
     
-    const numMatch = timeStr.match(/^(\d+)s?$/)
+    const numMatch = timeStr.match(/^(\d+\.?\d*)s$/)
     if (numMatch) {
-      return parseInt(numMatch[1], 10)
+      return parseFloat(numMatch[1])
     }
     
     return 0

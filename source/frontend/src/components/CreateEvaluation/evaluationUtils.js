@@ -171,16 +171,22 @@ export const calculateEvaluationMetrics = (groundTruthLabels, searchResults, sea
       
       if (sortedPredictions.length === 0) return 0
       
+      // Track which GT labels have been matched to avoid double-counting
+      const matchedGTIndices = new Set()
+      
       // Calculate precision at each position where we have a true positive
       let numCorrect = 0
       let sumPrecisions = 0
       let numRelevant = 0
       
       sortedPredictions.forEach((pred, rank) => {
-        // Check if this prediction matches any ground truth
-        const matchesGT = validGTLabels.some(gt => hasOverlap(gt, pred))
+        // Check if this prediction matches any ground truth that hasn't been matched yet
+        const matchingGTIndex = validGTLabels.findIndex((gt, idx) => 
+          !matchedGTIndices.has(idx) && hasOverlap(gt, pred)
+        )
         
-        if (matchesGT) {
+        if (matchingGTIndex !== -1) {
+          matchedGTIndices.add(matchingGTIndex)
           numCorrect++
           const precisionAtK = numCorrect / (rank + 1)
           sumPrecisions += precisionAtK
@@ -203,16 +209,16 @@ export const calculateEvaluationMetrics = (groundTruthLabels, searchResults, sea
 
   return {
     metrics: {
-      Precision: parseFloat(precision.toFixed(4)),
-      Recall: parseFloat(recall.toFixed(4)),
-      F1Score: parseFloat(f1Score.toFixed(4)),
-      Accuracy: parseFloat(accuracy.toFixed(4)),
+      Precision: parseFloat(Math.min(1, precision).toFixed(4)),
+      Recall: parseFloat(Math.min(1, recall).toFixed(4)),
+      F1Score: parseFloat(Math.min(1, f1Score).toFixed(4)),
+      Accuracy: parseFloat(Math.min(1, accuracy).toFixed(4)),
       TruePositives: truePositives,
       FalsePositives: falsePositives,
       TrueNegatives: 0,
       FalseNegatives: falseNegatives,
-      MeanIoU: parseFloat(meanIoU.toFixed(4)),
-      MeanAveragePrecision: parseFloat(meanAveragePrecision.toFixed(4))
+      MeanIoU: parseFloat(Math.min(1, meanIoU).toFixed(4)),
+      MeanAveragePrecision: parseFloat(Math.min(1, meanAveragePrecision).toFixed(4))
     },
     details: {
       gtMatches,

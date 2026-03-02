@@ -15,16 +15,17 @@ EMBEDDING_DIM_DEFAULT='1024'
 MODEL_ID_TLABS_27='twelvelabs.marengo-embed-2-7-v1:0'
 MODEL_ID_TLABS_30='twelvelabs.marengo-embed-3-0-v1:0'
 
-LAMBDA_LAYER_SOURCE_S3_KEY_SCENE_DETECT="layer/scenedetect_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_MOVIEPY="layer/moviepy_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_OPENCV="layer/opencv_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_BOTO3="layer/boto3_layer.zip"
 LAMBDA_LAYER_SOURCE_S3_KEY_GOOGLE="layer/google_layer.zip"
+LAMBDA_LAYER_SOURCE_S3_KEY_STRANDS_AGENTS="layer/strands_agents_layer.zip"
 
 DYNAMO_VIDEO_TABLE="bedrock_video_eval_video"
 DYNAMO_VIDEO_ANALYZE_TABLE="bedrock_video_eval_analyze_table"
 DYNAMO_GROUND_TRUTH_TABLE="bedrock_video_eval_ground_truth"
 DYNAMO_EVALUATION_TASK_TABLE="bedrock_video_eval_evaluation_task"
+DYNAMO_EVAL_TASK_TABLE="bedrock_video_eval_evaluation_task"  # Alias for consistency
 
 DYNAMO_VIDEO_FRAME_TABLE="video_eval_extr_srv_video_frame"
 DYNAMO_VIDEO_SHOT_TABLE="video_eval_extr_srv_video_shot"

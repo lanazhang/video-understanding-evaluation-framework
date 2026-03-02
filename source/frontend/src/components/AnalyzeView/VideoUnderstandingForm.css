@@ -1047,6 +1047,59 @@
   background: #ea580c;
 }
 
+/* SVG Rotate Animation */
+.video-understanding-form .svg-rotate {
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.video-understanding-form .svg-rotate--expanded {
+  transform: rotate(180deg);
+}
+
+/* Alert Styles */
+.video-understanding-form .alert-warning {
+  margin-top: 10px;
+  padding: 12px;
+  border: 2px solid #f97316;
+  border-radius: 8px;
+  color: #f97316;
+  background: transparent;
+}
+
+.video-understanding-form .alert-warning strong {
+  color: #f97316;
+}
+
+.video-understanding-form .alert-warning p {
+  margin: 4px 0 0 0;
+  color: #f97316;
+}
+
+.video-understanding-form .alert-warning a {
+  color: #f97316;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.video-understanding-form .alert-warning a:hover {
+  color: #ea580c;
+}
+
+.video-understanding-form .alert-info {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 4px;
+  color: #0369a1;
+}
+
+/* Pre-wrap text */
+.video-understanding-form .text-pre-wrap {
+  white-space: pre-wrap;
+}
+
 /* Review Modal */
 .video-understanding-form .review-modal-overlay {
   position: fixed;

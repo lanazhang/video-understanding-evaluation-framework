@@ -251,27 +251,7 @@ class ServicePreStack(NestedStack):
                     "Payload": json.dumps(
                         {
                             "RequestType":"Create",
-                            "Layers": [
-                                {
-                                    "name": "scenedetect_layer",
-                                    "packages": [
-                                        {
-                                            "name":"scenedetect",
-                                            "version":"0.6.7.1"
-                                        },
-                                        {
-                                            "name": "opencv-python-headless",
-                                            "version": "4.12.0.88"
-                                        },
-                                        {
-                                            "name": "numpy",
-                                            "version": "2.2.6"
-                                        }
-                                    ],
-                                    "s3_bucket":self.s3_data_bucket_name,
-                                    "s3_key":LAMBDA_LAYER_SOURCE_S3_KEY_SCENE_DETECT
-                                },  
-                            ],
+                            "Layers": [],
                             "S3Vectors": [
                                 {
                                     "BucketName": S3_VECTOR_BUCKET_NAME,
@@ -426,12 +406,51 @@ class ServicePreStack(NestedStack):
                                     "name": "google",
                                     "packages": [
                                         {
-                                            "name":"google-generativeai",
-                                            "version":"3.0.0",
+                                            "name":"google-genai",
+                                            "version":"1.65.0",
                                         }
                                     ],
                                     "s3_bucket":self.s3_data_bucket_name,
                                     "s3_key":LAMBDA_LAYER_SOURCE_S3_KEY_GOOGLE
+                                },
+                            ]
+                        }
+                    )
+                },
+                output_paths=["Payload"]
+            ),
+            role=lambda_util_provision_invoke_role
+        )
+
+        # 6th invoke: strands-agents
+        resource = custom_resources.AwsCustomResource(self,
+            id=f"util-pre-provision-invoke-res6",
+            log_retention=RetentionDays.ONE_WEEK,
+            on_create=custom_resources.AwsSdkCall(
+                service="Lambda",
+                action="invoke",
+                physical_resource_id=custom_resources.PhysicalResourceId.of("Trigger"),
+                parameters={
+                    "FunctionName": lambda_util_provision.function_name,
+                    "InvocationType": "RequestResponse",
+                    "Payload": json.dumps(
+                        {
+                            "RequestType":"Create",
+                            "Layers": [
+                                {
+                                    "name": "strands-agents",
+                                    "packages": [
+                                        {
+                                            "name":"strands-agents",
+                                            "version":"1.28.0",
+                                        },
+                                        {
+                                            "name":"strands-agents-tools",
+                                            "version":"0.2.21",
+                                        }
+                                    ],
+                                    "s3_bucket":self.s3_data_bucket_name,
+                                    "s3_key":LAMBDA_LAYER_SOURCE_S3_KEY_STRANDS_AGENTS
                                 },
                             ]
                         }

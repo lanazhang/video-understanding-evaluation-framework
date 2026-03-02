@@ -33,7 +33,6 @@ class EvalServiceStack(NestedStack):
 
     s3_eval_bucket = None
 
-    scenedetect_layer = None
     moviepy_layer = None
     opencv_layer = None
     aws_layer = None
@@ -161,11 +160,6 @@ class EvalServiceStack(NestedStack):
     def deploy_lambda_layer(self):
         # Create Lambda Layers which will be used by Lambda deployment
         layer_bucket = _s3.Bucket.from_bucket_name(self, "LayerBucket", bucket_name=self.s3_bucket_name_eval)
-        self.scenedetect_layer = _lambda.LayerVersion(self, 'SceneLayer',
-            code=_lambda.S3Code(bucket=layer_bucket, key=LAMBDA_LAYER_SOURCE_S3_KEY_SCENE_DETECT),
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
-            description="python3.13 scenedetect 0.6.7.1, opencv-python-headless 4.12.0.88, numpy 2.2.6"
-        )
         self.moviepy_layer = _lambda.LayerVersion(self, 'MoviePyLayer',
             code=_lambda.S3Code(bucket=layer_bucket, key=LAMBDA_LAYER_SOURCE_S3_KEY_MOVIEPY),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
@@ -185,6 +179,11 @@ class EvalServiceStack(NestedStack):
             code=_lambda.S3Code(bucket=layer_bucket, key=LAMBDA_LAYER_SOURCE_S3_KEY_GOOGLE),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
             description="python3.13 google-generativeai 3.0.0"
+        )
+        self.strands_agents_layer = _lambda.LayerVersion(self, 'StrandsAgentsLayer',
+            code=_lambda.S3Code(bucket=layer_bucket, key=LAMBDA_LAYER_SOURCE_S3_KEY_STRANDS_AGENTS),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
+            description="python3.13 strands-agents 1.28.0, strands-agents-tools 0.2.21"
         )
         self.aws_layer = _lambda.LayerVersion.from_layer_version_arn(self, "AwsLayerPowerTool", 
             layer_version_arn=f"arn:aws:lambda:{self.region}:336392948345:layer:AWSSDKPandas-Python313:4"
@@ -551,15 +550,16 @@ class EvalServiceStack(NestedStack):
 
         # eval-srv-fw-clip-gen-shot-duration 
         lambda_key = "eval-srv-fw-clip-gen-shot-duration"
-        lambda_extration_srv_metadata_role = self.create_role(lambda_key, ["s3","dynamodb"])
+        lambda_extration_srv_metadata_role = self.create_role(lambda_key, ["s3","dynamodb","bedrock"])
         lambda_eval_srv_fw_clip_gen_shot_durtion = self.create_lambda(
             lambda_key, 
             lambda_extration_srv_metadata_role, 
             {
                 'DYNAMO_VIDEO_SHOT_TABLE': DYNAMO_VIDEO_SHOT_TABLE,
+                'MODEL_ID_IMAGE_UNDERSTANDING': MODEL_ID_IMAGE_UNDERSTANDING,
             }, 
             timeout_s=15*60, memory_size=10240, ephemeral_storage_size=10240,
-            layers=[self.scenedetect_layer],
+            layers=[self.moviepy_layer],
         )
         
         # eval-srv-wf-clip-gen-shot-video 
@@ -799,6 +799,7 @@ class EvalServiceStack(NestedStack):
         gt = v1.add_resource("gt")
         eval_resource = v1.add_resource("eval")
         utils = v1.add_resource("utils")
+        chatbot = v1.add_resource("chatbot")
         
         self.api_gw_base_url = api.url
         
@@ -826,18 +827,31 @@ class EvalServiceStack(NestedStack):
                 evns={},
             )
 
+        # POST /v1/chatbot/converse
+        lambda_key='eval-srv-api-chatbot-converse'
+        lambda_chatbot_role = self.create_role(lambda_key, ["dynamodb", "bedrock", "lambda"])
+        self.create_api_endpoint(id=f'{lambda_key}-ep', root=chatbot, path1="converse", method="POST", auth=self.cognito_authorizer, 
+                role=lambda_chatbot_role,
+                lambda_file_name=lambda_key,
+                memory_m=1024, timeout_s=60, ephemeral_storage_size=512,
+                evns={},
+                layers=[self.strands_agents_layer]
+            )
+
         # POST /v1/video/add-video
         lambda_key='eval-srv-add-video'
         lambda_add_video_role = self.create_role(lambda_key, ["dynamodb", "lambda"])
         
         # Create metadata extraction Lambda first (needed for add-video env var)
         lambda_metadata_key = 'eval-srv-get-video-metadata'
-        lambda_metadata_role = self.create_role(lambda_metadata_key, ["dynamodb", "s3"])
+        lambda_metadata_role = self.create_role(lambda_metadata_key, ["dynamodb", "s3", "bedrock"])
         lambda_get_video_metadata = self.create_lambda(
             lambda_metadata_key,
             lambda_metadata_role,
             {
-                'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE
+                'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                'MODEL_ID_IMAGE_UNDERSTANDING': MODEL_ID_IMAGE_UNDERSTANDING,
+                'DYNAMO_VIDEO_USAGE_TABLE': DYNAMO_VIDEO_USAGE_TABLE
             },
             timeout_s=300, memory_size=2048, ephemeral_storage_size=2048,
             layers=[self.moviepy_layer]
@@ -1008,13 +1022,14 @@ class EvalServiceStack(NestedStack):
 
         # POST /v1/model/gemini
         lambda_key='eval-srv-api-gemini'
-        lambda_gemini_role = self.create_role(lambda_key, ["dynamodb","s3"])
+        lambda_gemini_role = self.create_role(lambda_key, ["dynamodb","s3","secretsmanager"])
         self.create_api_endpoint(id=f'{lambda_key}-api-ep', root=model, path1="gemini", method="POST", auth=self.cognito_authorizer, 
                 role=lambda_gemini_role,
                 lambda_file_name=lambda_key,
                 memory_m=3008, timeout_s=600, ephemeral_storage_size=10240,
                 evns={
                     'DYNAMO_VIDEO_TABLE': DYNAMO_VIDEO_TABLE,
+                    'DYNAMO_VIDEO_ANALYZE_TABLE': DYNAMO_VIDEO_ANALYZE_TABLE,
                     'DEFAULT_GEMINI_MODEL_ID': 'gemini-1.5-flash'
                 },
                 layers=[self.google_layer]
@@ -1164,7 +1179,7 @@ class EvalServiceStack(NestedStack):
             statements.append(
                 _iam.PolicyStatement(
                         effect=_iam.Effect.ALLOW,
-                        actions=["bedrock:InvokeModel","bedrock:GetAsyncInvoke"],
+                        actions=["bedrock:InvokeModel","bedrock:InvokeModelWithResponseStream","bedrock:GetAsyncInvoke"],
                         resources=[
                             "arn:aws:bedrock:*:*:foundation-model/*",
                             "arn:aws:bedrock:*:*:async-invoke/*",

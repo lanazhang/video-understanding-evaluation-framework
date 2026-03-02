@@ -87,7 +87,14 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
       
       if (typeof content === 'string') {
         try {
-          content = JSON.parse(content)
+          // Check if content is wrapped in ```json``` code blocks
+          let jsonContent = content
+          const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+          if (jsonBlockMatch) {
+            jsonContent = jsonBlockMatch[1].trim()
+          }
+          
+          content = JSON.parse(jsonContent)
         } catch (e) {
           return false
         }
@@ -236,7 +243,14 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
       let content = task.Result?.Response?.content || task.Result?.Response?.message || task.Result?.Response
       
       if (typeof content === 'string') {
-        content = JSON.parse(content)
+        // Check if content is wrapped in ```json``` code blocks
+        let jsonContent = content
+        const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+        if (jsonBlockMatch) {
+          jsonContent = jsonBlockMatch[1].trim()
+        }
+        
+        content = JSON.parse(jsonContent)
       }
       
       const items = []
@@ -400,6 +414,14 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
   const parseTimeToSeconds = (timeStr) => {
     if (typeof timeStr === 'number') return timeStr
     
+    if (typeof timeStr !== 'string') return 0
+    
+    // Handle decimal string format like "0.000", "5.100", "27.89"
+    const decimalMatch = timeStr.match(/^(\d+\.?\d*)$/)
+    if (decimalMatch) {
+      return parseFloat(decimalMatch[1])
+    }
+    
     // Handle formats like "00:00", "01:30", "02:15:30"
     const parts = timeStr.split(':').map(p => parseInt(p, 10))
     
@@ -412,9 +434,9 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
     }
     
     // Try to parse as number with 's' suffix
-    const numMatch = timeStr.match(/^(\d+)s?$/)
+    const numMatch = timeStr.match(/^(\d+\.?\d*)s$/)
     if (numMatch) {
-      return parseInt(numMatch[1], 10)
+      return parseFloat(numMatch[1])
     }
     
     return 0
@@ -428,28 +450,46 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
     const startSeconds = parseTimeToSeconds(startTime)
     const endSeconds = parseTimeToSeconds(endTime)
     
-    // Set video to start time and play
-    videoEl.currentTime = startSeconds
-    videoEl.muted = true
-    videoEl.play()
+    // Remove any existing listeners
+    const oldTimeUpdateListener = videoEl._sceneTimeUpdateListener
+    const oldSeekedListener = videoEl._sceneSeekedListener
+    if (oldTimeUpdateListener) {
+      videoEl.removeEventListener('timeupdate', oldTimeUpdateListener)
+    }
+    if (oldSeekedListener) {
+      videoEl.removeEventListener('seeked', oldSeekedListener)
+    }
     
-    // Set up event listener to stop at end time
+    // Pause the video first
+    videoEl.pause()
+    
+    // Set up listener to pause at end time
     const handleTimeUpdate = () => {
       if (videoEl.currentTime >= endSeconds) {
         videoEl.pause()
         videoEl.removeEventListener('timeupdate', handleTimeUpdate)
+        videoEl._sceneTimeUpdateListener = null
       }
     }
     
-    videoEl.addEventListener('timeupdate', handleTimeUpdate)
-    
-    // Cleanup listener if video is paused manually
-    const handlePause = () => {
-      videoEl.removeEventListener('timeupdate', handleTimeUpdate)
-      videoEl.removeEventListener('pause', handlePause)
+    // Set up listener to play after seek completes
+    const handleSeeked = () => {
+      videoEl.removeEventListener('seeked', handleSeeked)
+      videoEl._sceneSeekedListener = null
+      
+      videoEl.play().catch(err => {
+        console.error('Play error:', err)
+      })
     }
     
-    videoEl.addEventListener('pause', handlePause, { once: true })
+    videoEl.addEventListener('timeupdate', handleTimeUpdate)
+    videoEl._sceneTimeUpdateListener = handleTimeUpdate
+    
+    videoEl.addEventListener('seeked', handleSeeked)
+    videoEl._sceneSeekedListener = handleSeeked
+    
+    // Set the current time to trigger seek
+    videoEl.currentTime = startSeconds
   }
 
   return (
@@ -793,7 +833,14 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
                         
                         if (typeof content === 'string') {
                           try {
-                            const parsed = JSON.parse(content)
+                            // Check if content is wrapped in ```json``` code blocks
+                            let jsonContent = content
+                            const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+                            if (jsonBlockMatch) {
+                              jsonContent = jsonBlockMatch[1].trim()
+                            }
+                            
+                            const parsed = JSON.parse(jsonContent)
                             
                             // Direct array format
                             if (Array.isArray(parsed)) {

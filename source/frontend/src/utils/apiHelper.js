@@ -6,6 +6,15 @@ async function FetchPost(path, reqbody = null, apiName = 'EvalService') {
   const restOperation = await post(request)
   const { body } = await restOperation.response
   const data = await body.json()
+  
+  // Check if the response contains an error
+  if (data.statusCode && data.statusCode >= 400) {
+    const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body
+    const error = new Error(errorBody?.error || 'Request failed')
+    error.response = data
+    throw error
+  }
+  
   return data
 }
 

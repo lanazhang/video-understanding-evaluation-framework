@@ -533,6 +533,32 @@
   flex: 1;
 }
 
+.comparison-shared-thumbnail {
+  margin-bottom: 24px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e5e7eb;
+}
+
+.shared-thumbnail-img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
+.shared-thumbnail-label {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  border-top: 2px solid #e5e7eb;
+}
+
 .btn-view-all-timeline {
   padding: 10px 24px;
   background: var(--orange-gradient);

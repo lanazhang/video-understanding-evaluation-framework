@@ -251,6 +251,9 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
 
   // If showing comparison view
   if (showComparison) {
+    // Get the first task's video thumbnail for display at the top
+    const sharedVideo = selectedEvals[0]?.video
+    
     return (
       <div className="evaluation-comparison">
         <div className="comparison-header">
@@ -267,6 +270,17 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
             View Timeline Comparison
           </button>
         </div>
+        
+        {sharedVideo?.thumbnail_url && (
+          <div className="comparison-shared-thumbnail">
+            <img 
+              src={sharedVideo.thumbnail_url} 
+              alt={sharedVideo.Name}
+              className="shared-thumbnail-img"
+            />
+            <div className="shared-thumbnail-label">{sharedVideo.Name}</div>
+          </div>
+        )}
         
         <div className="comparison-grid">
           {selectedEvals.map(task => {
@@ -295,17 +309,8 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
               <div key={task.id} className="comparison-card">
                 <div className="comparison-card-header">
                   <h3>{task.taskName || task.Name}</h3>
-                  {task.video?.thumbnail_url && (
-                    <div className="comparison-thumbnail-container">
-                      <img 
-                        src={task.video.thumbnail_url} 
-                        alt={task.video.Name}
-                        className="comparison-thumbnail"
-                      />
-                      {task.analyzeTask?.ModelId && (
-                        <div className="comparison-model-id">{task.analyzeTask.ModelId}</div>
-                      )}
-                    </div>
+                  {task.analyzeTask?.ModelId && (
+                    <div className="comparison-model-id">{task.analyzeTask.ModelId}</div>
                   )}
                 </div>
                 

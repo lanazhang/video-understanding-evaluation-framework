@@ -76,12 +76,12 @@ function CreateEmbeddingForm({
                 <label htmlFor="embedMode">Embedding Mode</label>
                 <select
                   id="embedMode"
+                  size="2"
                   value={createParams.embedMode}
                   onChange={(e) => setCreateParams(prev => ({ ...prev, embedMode: e.target.value }))}
                 >
-                  <option value="AUDIO_VIDEO_COMBINED">Audio + Video</option>
-                  <option value="VIDEO_ONLY">Video Only</option>
-                  <option value="AUDIO_ONLY">Audio Only</option>
+                  <option value="AUDIO_VIDEO_COMBINED">Audio + Video Combined</option>
+                  <option value="AUDIO_VIDEO_SEPARATE">Audio + Video Separate</option>
                 </select>
               </div>
 
@@ -167,12 +167,8 @@ function CreateEmbeddingForm({
                 <label htmlFor="embeddingScope">Embedding Scope</label>
                 <select
                   id="embeddingScope"
-                  multiple
                   value={createParams.embeddingScope}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => option.value)
-                    setCreateParams(prev => ({ ...prev, embeddingScope: selected }))
-                  }}
+                  onChange={(e) => setCreateParams(prev => ({ ...prev, embeddingScope: e.target.value }))}
                 >
                   <option value="clip">Clip</option>
                   <option value="asset">Asset</option>
@@ -180,7 +176,7 @@ function CreateEmbeddingForm({
               </div>
 
               <div className="form-group">
-                <label htmlFor="embeddingOption">Embedding Options</label>
+                <label htmlFor="embeddingOption">Embedding Options (Multi-select)</label>
                 <select
                   id="embeddingOption"
                   multiple

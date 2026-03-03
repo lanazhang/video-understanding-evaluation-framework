@@ -174,8 +174,10 @@ function SearchIndexModal({
                       <>
                         <span className="metadata-separator">•</span>
                         <span className="metadata-value">
-                          {(selectedAnalyzeTask?.Request?.EmbeddingScope || 
-                            selectedAnalyzeTask?.Request?.embeddingScope)?.join(', ') || 'N/A'}
+                          {(() => {
+                            const scope = selectedAnalyzeTask?.Request?.EmbeddingScope || selectedAnalyzeTask?.Request?.embeddingScope;
+                            return Array.isArray(scope) ? scope.join(', ') : scope;
+                          })()}
                         </span>
                       </>
                     )}

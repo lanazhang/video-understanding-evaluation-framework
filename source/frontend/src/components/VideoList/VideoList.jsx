@@ -78,6 +78,25 @@ function VideoList({
         loading={loading}
       />
 
+      <div className="sort-controls">
+        <label>Sort by:</label>
+        <select 
+          value={sortField} 
+          onChange={(e) => setSortField(e.target.value)}
+          className="sort-select"
+        >
+          <option value="name">Name</option>
+          <option value="uploaded_ts">Upload Date</option>
+        </select>
+        <button 
+          onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+          className="sort-direction-btn"
+          title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+        >
+          {sortDirection === 'asc' ? '↑' : '↓'}
+        </button>
+      </div>
+
       {error && (
         <div className="alert alert-error">{error}</div>
       )}
@@ -86,40 +105,22 @@ function VideoList({
         <div className="loading-message">Loading videos...</div>
       ) : (
         <>
-          <div className="video-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Thumbnail</th>
-                  <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                    Name {getSortIcon('name')}
-                  </th>
-                  <th onClick={() => handleSort('uploaded_ts')} style={{ cursor: 'pointer' }}>
-                    Upload Date {getSortIcon('uploaded_ts')}
-                  </th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedAndFilteredVideos.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="no-results-cell">
-                      {searchQuery ? `No videos found matching "${searchQuery}"` : 'No videos uploaded yet'}
-                    </td>
-                  </tr>
-                ) : (
-                  sortedAndFilteredVideos.map(video => (
-                    <VideoListItem
-                      key={video.Id || video.id}
-                      video={video}
-                      onAnalyze={onAnalyze}
-                      onDelete={onDelete}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {sortedAndFilteredVideos.length === 0 ? (
+            <div className="no-results-message">
+              {searchQuery ? `No videos found matching "${searchQuery}"` : 'No videos uploaded yet'}
+            </div>
+          ) : (
+            <div className="video-grid">
+              {sortedAndFilteredVideos.map(video => (
+                <VideoListItem
+                  key={video.Id || video.id}
+                  video={video}
+                  onAnalyze={onAnalyze}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          )}
 
           {totalCount > 0 && (
             <Pagination

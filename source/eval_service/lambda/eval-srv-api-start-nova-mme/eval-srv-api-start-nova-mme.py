@@ -87,6 +87,17 @@ def lambda_handler(event, context):
         request_params = body.get("Request", {})
         duration_s = int(request_params.get("DurationS") or body.get("duration_s") or 5)
         embed_mode = request_params.get("EmbedMode") or body.get("embed_mode") or "AUDIO_VIDEO_COMBINED"
+        
+        # Map legacy values to valid API enum values
+        # For SEGMENTED_EMBEDDING, only AUDIO_VIDEO_COMBINED and AUDIO_VIDEO_SEPARATE are valid
+        embed_mode_mapping = {
+            "VIDEO_ONLY": "AUDIO_VIDEO_COMBINED",  # Map to combined as closest match
+            "AUDIO_ONLY": "AUDIO_VIDEO_COMBINED",  # Map to combined as closest match
+            "AUDIO_VIDEO_COMBINED": "AUDIO_VIDEO_COMBINED",
+            "AUDIO_VIDEO_SEPARATE": "AUDIO_VIDEO_SEPARATE"
+        }
+        embed_mode = embed_mode_mapping.get(embed_mode, "AUDIO_VIDEO_COMBINED")
+        
         embedding_dim = int(request_params.get("EmbeddingDim") or body.get("embedding_dim") or EMBEDDING_DIM)
         requested_by = request_params.get("RequestedBy") or body.get("requested_by") or "unknown"
         

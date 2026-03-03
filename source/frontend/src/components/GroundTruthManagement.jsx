@@ -332,76 +332,68 @@ function GroundTruthManagement({ currentUser, initialVideoFilter = null }) {
       {loading ? (
         <div className="loading-message">Loading ground truths...</div>
       ) : (
-        <div className="ground-truth-table">
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                <th onClick={() => handleSort('taskName')} style={{ cursor: 'pointer' }}>
-                  Name {getSortIcon('taskName')}
-                </th>
-                <th onClick={() => handleSort('createdAt')} style={{ cursor: 'pointer' }}>
-                  Created Date {getSortIcon('createdAt')}
-                </th>
-                <th onClick={() => handleSort('labels')} style={{ cursor: 'pointer' }}>
-                  Labels {getSortIcon('labels')}
-                </th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedAndFilteredTasks.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="no-results-cell">
-                    {searchQuery ? `No ground truths found matching "${searchQuery}"` : 'No ground truths created yet'}
-                  </td>
-                </tr>
-              ) : (
-                sortedAndFilteredTasks.map(task => (
-                  <tr 
-                    key={task.id} 
-                    className="ground-truth-row"
-                    onClick={() => handleTaskClick(task)}
-                  >
-                    <td>
-                      {task.video?.thumbnail_url ? (
-                        <img 
-                          src={task.video.thumbnail_url} 
-                          alt={task.video.Name}
-                          className="ground-truth-thumbnail"
-                        />
-                      ) : (
-                        <div className="thumbnail-placeholder">No thumbnail</div>
-                      )}
-                    </td>
-                    <td className="ground-truth-name">{task.taskName}</td>
-                    <td>{task.createdDate}</td>
-                    <td>{task.labels?.length || 0}</td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      {task.eval_count > 0 ? (
-                        <button 
-                          className="btn-icon-view-eval"
-                          onClick={(e) => handleViewEvaluations(e, task.id)}
-                          title={`View ${task.eval_count} evaluation${task.eval_count > 1 ? 's' : ''}`}
-                        >
-                          <img src={checkIcon} alt="View Evaluations" />
-                          <span className="eval-count">{task.eval_count}</span>
-                        </button>
-                      ) : (
-                        <button 
-                          className="btn-delete-icon"
-                          onClick={(e) => handleDelete(e, task)}
-                          title="Delete ground truth"
-                        >
-                          <img src={trashIcon} alt="Delete" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="ground-truth-cards-grid">
+          {sortedAndFilteredTasks.length === 0 ? (
+            <div className="no-results-message">
+              {searchQuery ? `No ground truths found matching "${searchQuery}"` : 'No ground truths created yet'}
+            </div>
+          ) : (
+            sortedAndFilteredTasks.map(task => (
+              <div 
+                key={task.id} 
+                className="ground-truth-card"
+                onClick={() => handleTaskClick(task)}
+              >
+                <div className="gt-card-thumbnail">
+                  {task.video?.thumbnail_url ? (
+                    <img 
+                      src={task.video.thumbnail_url} 
+                      alt={task.video.Name}
+                      className="gt-card-thumbnail-img"
+                    />
+                  ) : (
+                    <div className="gt-card-thumbnail-placeholder">No thumbnail</div>
+                  )}
+                </div>
+                
+                <div className="gt-card-content">
+                  <h3 className="gt-card-title">{task.taskName}</h3>
+                  
+                  <div className="gt-card-meta">
+                    <div className="gt-card-meta-item">
+                      <span className="gt-card-meta-label">Created:</span>
+                      <span className="gt-card-meta-value">{task.createdDate}</span>
+                    </div>
+                    <div className="gt-card-meta-item">
+                      <span className="gt-card-meta-label">Labels:</span>
+                      <span className="gt-card-meta-value">{task.labels?.length || 0}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="gt-card-actions" onClick={(e) => e.stopPropagation()}>
+                    {task.eval_count > 0 ? (
+                      <button 
+                        className="btn-icon-view-eval"
+                        onClick={(e) => handleViewEvaluations(e, task.id)}
+                        title={`View ${task.eval_count} evaluation${task.eval_count > 1 ? 's' : ''}`}
+                      >
+                        <img src={checkIcon} alt="View Evaluations" />
+                        <span className="eval-count">{task.eval_count}</span>
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn-delete-icon"
+                        onClick={(e) => handleDelete(e, task)}
+                        title="Delete ground truth"
+                      >
+                        <img src={trashIcon} alt="Delete" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>

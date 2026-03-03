@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import VideoTableRow from './VideoTableRow'
+import VideoCard from './VideoCard'
+import './VideoTable.css'
 
 function VideoTable({ 
   videos, 
@@ -22,68 +23,71 @@ function VideoTable({
   }
 
   return (
-    <div className="video-table">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th onClick={() => onSort('name')} style={{ cursor: 'pointer' }}>
-              Name {getSortIcon('name')}
-            </th>
-            <th onClick={() => onSort('uploaded_ts')} style={{ cursor: 'pointer' }}>
-              Upload Date {getSortIcon('uploaded_ts')}
-            </th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {videos.length === 0 ? (
-            <tr>
-              <td colSpan="4" className="no-results-cell">
-                {searchQuery ? (
-                  `No videos found matching "${searchQuery}"`
-                ) : (
-                  <div className="empty-state-message">
-                    <p>No videos uploaded yet. Get started by uploading your first video!</p>
-                    <p style={{ marginTop: '12px', fontSize: '13px', color: '#6c757d' }}>
-                      New to the platform?{' '}
-                      <button 
-                        onClick={() => navigate('/introduction')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#f97316',
-                          textDecoration: 'underline',
-                          cursor: 'pointer',
-                          padding: 0,
-                          font: 'inherit'
-                        }}
-                      >
-                        View the Introduction
-                      </button>
-                      {' '}to learn how to use this tool.
-                    </p>
-                  </div>
-                )}
-              </td>
-            </tr>
+    <div className="video-container">
+      <div className="sort-controls">
+        <label>Sort by:</label>
+        <select 
+          value={sortField} 
+          onChange={(e) => onSort(e.target.value)}
+          className="sort-select"
+        >
+          <option value="name">Name</option>
+          <option value="uploaded_ts">Upload Date</option>
+        </select>
+        <button 
+          onClick={() => onSort(sortField)}
+          className="sort-direction-btn"
+          title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+        >
+          {sortDirection === 'asc' ? '↑' : '↓'}
+        </button>
+      </div>
+
+      {videos.length === 0 ? (
+        <div className="no-results-message">
+          {searchQuery ? (
+            `No videos found matching "${searchQuery}"`
           ) : (
-            videos.map(video => (
-              <VideoTableRow
-                key={video.Id || video.id}
-                video={video}
-                gtCount={video.gt_count || 0}
-                onAnalyze={onAnalyze}
-                onDelete={onDelete}
-                onViewGTs={onViewGTs}
-                formatDate={formatDate}
-                getThumbnailUrl={getThumbnailUrl}
-                placeholderThumbnail={placeholderThumbnail}
-              />
-            ))
+            <div className="empty-state-message">
+              <p>No videos uploaded yet. Get started by uploading your first video!</p>
+              <p style={{ marginTop: '12px', fontSize: '13px', color: '#6c757d' }}>
+                New to the platform?{' '}
+                <button 
+                  onClick={() => navigate('/introduction')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f97316',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    padding: 0,
+                    font: 'inherit'
+                  }}
+                >
+                  View the Introduction
+                </button>
+                {' '}to learn how to use this tool.
+              </p>
+            </div>
           )}
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        <div className="video-grid">
+          {videos.map(video => (
+            <VideoCard
+              key={video.Id || video.id}
+              video={video}
+              gtCount={video.gt_count || 0}
+              onAnalyze={onAnalyze}
+              onDelete={onDelete}
+              onViewGTs={onViewGTs}
+              formatDate={formatDate}
+              getThumbnailUrl={getThumbnailUrl}
+              placeholderThumbnail={placeholderThumbnail}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

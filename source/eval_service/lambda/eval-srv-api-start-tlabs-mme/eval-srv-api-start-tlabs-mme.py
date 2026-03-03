@@ -142,6 +142,9 @@ def lambda_handler(event, context):
             
             # Add embedding scope
             embedding_scope = request_params.get("embeddingScope", ["clip"])
+            # Ensure embeddingScope is always an array
+            if isinstance(embedding_scope, str):
+                embedding_scope = [embedding_scope]
             if embedding_scope:
                 tlabs_request["video"]["embeddingScope"] = embedding_scope
             

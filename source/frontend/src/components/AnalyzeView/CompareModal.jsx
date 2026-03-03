@@ -121,8 +121,10 @@ function CompareModal({
                                  task.Request?.segmentation?.dynamic?.minDurationSec || 
                                  task.Request?.Segmentation?.Fixed?.DurationSec || 
                                  task.Request?.segmentation?.fixed?.durationSec || 'N/A'
-                  const scope = (task.Request?.EmbeddingScope || task.Request?.embeddingScope)?.join(', ') || 'N/A'
-                  const options = (task.Request?.EmbeddingOption || task.Request?.embeddingOption)?.join(', ') || 'N/A'
+                  const scopeValue = task.Request?.EmbeddingScope || task.Request?.embeddingScope
+                  const scope = Array.isArray(scopeValue) ? scopeValue.join(', ') : (scopeValue || 'N/A')
+                  const optionsValue = task.Request?.EmbeddingOption || task.Request?.embeddingOption
+                  const options = Array.isArray(optionsValue) ? optionsValue.join(', ') : (optionsValue || 'N/A')
                   tooltipContent = `Segmentation: ${segMethod}\nDuration: ${minDur}s\nScope: ${scope}\nOptions: ${options}`
                 }
                 

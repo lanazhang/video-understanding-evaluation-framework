@@ -23,6 +23,8 @@ function TaskList({
   setCompareSearchText,
   compareTopK,
   setCompareTopK,
+  compareEmbeddingType,
+  setCompareEmbeddingType,
   compareLoading,
   compareError,
   compareResults,
@@ -109,7 +111,8 @@ function TaskList({
                         className="task-list__item-checkbox"
                         checked={isSelected}
                         onChange={() => onToggleSelection(task)}
-                        title="Select for comparison"
+                        disabled={!isSelected && selectedTasks.length >= 4}
+                        title={!isSelected && selectedTasks.length >= 4 ? "Maximum 4 tasks can be selected" : "Select for comparison"}
                       />
                     )}
                     <span className={`task-list__status task-list__status--${task.Status}`}>{task.Status}</span>
@@ -235,7 +238,10 @@ function TaskList({
                             <div className="task-list__detail-row">
                               <span className="task-list__detail-label">Embedding Scope:</span>
                               <span className="task-list__detail-value">
-                                {(task.Request.EmbeddingScope || task.Request.embeddingScope)?.join(', ') || 'N/A'}
+                                {(() => {
+                                  const scope = task.Request.EmbeddingScope || task.Request.embeddingScope;
+                                  return Array.isArray(scope) ? scope.join(', ') : scope;
+                                })()}
                               </span>
                             </div>
                           )}
@@ -243,7 +249,10 @@ function TaskList({
                             <div className="task-list__detail-row">
                               <span className="task-list__detail-label">Embedding Options:</span>
                               <span className="task-list__detail-value">
-                                {(task.Request.EmbeddingOption || task.Request.embeddingOption)?.join(', ') || 'N/A'}
+                                {(() => {
+                                  const options = task.Request.EmbeddingOption || task.Request.embeddingOption;
+                                  return Array.isArray(options) ? options.join(', ') : (options || 'N/A');
+                                })()}
                               </span>
                             </div>
                           )}
@@ -313,6 +322,8 @@ function TaskList({
           setCompareSearchText={setCompareSearchText}
           compareTopK={compareTopK}
           setCompareTopK={setCompareTopK}
+          compareEmbeddingType={compareEmbeddingType}
+          setCompareEmbeddingType={setCompareEmbeddingType}
           compareLoading={compareLoading}
           compareError={compareError}
           compareResults={compareResults}

@@ -8,7 +8,8 @@ function TaskItem({
   onToggleSelection, 
   onOpenSearch, 
   onDelete,
-  isGroundTruthMode = false
+  isGroundTruthMode = false,
+  isSelectionDisabled = false
 }) {
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A'
@@ -25,7 +26,8 @@ function TaskItem({
               className="task-checkbox"
               checked={isSelected}
               onChange={onToggleSelection}
-              title="Select for search"
+              disabled={isSelectionDisabled && !isSelected}
+              title={isSelectionDisabled && !isSelected ? "Maximum 4 tasks can be selected" : "Select for search"}
             />
           )}
           <div className="task-main-info">
@@ -124,7 +126,10 @@ function TaskItem({
                   <div className="task-detail-row">
                     <span className="detail-label">Scope:</span>
                     <span className="detail-value">
-                      {(task.Request.EmbeddingScope || task.Request.embeddingScope)?.join(', ') || 'N/A'}
+                      {(() => {
+                        const scope = task.Request.EmbeddingScope || task.Request.embeddingScope;
+                        return Array.isArray(scope) ? scope.join(', ') : scope;
+                      })()}
                     </span>
                   </div>
                 )}

@@ -244,7 +244,7 @@ function VideoManagement({ currentUser }) {
   return (
     <div className="video-management">
       <div className="content-header">
-        <h1>Videos</h1>
+        <h1>Video Inventory</h1>
         <div className="header-actions">
           <button 
             className="btn-refresh" 

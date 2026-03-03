@@ -1,0 +1,304 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1000" style="background-color: #ffffff;">
+  <defs>
+    <!-- AWS Color Palette -->
+    <style>
+      .aws-orange { fill: #FF9900; }
+      .aws-blue { fill: #232F3E; }
+      .aws-light-blue { fill: #527FFF; }
+      .aws-green { fill: #1E8900; }
+      .aws-purple { fill: #8C4FFF; }
+      .aws-red { fill: #D13212; }
+      .text-white { fill: #FFFFFF; font-family: Arial, sans-serif; }
+      .text-dark { fill: #232F3E; font-family: Arial, sans-serif; font-size: 12px; }
+      .text-title { fill: #232F3E; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }
+      .text-header { fill: #232F3E; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+      .line { stroke: #879196; stroke-width: 2; fill: none; }
+      .arrow { fill: #879196; }
+      .box { fill: #FFFFFF; stroke: #232F3E; stroke-width: 2; }
+      .group-box { fill: #F2F3F4; stroke: #AAB7B8; stroke-width: 1; stroke-dasharray: 5,5; }
+    </style>
+    
+    <!-- Arrow marker -->
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" class="arrow" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" class="text-header">Video Understanding Evaluation Framework - AWS Architecture</text>
+  
+  <!-- User/Client Layer -->
+  <g id="client-layer">
+    <rect x="50" y="60" width="180" height="80" rx="5" class="box"/>
+    <circle cx="140" cy="90" r="15" class="aws-orange"/>
+    <text x="140" y="95" text-anchor="middle" class="text-white" font-size="10">👤</text>
+    <text x="140" y="120" text-anchor="middle" class="text-title">React Frontend</text>
+    <text x="140" y="135" text-anchor="middle" class="text-dark" font-size="10">(Vite + S3/CloudFront)</text>
+  </g>
+  
+  <!-- Authentication Layer -->
+  <g id="auth-layer">
+    <rect x="280" y="60" width="160" height="80" rx="5" class="box"/>
+    <rect x="320" y="75" width="80" height="50" rx="3" class="aws-red"/>
+    <text x="360" y="95" text-anchor="middle" class="text-white" font-size="10">🔐</text>
+    <text x="360" y="110" text-anchor="middle" class="text-white" font-size="11">Cognito</text>
+    <text x="360" y="135" text-anchor="middle" class="text-dark" font-size="9">User Pool + Identity Pool</text>
+  </g>
+  
+  <!-- API Gateway -->
+  <g id="api-gateway">
+    <rect x="490" y="60" width="160" height="80" rx="5" class="box"/>
+    <rect x="530" y="75" width="80" height="50" rx="3" class="aws-purple"/>
+    <text x="570" y="95" text-anchor="middle" class="text-white" font-size="10">🌐</text>
+    <text x="570" y="110" text-anchor="middle" class="text-white" font-size="11">API Gateway</text>
+    <text x="570" y="135" text-anchor="middle" class="text-dark" font-size="9">REST API</text>
+  </g>
+  
+  <!-- Connection lines: Client -> Auth -> API Gateway -->
+  <line x1="230" y1="100" x2="280" y2="100" class="line" marker-end="url(#arrowhead)"/>
+  <line x1="440" y1="100" x2="490" y2="100" class="line" marker-end="url(#arrowhead)"/>
+  
+  <!-- Lambda Functions Group -->
+  <rect x="40" y="180" width="620" height="280" rx="5" class="group-box"/>
+  <text x="50" y="200" class="text-title">Lambda Functions</text>
+  
+  <!-- Lambda - Video Management -->
+  <g id="lambda-video">
+    <rect x="60" y="220" width="140" height="70" rx="3" class="aws-orange"/>
+    <text x="130" y="240" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="130" y="255" text-anchor="middle" class="text-white" font-size="10">Video Management</text>
+    <text x="130" y="270" text-anchor="middle" class="text-white" font-size="8">add/get/delete</text>
+    <text x="130" y="282" text-anchor="middle" class="text-white" font-size="8">metadata</text>
+  </g>
+  
+  <!-- Lambda - Analysis -->
+  <g id="lambda-analysis">
+    <rect x="220" y="220" width="140" height="70" rx="3" class="aws-orange"/>
+    <text x="290" y="240" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="290" y="255" text-anchor="middle" class="text-white" font-size="10">Model APIs</text>
+    <text x="290" y="270" text-anchor="middle" class="text-white" font-size="8">Nova/TwelveLabs</text>
+    <text x="290" y="282" text-anchor="middle" class="text-white" font-size="8">Gemini/Bedrock</text>
+  </g>
+  
+  <!-- Lambda - Ground Truth -->
+  <g id="lambda-gt">
+    <rect x="380" y="220" width="140" height="70" rx="3" class="aws-orange"/>
+    <text x="450" y="240" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="450" y="255" text-anchor="middle" class="text-white" font-size="10">Ground Truth</text>
+    <text x="450" y="270" text-anchor="middle" class="text-white" font-size="8">upsert/get/delete</text>
+  </g>
+  
+  <!-- Lambda - Evaluation -->
+  <g id="lambda-eval">
+    <rect x="60" y="310" width="140" height="70" rx="3" class="aws-orange"/>
+    <text x="130" y="330" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="130" y="345" text-anchor="middle" class="text-white" font-size="10">Evaluation Tasks</text>
+    <text x="130" y="360" text-anchor="middle" class="text-white" font-size="8">upsert/get/delete</text>
+  </g>
+  
+  <!-- Lambda - S3 Listeners -->
+  <g id="lambda-s3-listener">
+    <rect x="220" y="310" width="140" height="70" rx="3" class="aws-orange"/>
+    <text x="290" y="330" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="290" y="345" text-anchor="middle" class="text-white" font-size="10">S3 Listeners</text>
+    <text x="290" y="360" text-anchor="middle" class="text-white" font-size="8">Nova/TwelveLabs</text>
+    <text x="290" y="372" text-anchor="middle" class="text-white" font-size="8">EventBridge</text>
+  </g>
+  
+  <!-- Lambda - Utils -->
+  <g id="lambda-utils">
+    <rect x="380" y="310" width="140" height="70" rx="3" class="aws-orange"/>
+    <text x="450" y="330" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="450" y="345" text-anchor="middle" class="text-white" font-size="10">Utilities</text>
+    <text x="450" y="360" text-anchor="middle" class="text-white" font-size="8">S3 Presigned URLs</text>
+    <text x="450" y="372" text-anchor="middle" class="text-white" font-size="8">API Key Mgmt</text>
+  </g>
+  
+  <!-- Lambda - Chatbot -->
+  <g id="lambda-chatbot">
+    <rect x="540" y="220" width="100" height="70" rx="3" class="aws-orange"/>
+    <text x="590" y="240" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="590" y="255" text-anchor="middle" class="text-white" font-size="10">Chatbot</text>
+    <text x="590" y="270" text-anchor="middle" class="text-white" font-size="8">Converse</text>
+  </g>
+  
+  <!-- Lambda - Vector Search -->
+  <g id="lambda-vector">
+    <rect x="540" y="310" width="100" height="70" rx="3" class="aws-orange"/>
+    <text x="590" y="330" text-anchor="middle" class="text-white" font-size="10">λ</text>
+    <text x="590" y="345" text-anchor="middle" class="text-white" font-size="10">Vector</text>
+    <text x="590" y="360" text-anchor="middle" class="text-white" font-size="8">Search</text>
+  </g>
+  
+  <!-- Connection: API Gateway to Lambdas -->
+  <line x1="570" y1="140" x2="570" y2="180" class="line" marker-end="url(#arrowhead)"/>
+  
+  <!-- DynamoDB Tables Group -->
+  <rect x="700" y="180" width="280" height="280" rx="5" class="group-box"/>
+  <text x="710" y="200" class="text-title">DynamoDB Tables</text>
+  
+  <!-- DynamoDB - Video -->
+  <g id="dynamo-video">
+    <rect x="720" y="220" width="120" height="50" rx="3" class="aws-light-blue"/>
+    <text x="780" y="240" text-anchor="middle" class="text-white" font-size="10">📊</text>
+    <text x="780" y="255" text-anchor="middle" class="text-white" font-size="10">Video Table</text>
+  </g>
+  
+  <!-- DynamoDB - Video Analyze -->
+  <g id="dynamo-analyze">
+    <rect x="850" y="220" width="120" height="50" rx="3" class="aws-light-blue"/>
+    <text x="910" y="240" text-anchor="middle" class="text-white" font-size="10">📊</text>
+    <text x="910" y="255" text-anchor="middle" class="text-white" font-size="10">Analyze Table</text>
+  </g>
+  
+  <!-- DynamoDB - Ground Truth -->
+  <g id="dynamo-gt">
+    <rect x="720" y="290" width="120" height="50" rx="3" class="aws-light-blue"/>
+    <text x="780" y="310" text-anchor="middle" class="text-white" font-size="10">📊</text>
+    <text x="780" y="325" text-anchor="middle" class="text-white" font-size="10">Ground Truth</text>
+  </g>
+  
+  <!-- DynamoDB - Evaluation -->
+  <g id="dynamo-eval">
+    <rect x="850" y="290" width="120" height="50" rx="3" class="aws-light-blue"/>
+    <text x="910" y="310" text-anchor="middle" class="text-white" font-size="10">📊</text>
+    <text x="910" y="325" text-anchor="middle" class="text-white" font-size="10">Evaluation</text>
+  </g>
+  
+  <!-- Connection: Lambdas to DynamoDB -->
+  <line x1="660" y1="300" x2="700" y2="300" class="line" marker-end="url(#arrowhead)"/>
+  
+  <!-- S3 Buckets -->
+  <g id="s3-group">
+    <rect x="1020" y="180" width="340" height="280" rx="5" class="group-box"/>
+    <text x="1030" y="200" class="text-title">Storage Layer</text>
+    
+    <!-- S3 Data Bucket -->
+    <rect x="1040" y="220" width="140" height="70" rx="3" class="aws-green"/>
+    <text x="1110" y="240" text-anchor="middle" class="text-white" font-size="10">🪣</text>
+    <text x="1110" y="255" text-anchor="middle" class="text-white" font-size="10">S3 Data Bucket</text>
+    <text x="1110" y="270" text-anchor="middle" class="text-white" font-size="8">Videos/Tasks</text>
+    <text x="1110" y="282" text-anchor="middle" class="text-white" font-size="8">EventBridge</text>
+    
+    <!-- S3 Vector Bucket -->
+    <rect x="1200" y="220" width="140" height="70" rx="3" class="aws-green"/>
+    <text x="1270" y="240" text-anchor="middle" class="text-white" font-size="10">🪣</text>
+    <text x="1270" y="255" text-anchor="middle" class="text-white" font-size="10">S3 Vectors</text>
+    <text x="1270" y="270" text-anchor="middle" class="text-white" font-size="8">Embeddings</text>
+    <text x="1270" y="282" text-anchor="middle" class="text-white" font-size="8">Indexes</text>
+    
+    <!-- Lambda Layers -->
+    <rect x="1040" y="310" width="300" height="70" rx="3" class="aws-green"/>
+    <text x="1190" y="330" text-anchor="middle" class="text-white" font-size="10">📦</text>
+    <text x="1190" y="345" text-anchor="middle" class="text-white" font-size="10">Lambda Layers (S3)</text>
+    <text x="1190" y="360" text-anchor="middle" class="text-white" font-size="8">moviepy, opencv, boto3, google-genai</text>
+    <text x="1190" y="372" text-anchor="middle" class="text-white" font-size="8">strands-agents</text>
+  </g>
+  
+  <!-- Connection: Lambdas to S3 -->
+  <line x1="660" y1="350" x2="1020" y2="280" class="line" marker-end="url(#arrowhead)"/>
+  
+  <!-- AWS Services Layer -->
+  <rect x="40" y="500" width="1320" height="180" rx="5" class="group-box"/>
+  <text x="50" y="520" class="text-title">AWS AI/ML Services</text>
+  
+  <!-- Bedrock -->
+  <g id="bedrock">
+    <rect x="60" y="540" width="180" height="120" rx="3" class="aws-purple"/>
+    <text x="150" y="565" text-anchor="middle" class="text-white" font-size="11">Amazon Bedrock</text>
+    <text x="150" y="585" text-anchor="middle" class="text-white" font-size="9">• Nova Pro/Lite</text>
+    <text x="150" y="600" text-anchor="middle" class="text-white" font-size="9">• Nova Reel</text>
+    <text x="150" y="615" text-anchor="middle" class="text-white" font-size="9">• Nova Canvas</text>
+    <text x="150" y="630" text-anchor="middle" class="text-white" font-size="9">• Multimodal Embed</text>
+    <text x="150" y="645" text-anchor="middle" class="text-white" font-size="9">• TwelveLabs Models</text>
+  </g>
+  
+  <!-- Transcribe -->
+  <g id="transcribe">
+    <rect x="260" y="540" width="140" height="120" rx="3" class="aws-purple"/>
+    <text x="330" y="565" text-anchor="middle" class="text-white" font-size="11">Amazon</text>
+    <text x="330" y="580" text-anchor="middle" class="text-white" font-size="11">Transcribe</text>
+    <text x="330" y="605" text-anchor="middle" class="text-white" font-size="9">Audio to Text</text>
+    <text x="330" y="620" text-anchor="middle" class="text-white" font-size="9">Transcription</text>
+  </g>
+  
+  <!-- EventBridge -->
+  <g id="eventbridge">
+    <rect x="420" y="540" width="140" height="120" rx="3" class="aws-red"/>
+    <text x="490" y="565" text-anchor="middle" class="text-white" font-size="11">Amazon</text>
+    <text x="490" y="580" text-anchor="middle" class="text-white" font-size="11">EventBridge</text>
+    <text x="490" y="605" text-anchor="middle" class="text-white" font-size="9">S3 Object</text>
+    <text x="490" y="620" text-anchor="middle" class="text-white" font-size="9">Created Events</text>
+    <text x="490" y="635" text-anchor="middle" class="text-white" font-size="9">→ Lambda</text>
+  </g>
+  
+  <!-- Secrets Manager -->
+  <g id="secrets">
+    <rect x="580" y="540" width="140" height="120" rx="3" class="aws-red"/>
+    <text x="650" y="565" text-anchor="middle" class="text-white" font-size="11">AWS Secrets</text>
+    <text x="650" y="580" text-anchor="middle" class="text-white" font-size="11">Manager</text>
+    <text x="650" y="605" text-anchor="middle" class="text-white" font-size="9">API Keys</text>
+    <text x="650" y="620" text-anchor="middle" class="text-white" font-size="9">(Gemini, etc.)</text>
+  </g>
+  
+  <!-- Step Functions -->
+  <g id="stepfunctions">
+    <rect x="740" y="540" width="180" height="120" rx="3" class="aws-purple"/>
+    <text x="830" y="565" text-anchor="middle" class="text-white" font-size="11">AWS Step Functions</text>
+    <text x="830" y="585" text-anchor="middle" class="text-white" font-size="9">• Frame-based Flow</text>
+    <text x="830" y="600" text-anchor="middle" class="text-white" font-size="9">• Clip-based Flow</text>
+    <text x="830" y="615" text-anchor="middle" class="text-white" font-size="9">Video Processing</text>
+    <text x="830" y="630" text-anchor="middle" class="text-white" font-size="9">Orchestration</text>
+  </g>
+  
+  <!-- External APIs -->
+  <g id="external">
+    <rect x="940" y="540" width="180" height="120" rx="3" class="aws-orange"/>
+    <text x="1030" y="565" text-anchor="middle" class="text-white" font-size="11">External APIs</text>
+    <text x="1030" y="585" text-anchor="middle" class="text-white" font-size="9">• Google Gemini</text>
+    <text x="1030" y="600" text-anchor="middle" class="text-white" font-size="9">• TwelveLabs</text>
+    <text x="1030" y="615" text-anchor="middle" class="text-white" font-size="9">Pegasus/Marengo</text>
+  </g>
+  
+  <!-- CDK Deployment -->
+  <g id="cdk">
+    <rect x="1140" y="540" width="200" height="120" rx="3" class="aws-blue"/>
+    <text x="1240" y="565" text-anchor="middle" class="text-white" font-size="11">AWS CDK Deployment</text>
+    <text x="1240" y="585" text-anchor="middle" class="text-white" font-size="9">• Pre Stack (Setup)</text>
+    <text x="1240" y="600" text-anchor="middle" class="text-white" font-size="9">• Eval Service Stack</text>
+    <text x="1240" y="615" text-anchor="middle" class="text-white" font-size="9">• Post Stack (Users)</text>
+    <text x="1240" y="630" text-anchor="middle" class="text-white" font-size="9">Infrastructure as Code</text>
+  </g>
+  
+  <!-- Connection lines from Lambda layer to services -->
+  <line x1="290" y1="460" x2="150" y2="540" class="line" marker-end="url(#arrowhead)"/>
+  <line x1="290" y1="460" x2="330" y2="540" class="line" marker-end="url(#arrowhead)"/>
+  <line x1="290" y1="460" x2="490" y2="540" class="line" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="460" x2="650" y2="540" class="line" marker-end="url(#arrowhead)"/>
+  <line x1="350" y1="460" x2="830" y2="540" class="line" marker-end="url(#arrowhead)"/>
+  <line x1="290" y1="460" x2="1030" y2="540" class="line" marker-end="url(#arrowhead)"/>
+  
+  <!-- Data Flow Annotations -->
+  <g id="annotations">
+    <text x="700" y="730" text-anchor="middle" class="text-title">Key Features</text>
+    <text x="50" y="760" class="text-dark">• Multi-model video understanding (Bedrock Nova, TwelveLabs, Gemini)</text>
+    <text x="50" y="780" class="text-dark">• Embedding-based vector search with S3 Vectors</text>
+    <text x="50" y="800" class="text-dark">• Ground truth labeling and evaluation workflows</text>
+    <text x="50" y="820" class="text-dark">• Event-driven processing with EventBridge triggers</text>
+    <text x="50" y="840" class="text-dark">• Serverless architecture with Lambda + Step Functions orchestration</text>
+    <text x="50" y="860" class="text-dark">• Secure authentication with Cognito + API Gateway</text>
+    
+    <text x="750" y="760" class="text-dark">• Frame-based and clip-based video analysis</text>
+    <text x="750" y="780" class="text-dark">• Automated transcription with Amazon Transcribe</text>
+    <text x="750" y="800" class="text-dark">• Cross-model comparison and evaluation metrics</text>
+    <text x="750" y="820" class="text-dark">• S3 presigned URLs for secure video upload/access</text>
+    <text x="750" y="840" class="text-dark">• Lambda layers for ML dependencies (moviepy, opencv)</text>
+    <text x="750" y="860" class="text-dark">• Infrastructure deployed via AWS CDK (Python)</text>
+  </g>
+  
+  <!-- Region indicator -->
+  <rect x="1250" y="920" width="130" height="60" rx="3" class="box"/>
+  <text x="1315" y="940" text-anchor="middle" class="text-title">AWS Region</text>
+  <text x="1315" y="960" text-anchor="middle" class="text-dark">us-east-1</text>
+  <text x="1315" y="975" text-anchor="middle" class="text-dark">(configurable)</text>
+</svg>

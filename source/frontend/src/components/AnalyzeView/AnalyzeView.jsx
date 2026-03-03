@@ -22,6 +22,7 @@ function AnalyzeView({ video, onBack }) {
   const [showCompareModal, setShowCompareModal] = useState(false)
   const [compareSearchText, setCompareSearchText] = useState('')
   const [compareTopK, setCompareTopK] = useState(10)
+  const [compareEmbeddingType, setCompareEmbeddingType] = useState('all') // 'all', 'audio-video', 'video', 'audio'
   const [compareResults, setCompareResults] = useState({})
   const [compareLoading, setCompareLoading] = useState(false)
   const [compareError, setCompareError] = useState(null)
@@ -54,20 +55,26 @@ function AnalyzeView({ video, onBack }) {
   const generateDefaultTaskName = () => {
     if (selectedModel?.parameterType === 'nova-mme') {
       const modelShortName = selectedModel.displayName.replace(/\s+/g, '-').toLowerCase()
-      return `${modelShortName}-${createParams.embedMode.toLowerCase()}-${createParams.embeddingDim}d`
+      const embedModeShort = createParams.embedMode === 'AUDIO_VIDEO_COMBINED' ? 'combined' : 'separate'
+      return `${modelShortName}-${embedModeShort}-${createParams.durationS}s-${createParams.embeddingDim}d`
     } else if (selectedModel?.parameterType === 'twelvelabs') {
       const modelShortName = selectedModel.displayName.replace(/\s+/g, '-').toLowerCase()
-      return `${modelShortName}-${createParams.segmentationMethod}`
+      return `${modelShortName}-${createParams.segmentationMethod}-${createParams.minDurationSec}s`
     }
     return ''
   }
   
-  // Update task name when relevant parameters change
+  // Update task name when any relevant parameter changes
   useEffect(() => {
-    if (!createParams.taskName || createParams.taskName === generateDefaultTaskName()) {
-      setCreateParams(prev => ({ ...prev, taskName: generateDefaultTaskName() }))
-    }
-  }, [createParams.modelId, createParams.embedMode, createParams.embeddingDim, createParams.segmentationMethod])
+    setCreateParams(prev => ({ ...prev, taskName: generateDefaultTaskName() }))
+  }, [
+    createParams.modelId, 
+    createParams.embedMode, 
+    createParams.durationS,
+    createParams.embeddingDim, 
+    createParams.segmentationMethod,
+    createParams.minDurationSec
+  ])
   
   // Update embeddingDim when model changes
   useEffect(() => {
@@ -147,6 +154,11 @@ function AnalyzeView({ video, onBack }) {
       if (isSelected) {
         return prev.filter(t => t.Id !== task.Id)
       } else {
+        // Limit to 4 tasks maximum
+        if (prev.length >= 4) {
+          alert('You can compare up to 4 embedding indexes at a time')
+          return prev
+        }
         return [...prev, task]
       }
     })
@@ -175,6 +187,31 @@ function AnalyzeView({ video, onBack }) {
 
     try {
       for (const task of selectedTasks) {
+        // Determine embedding options based on selected type and model
+        let embeddingOptions
+        const modelId = task.ModelId || ''
+        const isTlabs30 = modelId.includes('3-0') || modelId.includes('3.0')
+        
+        if (compareEmbeddingType === 'all') {
+          // All options
+          embeddingOptions = isTlabs30 
+            ? ['visual', 'audio', 'transcription']
+            : ['audio-video', 'video', 'audio']
+        } else if (compareEmbeddingType === 'audio-video') {
+          // Video + Audio combined
+          embeddingOptions = isTlabs30 
+            ? ['visual', 'audio']
+            : ['audio-video']
+        } else if (compareEmbeddingType === 'video') {
+          // Video only
+          embeddingOptions = isTlabs30 
+            ? ['visual']
+            : ['video']
+        } else if (compareEmbeddingType === 'audio') {
+          // Audio only
+          embeddingOptions = ['audio']
+        }
+        
         const payload = {
           TaskId: task.Id,
           SearchText: compareSearchText,
@@ -183,7 +220,7 @@ function AnalyzeView({ video, onBack }) {
           PageSize: 1000,
           FromIndex: 0,
           IncludeVideoUrl: true,
-          EmbeddingOptions: ['audio-video', 'video', 'audio']
+          EmbeddingOptions: embeddingOptions
         }
 
         let endpoint = '/model/nova-mme-search-vector'
@@ -520,6 +557,8 @@ function AnalyzeView({ video, onBack }) {
                 setCompareSearchText={setCompareSearchText}
                 compareTopK={compareTopK}
                 setCompareTopK={setCompareTopK}
+                compareEmbeddingType={compareEmbeddingType}
+                setCompareEmbeddingType={setCompareEmbeddingType}
                 compareLoading={compareLoading}
                 compareError={compareError}
                 compareResults={compareResults}

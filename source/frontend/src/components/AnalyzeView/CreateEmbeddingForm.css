@@ -162,7 +162,20 @@
   padding: 12px;
 }
 
+.form-group select[size] {
+  min-height: auto;
+  padding: 12px;
+}
+
 .form-group select[multiple] option {
+  padding: 10px 12px;
+  border-radius: 7px;
+  margin: 4px 0;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.form-group select[size] option {
   padding: 10px 12px;
   border-radius: 7px;
   margin: 4px 0;
@@ -174,7 +187,19 @@
   background: #fff7ed;
 }
 
+.form-group select[size] option:hover {
+  background: #fff7ed;
+  cursor: pointer;
+}
+
 .form-group select[multiple] option:checked {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+}
+
+.form-group select[size] option:checked {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
   font-weight: 700;

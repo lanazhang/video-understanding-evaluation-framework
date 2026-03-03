@@ -13,26 +13,27 @@ function VideoListItem({ video, onAnalyze, onDelete }) {
     return null
   }
 
-  const placeholderThumbnail = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90"%3E%3Crect width="160" height="90" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="%23666"%3ENo Thumbnail%3C/text%3E%3C/svg%3E'
+  const placeholderThumbnail = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"%3E%3Crect width="320" height="180" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23666"%3ENo Thumbnail%3C/text%3E%3C/svg%3E'
 
   return (
-    <tr>
-      <td>
+    <div className="video-card">
+      <div className="video-card-thumbnail">
         <img 
           src={getThumbnailUrl(video) || placeholderThumbnail} 
           alt={video.Name}
-          className="video-thumbnail"
           onError={(e) => {
             e.target.src = placeholderThumbnail
           }}
         />
-      </td>
-      <td>
-        <span className="video-link">{video.Name}</span>
-      </td>
-      <td>{formatDate(video.UploadedTs)}</td>
-      <td>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      </div>
+      <div className="video-card-content">
+        <h3 className="video-card-title" title={video.Name}>
+          {video.Name}
+        </h3>
+        <p className="video-card-date">
+          {formatDate(video.UploadedTs)}
+        </p>
+        <div className="video-card-actions">
           <button 
             className="btn-action btn-analyze" 
             onClick={(e) => {
@@ -52,8 +53,8 @@ function VideoListItem({ video, onAnalyze, onDelete }) {
             Delete
           </button>
         </div>
-      </td>
-    </tr>
+      </div>
+    </div>
   )
 }
 

@@ -8,6 +8,8 @@ function SearchEmbeddings({
   setCompareSearchText,
   compareTopK,
   setCompareTopK,
+  compareEmbeddingType,
+  setCompareEmbeddingType,
   compareLoading,
   compareError,
   compareResults,
@@ -98,6 +100,18 @@ function SearchEmbeddings({
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
                 disabled={compareLoading}
               />
+              <select
+                className="search-topk-input"
+                value={compareEmbeddingType}
+                onChange={(e) => setCompareEmbeddingType(e.target.value)}
+                disabled={compareLoading}
+                title="Filter by embedding type"
+              >
+                <option value="all">All</option>
+                <option value="audio-video">Video + Audio</option>
+                <option value="video">Video Only</option>
+                <option value="audio">Audio Only</option>
+              </select>
               <input
                 type="number"
                 className="search-topk-input"
@@ -157,8 +171,10 @@ function SearchEmbeddings({
                                  task.Request?.segmentation?.dynamic?.minDurationSec || 
                                  task.Request?.Segmentation?.Fixed?.DurationSec || 
                                  task.Request?.segmentation?.fixed?.durationSec || 'N/A'
-                  const scope = (task.Request?.EmbeddingScope || task.Request?.embeddingScope)?.join(', ') || 'N/A'
-                  const options = (task.Request?.EmbeddingOption || task.Request?.embeddingOption)?.join(', ') || 'N/A'
+                  const scopeValue = task.Request?.EmbeddingScope || task.Request?.embeddingScope
+                  const scope = Array.isArray(scopeValue) ? scopeValue.join(', ') : (scopeValue || 'N/A')
+                  const optionsValue = task.Request?.EmbeddingOption || task.Request?.embeddingOption
+                  const options = Array.isArray(optionsValue) ? optionsValue.join(', ') : (optionsValue || 'N/A')
                   tooltipContent = `Segmentation: ${segMethod}\nDuration: ${minDur}s\nScope: ${scope}\nOptions: ${options}`
                 }
                 
@@ -166,10 +182,9 @@ function SearchEmbeddings({
                   <div key={task.Id} className="search-result-compare-column">
                     <div className="search-result-compare-header" title={tooltipContent}>
                       <h4>
-                        {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}
+                        {task.Name || task.Description || (task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs')}
                         <span className="info-icon" title={tooltipContent}>ⓘ</span>
                       </h4>
-                      <span className="search-model-id">{task.ModelId}</span>
                       {resultData && resultData.results.length > 0 && (
                         <span className="search-result-count">{resultData.results.length} results</span>
                       )}
@@ -250,6 +265,18 @@ function SearchEmbeddings({
                 </div>
                 
                 <div className="se-modal-sort-controls">
+                  <select
+                    className="se-modal-embedding-type-select"
+                    value={compareEmbeddingType}
+                    onChange={(e) => setCompareEmbeddingType(e.target.value)}
+                    disabled={compareLoading}
+                    title="Filter by embedding type"
+                  >
+                    <option value="all">All</option>
+                    <option value="audio-video">Video + Audio</option>
+                    <option value="video">Video Only</option>
+                    <option value="audio">Audio Only</option>
+                  </select>
                   <label className="se-modal-sort-label">Sort by:</label>
                   <select 
                     className="se-modal-sort-select"
@@ -289,8 +316,10 @@ function SearchEmbeddings({
                                    task.Request?.segmentation?.dynamic?.minDurationSec || 
                                    task.Request?.Segmentation?.Fixed?.DurationSec || 
                                    task.Request?.segmentation?.fixed?.durationSec || 'N/A'
-                    const scope = (task.Request?.EmbeddingScope || task.Request?.embeddingScope)?.join(', ') || 'N/A'
-                    const options = (task.Request?.EmbeddingOption || task.Request?.embeddingOption)?.join(', ') || 'N/A'
+                    const scopeValue = task.Request?.EmbeddingScope || task.Request?.embeddingScope
+                    const scope = Array.isArray(scopeValue) ? scopeValue.join(', ') : (scopeValue || 'N/A')
+                    const optionsValue = task.Request?.EmbeddingOption || task.Request?.embeddingOption
+                    const options = Array.isArray(optionsValue) ? optionsValue.join(', ') : (optionsValue || 'N/A')
                     tooltipContent = `Segmentation: ${segMethod}\nDuration: ${minDur}s\nScope: ${scope}\nOptions: ${options}`
                   }
                   
@@ -298,10 +327,9 @@ function SearchEmbeddings({
                     <div key={task.Id} className="se-modal-result-column">
                       <div className="se-modal-result-header" title={tooltipContent}>
                         <h4>
-                          {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}
+                          {task.Name || task.Description || (task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs')}
                           <span className="se-modal-info-icon" title={tooltipContent}>ⓘ</span>
                         </h4>
-                        <span className="se-modal-model-id">{task.ModelId}</span>
                         {resultData && resultData.results.length > 0 && (
                           <span className="se-modal-result-count">{resultData.results.length} results</span>
                         )}

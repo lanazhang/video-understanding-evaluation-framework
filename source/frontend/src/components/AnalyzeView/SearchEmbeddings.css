@@ -132,19 +132,18 @@
   flex-direction: column;
   background: #fafbfc;
   overflow: hidden;
+  padding-right: 5px;
 }
 
 /* ===================================
    SEARCH EMBEDDINGS MODAL - Search Controls
    =================================== */
 .search-embeddings-wrapper .se-modal-search-controls {
-  padding: 20px;
   background: white;
-  border-bottom: 2px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   flex-shrink: 0;
+  padding: 0px 3px 0px 3px;
 }
 
 .search-embeddings-wrapper .se-modal-controls-row {
@@ -165,6 +164,28 @@
 }
 
 .search-embeddings-wrapper .se-modal-text-input:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.search-embeddings-wrapper .se-modal-embedding-type-select {
+  width: 80px;
+  padding: 10px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.search-embeddings-wrapper .se-modal-embedding-type-select:hover:not(:disabled) {
+  border-color: #f97316;
+}
+
+.search-embeddings-wrapper .se-modal-embedding-type-select:focus {
   outline: none;
   border-color: #f97316;
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);

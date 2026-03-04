@@ -147,6 +147,22 @@
   box-shadow: 0 3px 10px rgba(5, 150, 105, 0.3);
 }
 
+.task-processing-time {
+  font-weight: 700;
+  color: #0284c7;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border-radius: 8px;
+  border: 2px solid #7dd3fc;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+  transition: all 0.2s ease;
+}
+
+.task-processing-time:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.3);
+}
+
 .task-actions {
   display: flex;
   align-items: center;

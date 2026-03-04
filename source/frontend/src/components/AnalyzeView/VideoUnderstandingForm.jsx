@@ -140,6 +140,63 @@ function VideoUnderstandingForm({ video, onSuccess }) {
     const model = models.find(m => m.modelId === modelId)
     return model?.displayName || modelId
   }
+  
+  // Helper function to calculate cost for a task
+  const calculateTaskCost = (task) => {
+      if (!task || task.Status !== 'completed' || !task.Result) return null
+
+      const modelConfig = models.find(m => m.modelId === task.ModelId)
+      if (!modelConfig || !modelConfig.pricing) return null
+
+      const pricing = modelConfig.pricing
+      const metadata = task.Result.ResponseMetadata || task.Result.Metadata || {}
+
+      let totalCost = 0
+      let costBreakdown = []
+
+      // Calculate token-based costs (for Nova and other Bedrock models)
+      if (pricing.inputTokensPer1M && metadata.inputTokens) {
+        const inputCost = (metadata.inputTokens / 1000000) * pricing.inputTokensPer1M
+        totalCost += inputCost
+        costBreakdown.push(`Input: ${inputCost.toFixed(2)} (${metadata.inputTokens.toLocaleString()} tokens @ ${pricing.inputTokensPer1M.toFixed(2)}/1M)`)
+      }
+
+      if (pricing.outputTokensPer1M) {
+        let outputTokens = metadata.outputTokens
+
+        // If output tokens not in metadata, estimate from response size
+        if (!outputTokens && task.Result.Response) {
+          const responseStr = typeof task.Result.Response === 'string' 
+            ? task.Result.Response 
+            : JSON.stringify(task.Result.Response)
+          // Rough estimate: 1 token ≈ 4 characters for English text
+          outputTokens = Math.ceil(responseStr.length / 4)
+        }
+
+        if (outputTokens) {
+          const outputCost = (outputTokens / 1000000) * pricing.outputTokensPer1M
+          totalCost += outputCost
+          const tokenLabel = metadata.outputTokens ? 'tokens' : 'tokens (estimated)'
+          costBreakdown.push(`Output: ${outputCost.toFixed(2)} (${outputTokens.toLocaleString()} ${tokenLabel} @ ${pricing.outputTokensPer1M.toFixed(2)}/1M)`)
+        }
+      }
+
+      // Calculate video duration-based costs (for TwelveLabs Pegasus)
+      if (pricing.perSecondVideo && video) {
+        const videoDurationMinutes = parseDurationToMinutes(video.Duration || video.duration)
+        const videoDurationSeconds = videoDurationMinutes * 60
+        const videoCost = videoDurationSeconds * pricing.perSecondVideo
+        totalCost += videoCost
+        costBreakdown.push(`Video: ${videoCost.toFixed(2)} (${videoDurationSeconds.toFixed(0)}s @ ${pricing.perSecondVideo.toFixed(5)}/sec)`)
+      }
+
+      if (totalCost === 0) return null
+
+      return {
+        total: totalCost,
+        breakdown: costBreakdown
+      }
+    }
 
   // Set default model if not selected
   useEffect(() => {
@@ -631,6 +688,28 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                         <span className={`task-status task-status--${task.Status}`}>{task.Status}</span>
                         <span className="task-item-detail" title={task.Status === 'failed' && (task.Result?.ErrorMessage || task.Result?.Error) ? (task.Result.ErrorMessage || task.Result.Error) : ''}>
                           {task.Description || task.TaskName || task.ModelId || 'N/A'}
+                          {task.Status === 'completed' && task.CompletedTs && (() => {
+                            const startDate = new Date(task.StartedTs)
+                            const endDate = new Date(task.CompletedTs)
+                            const diffMs = endDate - startDate
+                            
+                            if (isNaN(diffMs) || diffMs < 0) return null
+                            
+                            const diffSeconds = Math.floor(diffMs / 1000)
+                            const hours = Math.floor(diffSeconds / 3600)
+                            const minutes = Math.floor((diffSeconds % 3600) / 60)
+                            const seconds = diffSeconds % 60
+                            
+                            const parts = []
+                            if (hours > 0) parts.push(`${hours}h`)
+                            if (minutes > 0) parts.push(`${minutes}m`)
+                            if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`)
+                            
+                            const costInfo = calculateTaskCost(task)
+                            const costStr = costInfo ? `, $${costInfo.total.toFixed(2)}` : ''
+                            
+                            return ` (${parts.join(' ')}${costStr})`
+                          })()}
                           {task.Status === 'failed' && (task.Result?.ErrorMessage || task.Result?.Error) && (
                             <span className="task-error-indicator" title={task.Result.ErrorMessage || task.Result.Error}>⚠️</span>
                           )}
@@ -718,6 +797,45 @@ function VideoUnderstandingForm({ video, onSuccess }) {
                             <span className="task-detail-label">Prompt:</span>
                             <span className="task-detail-value">{task.Request?.Prompt || task.Request?.InputPrompt || 'N/A'}</span>
                           </div>
+                          {task.CompletedTs && (
+                            <div className="task-detail-row">
+                              <span className="task-detail-label">Processing Time:</span>
+                              <span className="task-detail-value">
+                                {(() => {
+                                  const startDate = new Date(task.StartedTs)
+                                  const endDate = new Date(task.CompletedTs)
+                                  const diffMs = endDate - startDate
+                                  
+                                  if (isNaN(diffMs) || diffMs < 0) return 'N/A'
+                                  
+                                  const diffSeconds = Math.floor(diffMs / 1000)
+                                  const hours = Math.floor(diffSeconds / 3600)
+                                  const minutes = Math.floor((diffSeconds % 3600) / 60)
+                                  const seconds = diffSeconds % 60
+                                  
+                                  const parts = []
+                                  if (hours > 0) parts.push(`${hours}h`)
+                                  if (minutes > 0) parts.push(`${minutes}m`)
+                                  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`)
+                                  
+                                  return parts.join(' ')
+                                })()}
+                              </span>
+                            </div>
+                          )}
+                          {(() => {
+                            const costInfo = calculateTaskCost(task)
+                            if (!costInfo) return null
+                            
+                            return (
+                              <div className="task-detail-row">
+                                <span className="task-detail-label">Estimated Cost:</span>
+                                <span className="task-detail-value task-detail-value--cost" title={costInfo.breakdown.join('\n')}>
+                                  ${costInfo.total.toFixed(2)}
+                                </span>
+                              </div>
+                            )
+                          })()}
                         </div>
                       </div>
                     )}
@@ -734,7 +852,122 @@ function VideoUnderstandingForm({ video, onSuccess }) {
       
       {/* Create New Task Form */}
       <div className="form-section">
-        <h3>Create New Video Understanding Task</h3>
+        <h3>
+          Create New Video Understanding Task
+          {selectedModelConfig?.pricing && (
+            <div className="pricing-tooltip-container">
+              <button 
+                type="button"
+                className="btn-pricing-info"
+                title="View model information"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 7.5V11.5M8 5V5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Model Information
+              </button>
+              <div className="pricing-tooltip">
+                <div className="pricing-tooltip-header">
+                  {selectedModelConfig.displayName}
+                </div>
+                <div className="pricing-tooltip-body">
+                  {(selectedModelConfig.maxDurationMinutes || selectedModelConfig.maxSizeGB || selectedModelConfig.maxPromptTokens || selectedModelConfig.maxOutputTokens) && (
+                    <>
+                      <div className="pricing-tooltip-section-title">Model Limits</div>
+                      {selectedModelConfig.maxDurationMinutes && (
+                        <div className="pricing-tooltip-row">
+                          <span className="pricing-tooltip-label">Max Duration:</span>
+                          <span className="pricing-tooltip-value">
+                            {selectedModelConfig.maxDurationMinutes} min
+                            {video && (video.Duration || video.duration) && (
+                              <span className={`pricing-tooltip-video-stat ${parseDurationToMinutes(video.Duration || video.duration) > selectedModelConfig.maxDurationMinutes ? 'pricing-tooltip-video-stat--warning' : ''}`}>
+                                {' '}(Video: {Math.round(parseDurationToMinutes(video.Duration || video.duration))} min)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      {selectedModelConfig.maxSizeGB && (
+                        <div className="pricing-tooltip-row">
+                          <span className="pricing-tooltip-label">Max Size:</span>
+                          <span className="pricing-tooltip-value">
+                            {selectedModelConfig.maxSizeGB} GB
+                            {video && (video.Size || video.size) && (
+                              <span className={`pricing-tooltip-video-stat ${parseSizeToGB(video.Size || video.size) > selectedModelConfig.maxSizeGB ? 'pricing-tooltip-video-stat--warning' : ''}`}>
+                                {' '}(Video: {parseSizeToGB(video.Size || video.size).toFixed(2)} GB)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      {selectedModelConfig.maxPromptTokens && (
+                        <div className="pricing-tooltip-row">
+                          <span className="pricing-tooltip-label">Max Prompt:</span>
+                          <span className="pricing-tooltip-value">{selectedModelConfig.maxPromptTokens.toLocaleString()} tokens</span>
+                        </div>
+                      )}
+                      {selectedModelConfig.maxOutputTokens && (
+                        <div className="pricing-tooltip-row">
+                          <span className="pricing-tooltip-label">Max Output:</span>
+                          <span className="pricing-tooltip-value">{selectedModelConfig.maxOutputTokens.toLocaleString()} tokens</span>
+                        </div>
+                      )}
+                      <div className="pricing-tooltip-divider"></div>
+                    </>
+                  )}
+                  
+                  <div className="pricing-tooltip-section-title">
+                    Pricing
+                    {selectedModelConfig.pricing.url && (
+                      <a 
+                        href={selectedModelConfig.pricing.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="pricing-tooltip-link"
+                        title="View pricing documentation"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8.5 1.5H3.5C2.94772 1.5 2.5 1.94772 2.5 2.5V13.5C2.5 14.0523 2.94772 14.5 3.5 14.5H12.5C13.0523 14.5 13.5 14.0523 13.5 13.5V6.5M10.5 1.5H14.5M14.5 1.5V5.5M14.5 1.5L7 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                  {selectedModelConfig.pricing.inputTokensPer1M && (
+                    <div className="pricing-tooltip-row">
+                      <span className="pricing-tooltip-label">Input:</span>
+                      <span className="pricing-tooltip-value">${selectedModelConfig.pricing.inputTokensPer1M.toFixed(2)}/1M tokens</span>
+                    </div>
+                  )}
+                  {selectedModelConfig.pricing.inputTokensPer1MAudio && (
+                    <div className="pricing-tooltip-row">
+                      <span className="pricing-tooltip-label">Input (Audio):</span>
+                      <span className="pricing-tooltip-value">${selectedModelConfig.pricing.inputTokensPer1MAudio.toFixed(2)}/1M tokens</span>
+                    </div>
+                  )}
+                  {selectedModelConfig.pricing.outputTokensPer1M && (
+                    <div className="pricing-tooltip-row">
+                      <span className="pricing-tooltip-label">Output:</span>
+                      <span className="pricing-tooltip-value">${selectedModelConfig.pricing.outputTokensPer1M.toFixed(2)}/1M tokens</span>
+                    </div>
+                  )}
+                  {selectedModelConfig.pricing.perSecondVideo && (
+                    <div className="pricing-tooltip-row">
+                      <span className="pricing-tooltip-label">Video:</span>
+                      <span className="pricing-tooltip-value">${selectedModelConfig.pricing.perSecondVideo.toFixed(5)}/sec</span>
+                    </div>
+                  )}
+                  
+                  {selectedModelConfig.pricing.notes && (
+                    <div className="pricing-tooltip-notes">
+                      {selectedModelConfig.pricing.notes}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </h3>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="model-select">Model</label>
@@ -752,35 +985,6 @@ function VideoUnderstandingForm({ video, onSuccess }) {
               ))}
             </select>
             
-            {/* Show model limits and video stats */}
-            {selectedModelConfig && (selectedModelConfig.maxDurationMinutes || selectedModelConfig.maxSizeGB) && (
-              <div className="model-limits-info">
-                <div className="limits-row">
-                  {selectedModelConfig.maxDurationMinutes && (
-                    <div className="limit-item">
-                      <span className="limit-label">Max Duration:</span>
-                      <span className="limit-value">{selectedModelConfig.maxDurationMinutes} min</span>
-                      {video && (video.Duration || video.duration) && (
-                        <span className={`video-stat ${parseDurationToMinutes(video.Duration || video.duration) > selectedModelConfig.maxDurationMinutes ? 'video-stat--warning' : ''}`}>
-                          (Video: {Math.round(parseDurationToMinutes(video.Duration || video.duration))} min)
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {selectedModelConfig.maxSizeGB && (
-                    <div className="limit-item">
-                      <span className="limit-label">Max Size:</span>
-                      <span className="limit-value">{selectedModelConfig.maxSizeGB} GB</span>
-                      {video && (video.Size || video.size) && (
-                        <span className={`video-stat ${parseSizeToGB(video.Size || video.size) > selectedModelConfig.maxSizeGB ? 'video-stat--warning' : ''}`}>
-                          (Video: {parseSizeToGB(video.Size || video.size).toFixed(2)} GB)
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
             
             {/* Show warning if Gemini model is selected but no API key is configured */}
             {selectedModelConfig && selectedModelConfig.apiType === 'gemini' && !hasGeminiKey && (

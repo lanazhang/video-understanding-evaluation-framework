@@ -7,14 +7,41 @@ export const modelGroups = [
         modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
         api: '/model/start-nova-mme',
         parameterType: 'nova-mme',
-        dims: [1024, 3072, 384, 256]
+        dims: [1024, 3072, 384, 256],
+        //maxContextTokens: 8000,
+        //maxVideoSeconds: 30,
+        //maxAudioSeconds: 30,
+        maxVideoSizeGB: 1.5,
+        //maxAudioSizeGB: 1.0,
+        //supportedLanguages: 200,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          perMinuteVideo: 0.042, //0.0007 per second
+          //perImage: 0.0001,
+          //perTextQuery: 0.00007,
+          unit: 'USD',
+          //notes: 'Video: $0.00049/sec, Image: $0.0001/image, Text: $0.00007/query'
+        }
       },
       {
         displayName: 'TwelveLabs Marengo 3.0',
         modelId: 'twelvelabs.marengo-embed-3-0-v1:0',
         api: '/model/start-tlabs-mme',
         parameterType: 'twelvelabs',
-        dims: [512]
+        dims: [512],
+        maxDurationMinutes: 240, // 4 hours
+        maxSizeGB: 6,
+        //maxTextTokens: 500,
+        //maxImageSize: 5, // 5 MB
+        //supportedLanguages: 36,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          perMinuteVideo: 0.042, // $0.00070 per second = $0.042 per minute
+          //perImage: 0.0001,
+          //perTextQuery: 0.00007,
+          unit: 'USD',
+          //notes: 'Video: $0.00070/sec, Image: $0.0001/image, Text: $0.00007/query'
+        }
       },
     ],
   },
@@ -28,6 +55,13 @@ export const modelGroups = [
         apiType: 'bedrock_converse',
         maxDurationMinutes: 60,
         maxSizeGB: 2,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          inputTokensPer1M: 0.30,
+          outputTokensPer1M: 2.50,
+          unit: 'USD',
+          //notes: 'Input: $0.06/1M tokens, Output: $0.24/1M tokens'
+        },
         toolConfig: {
           toolChoice: {
             tool: {
@@ -82,6 +116,13 @@ export const modelGroups = [
         apiType: 'bedrock_converse',
         maxDurationMinutes: 60,
         maxSizeGB: 2,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          inputTokensPer1M: 0.06,
+          outputTokensPer1M: 0.24,
+          unit: 'USD',
+          //notes: 'Input: $0.06/1M tokens, Output: $0.24/1M tokens'
+        },
         toolConfig: {
           toolChoice: {
             tool: {
@@ -132,6 +173,13 @@ export const modelGroups = [
         apiType: 'bedrock_converse',
         maxDurationMinutes: 60,
         maxSizeGB: 2,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          inputTokensPer1M: 0.80,
+          outputTokensPer1M: 3.20,
+          unit: 'USD',
+          //notes: 'Input: $0.80/1M tokens, Output: $3.20/1M tokens'
+        },
         toolConfig: {
           toolChoice: {
             tool: {
@@ -182,6 +230,13 @@ export const modelGroups = [
         apiType: 'bedrock_converse',
         maxDurationMinutes: 60,
         maxSizeGB: 2,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          inputTokensPer1M: 0.30,
+          outputTokensPer1M: 2.50,
+          unit: 'USD',
+          //notes: 'Input: $0.80/1M tokens, Output: $3.20/1M tokens'
+        },
         toolConfig: {
           toolChoice: {
             tool: {
@@ -236,6 +291,15 @@ export const modelGroups = [
         apiType: 'tlabs_pegasus',
         maxDurationMinutes: 60,
         maxSizeGB: 2,
+        maxPromptTokens: 2000,
+        maxOutputTokens: 4096,
+        pricing: {
+          url: "https://aws.amazon.com/bedrock/pricing/",
+          perSecondVideo: 0.00049,
+          outputTokensPer1M: 7.50,
+          unit: 'USD',
+          //notes: 'Video: $0.00049/sec, Output: $7.50/1M tokens'
+        },
         toolConfig: {
           responseFormat: {
             jsonSchema: {
@@ -279,6 +343,14 @@ export const modelGroups = [
         enabled: true,
         maxDurationMinutes: 120,
         maxSizeGB: 2,
+        pricing: {
+          url: "https://ai.google.dev/gemini-api/docs/pricing#gemini-2.5-flash",
+          inputTokensPer1M: 0.30, // text/image/video
+          //inputTokensPer1MAudio: 1.00,
+          outputTokensPer1M: 2.50,
+          unit: 'USD',
+          //notes: 'Input: $0.10/1M tokens (text/image/video), $0.70/1M (audio), Output: $0.40/1M tokens'
+        },
         toolConfig: {
           responseSchema: {
             type: 'object',
@@ -321,6 +393,114 @@ export const modelGroups = [
         enabled: true,
         maxDurationMinutes: 120,
         maxSizeGB: 2,
+        pricing: {
+          url: "https://ai.google.dev/gemini-api/docs/pricing#gemini-2.5-pro",
+          inputTokensPer1M: 1.25, // text/image/video
+          inputTokensPer1MAudio: 2.50,
+          outputTokensPer1M: 15.00,
+          unit: 'USD',
+          //notes: 'Input: $0.50/1M tokens (text/image/video), $1.00/1M (audio), Output: $3.00/1M tokens'
+        },
+        toolConfig: {
+          responseSchema: {
+            type: 'object',
+            properties: {
+              summary: {
+                type: 'string',
+                description: 'A high-level summary of the entire video content'
+              },
+              scenes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    start_time: {
+                      type: 'number',
+                      description: 'Start time in decimal seconds (e.g., 23.5 for 23.5 seconds)'
+                    },
+                    end_time: {
+                      type: 'number',
+                      description: 'End time in decimal seconds (e.g., 27.8 for 27.8 seconds)'
+                    },
+                    description: {
+                      type: 'string',
+                      description: 'Description of what happens in this scene'
+                    }
+                  },
+                  required: ['start_time', 'end_time', 'description']
+                }
+              }
+            },
+            required: ['summary', 'scenes']
+          }
+        }
+      },
+      {
+        displayName: 'Gemini 3.1 Flash Lite Preview',
+        modelId: 'gemini-3.1-flash-lite-preview',
+        api: '/model/start-video-understanding',
+        apiType: 'gemini',
+        enabled: true,
+        maxDurationMinutes: 120,
+        maxSizeGB: 2,
+        pricing: {
+          url: "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-lite/#:~:text=Gemini%203.1%20Flash%2DLite%20is,and%20faster%20than%202.5%20Flash.",
+          inputTokensPer1M: 0.25, // text/image/video
+          //inputTokensPer1MAudio: 0.30,
+          outputTokensPer1M: 1.50,
+          unit: 'USD',
+          //notes: 'Input: $0.10/1M tokens (text/image/video), $0.30/1M (audio), Output: $0.40/1M tokens'
+        },
+        toolConfig: {
+          responseSchema: {
+            type: 'object',
+            properties: {
+              summary: {
+                type: 'string',
+                description: 'A high-level summary of the entire video content'
+              },
+              scenes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    start_time: {
+                      type: 'number',
+                      description: 'Start time in decimal seconds (e.g., 23.5 for 23.5 seconds)'
+                    },
+                    end_time: {
+                      type: 'number',
+                      description: 'End time in decimal seconds (e.g., 27.8 for 27.8 seconds)'
+                    },
+                    description: {
+                      type: 'string',
+                      description: 'Description of what happens in this scene'
+                    }
+                  },
+                  required: ['start_time', 'end_time', 'description']
+                }
+              }
+            },
+            required: ['summary', 'scenes']
+          }
+        }
+      },
+      {
+        displayName: 'Gemini 3 Flash Preview',
+        modelId: 'gemini-3-flash-preview',
+        api: '/model/start-video-understanding',
+        apiType: 'gemini',
+        enabled: true,
+        maxDurationMinutes: 120,
+        maxSizeGB: 2,
+        pricing: {
+          url: "https://ai.google.dev/gemini-api/docs/pricing#gemini-3-flash-preview",
+          inputTokensPer1M: 0.50, // text/image/video
+          inputTokensPer1MAudio: 1.00,
+          outputTokensPer1M: 3.00,
+          unit: 'USD',
+          //notes: 'Input: $0.25/1M tokens (text/image/video), $0.50/1M (audio), Output: $1.50/1M tokens'
+        },
         toolConfig: {
           responseSchema: {
             type: 'object',

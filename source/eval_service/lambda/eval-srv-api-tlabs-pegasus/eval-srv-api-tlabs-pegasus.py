@@ -226,9 +226,19 @@ def lambda_handler(event, context):
                     
                     # Add response metadata if available
                     if 'stopReason' in response_body:
-                        task_item['Result']['ResponseMetadata'] = {
+                        metadata = {
                             'stopReason': response_body.get('stopReason', 'unknown')
                         }
+                        
+                        # Add token usage if available
+                        if 'usage' in response_body:
+                            usage = response_body['usage']
+                            if 'inputTokens' in usage:
+                                metadata['inputTokens'] = usage['inputTokens']
+                            if 'outputTokens' in usage:
+                                metadata['outputTokens'] = usage['outputTokens']
+                        
+                        task_item['Result']['ResponseMetadata'] = metadata
                     
                     # Calculate processing time
                     from dateutil import parser

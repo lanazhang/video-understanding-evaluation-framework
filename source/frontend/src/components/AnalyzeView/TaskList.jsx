@@ -1,5 +1,6 @@
 import refreshIcon from '../../assets/icons/refresh.svg'
 import SearchEmbeddings from './SearchEmbeddings'
+import { modelGroups } from '../../static/modelConfig'
 import './TaskList.css'
 
 function TaskList({
@@ -43,6 +44,52 @@ function TaskList({
   )
   
   const completedTasks = mmeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
+
+  // Helper function to calculate cost for an embedding task
+  const calculateEmbeddingCost = (task) => {
+      if (!task || task.Status !== 'completed' || !task.Result) return null
+
+      // Find the model config
+      const embeddingGroup = modelGroups.find(g => g.groupName === 'Multimodal Embedding')
+      if (!embeddingGroup) return null
+
+      const modelConfig = embeddingGroup.models.find(m => m.modelId === task.ModelId)
+      if (!modelConfig || !modelConfig.pricing) return null
+
+      const pricing = modelConfig.pricing
+      let totalCost = 0
+      let costBreakdown = []
+
+      // For embedding models, use the actual video duration for cost calculation
+      // TwelveLabs and Nova MME pricing is based on video duration, not processing time
+      let videoDurationSeconds = null
+
+      // Try to get video duration from the video object
+      if (video && video.Duration) {
+        videoDurationSeconds = video.Duration
+      }
+
+      // Calculate video processing cost based on video duration
+      if (videoDurationSeconds) {
+        if (pricing.perMinuteVideo) {
+          const durationMinutes = videoDurationSeconds / 60
+          const videoCost = durationMinutes * pricing.perMinuteVideo
+          totalCost += videoCost
+          costBreakdown.push(`Video: $${videoCost.toFixed(2)} (${videoDurationSeconds.toFixed(1)}s @ $${pricing.perMinuteVideo.toFixed(5)}/min)`)
+        } else if (pricing.perSecondVideo) {
+          const videoCost = videoDurationSeconds * pricing.perSecondVideo
+          totalCost += videoCost
+          costBreakdown.push(`Video: $${videoCost.toFixed(2)} (${videoDurationSeconds.toFixed(1)}s @ $${pricing.perSecondVideo.toFixed(5)}/sec)`)
+        }
+      }
+
+      if (totalCost === 0) return null
+
+      return {
+        total: totalCost,
+        breakdown: costBreakdown
+      }
+    }
 
   return (
     <div className="task-list">
@@ -118,9 +165,28 @@ function TaskList({
                     <span className={`task-list__status task-list__status--${task.Status}`}>{task.Status}</span>
                     <span className="task-list__item-detail">
                       {task.ModelId || 'N/A'}
-                    </span>
-                    <span className="task-list__item-detail">
-                      {task.Type}
+                      {task.Status === 'completed' && task.CompletedTs && (() => {
+                        const startDate = new Date(task.StartedTs)
+                        const endDate = new Date(task.CompletedTs)
+                        const diffMs = endDate - startDate
+                        
+                        if (isNaN(diffMs) || diffMs < 0) return null
+                        
+                        const diffSeconds = Math.floor(diffMs / 1000)
+                        const hours = Math.floor(diffSeconds / 3600)
+                        const minutes = Math.floor((diffSeconds % 3600) / 60)
+                        const seconds = diffSeconds % 60
+                        
+                        const parts = []
+                        if (hours > 0) parts.push(`${hours}h`)
+                        if (minutes > 0) parts.push(`${minutes}m`)
+                        if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`)
+                        
+                        const costInfo = calculateEmbeddingCost(task)
+                        const costStr = costInfo ? `, $${costInfo.total.toFixed(2)}` : ''
+                        
+                        return ` (${parts.join(' ')}${costStr})`
+                      })()}
                     </span>
                   </div>
                   <div className="task-list__item-actions">
@@ -193,6 +259,12 @@ function TaskList({
                         <span className="task-list__detail-label">Created:</span>
                         <span className="task-list__detail-value">{formatDate(task.StartedTs)}</span>
                       </div>
+                      {task.CompletedTs && (
+                        <div className="task-list__detail-row">
+                          <span className="task-list__detail-label">Completed:</span>
+                          <span className="task-list__detail-value">{formatDate(task.CompletedTs)}</span>
+                        </div>
+                      )}
                       
                       {task.Type === 'tlabs-mme' ? (
                         <>
@@ -280,14 +352,48 @@ function TaskList({
                             <span className="task-list__detail-label">Embeddings:</span>
                             <span className="task-list__detail-value">{task.Result.EmbeddingCount || 0}</span>
                           </div>
-                          {task.CompletedTs && (
-                            <div className="task-list__detail-row">
-                              <span className="task-list__detail-label">Completed:</span>
-                              <span className="task-list__detail-value">{formatDate(task.CompletedTs)}</span>
-                            </div>
-                          )}
                         </>
                       )}
+                      
+                      {task.CompletedTs && (
+                        <div className="task-list__detail-row">
+                          <span className="task-list__detail-label">Processing Time:</span>
+                          <span className="task-list__detail-value">
+                            {(() => {
+                              const startDate = new Date(task.StartedTs)
+                              const endDate = new Date(task.CompletedTs)
+                              const diffMs = endDate - startDate
+                              
+                              if (isNaN(diffMs) || diffMs < 0) return 'N/A'
+                              
+                              const diffSeconds = Math.floor(diffMs / 1000)
+                              const hours = Math.floor(diffSeconds / 3600)
+                              const minutes = Math.floor((diffSeconds % 3600) / 60)
+                              const seconds = diffSeconds % 60
+                              
+                              const parts = []
+                              if (hours > 0) parts.push(`${hours}h`)
+                              if (minutes > 0) parts.push(`${minutes}m`)
+                              if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`)
+                              
+                              return parts.join(' ')
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                      {(() => {
+                        const costInfo = calculateEmbeddingCost(task)
+                        if (!costInfo) return null
+                        
+                        return (
+                          <div className="task-list__detail-row">
+                            <span className="task-list__detail-label">Estimated Cost:</span>
+                            <span className="task-list__detail-value task-list__detail-value--cost" title={costInfo.breakdown.join('\n')}>
+                              ${costInfo.total.toFixed(2)}
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </div>
                     
                     {task.Status === 'completed' && task.Result && (

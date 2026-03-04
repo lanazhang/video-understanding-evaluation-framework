@@ -41,6 +41,9 @@ function TaskItem({
               <span className="task-param">{task.Request?.segmentation?.method || task.Request?.Segmentation?.Method || 'N/A'}</span>
             )}
             <span className="task-embedding-count">{task.Result?.EmbeddingCount || 0} embeddings</span>
+            {task.Result?.ProcessingTimeS && (
+              <span className="task-processing-time">{task.Result.ProcessingTimeS.toFixed(1)}s</span>
+            )}
           </div>
         </div>
         <div className="task-actions">

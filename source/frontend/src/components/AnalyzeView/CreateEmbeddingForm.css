@@ -286,3 +286,179 @@
   border-color: #f87171;
   color: #991b1b;
 }
+
+/* Pricing Tooltip Container */
+.pricing-tooltip-container {
+  position: relative;
+  display: inline-block;
+  margin-left: auto;
+}
+
+/* Pricing Button */
+.btn-pricing-info {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  color: #f97316;
+  border: 2px solid #f97316;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.2);
+}
+
+.btn-pricing-info:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+}
+
+.btn-pricing-info svg {
+  flex-shrink: 0;
+}
+
+/* Pricing Tooltip */
+.pricing-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 2px solid #f97316;
+  min-width: 320px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+/* Bridge the gap between button and tooltip to prevent hover loss */
+.pricing-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.pricing-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-left: 2px solid #f97316;
+  border-top: 2px solid #f97316;
+  transform: rotate(45deg);
+}
+
+.pricing-tooltip-container:hover .pricing-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.pricing-tooltip-header {
+  padding: 10px 16px;
+  background: transparent;
+  color: #f97316;
+  font-weight: 700;
+  font-size: 13px;
+  border-bottom: 2px solid #fed7aa;
+  letter-spacing: 0.02em;
+}
+
+.pricing-tooltip-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pricing-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.pricing-tooltip-row:hover {
+  border-color: #f97316;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);
+  transform: translateX(4px);
+}
+
+.pricing-tooltip-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+}
+
+.pricing-tooltip-value {
+  font-weight: 700;
+  color: #f97316;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+}
+
+.pricing-tooltip-notes {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-radius: 8px;
+  border: 1px solid #fed7aa;
+  color: #92400e;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Pricing Tooltip Additional Styles */
+.pricing-tooltip-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #fed7aa, transparent);
+  margin: 12px 0;
+}
+
+.pricing-tooltip-section-title {
+  font-weight: 700;
+  color: #f97316;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.pricing-tooltip-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  color: #0066cc;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.pricing-tooltip-link:hover {
+  color: #0052a3;
+}
+
+.pricing-tooltip-link svg {
+  width: 14px;
+  height: 14px;
+}

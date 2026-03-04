@@ -9,11 +9,143 @@ function CreateEmbeddingForm({
   createError, 
   onCreateEmbedding 
 }) {
-
   return (
     <div className="create-embedding-section">
       <h3>
         Create New Embedding Index
+        {selectedModel?.pricing && (
+          <div className="pricing-tooltip-container">
+            <button 
+              className="btn-pricing-info"
+              title="View model information"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M8 7.5V11.5M8 5V5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Model Information
+            </button>
+            <div className="pricing-tooltip">
+              <div className="pricing-tooltip-header">
+                {selectedModel.displayName}
+              </div>
+              <div className="pricing-tooltip-body">
+                {(selectedModel.maxContextTokens || selectedModel.supportedLanguages || selectedModel.maxDurationMinutes || selectedModel.maxSizeGB || selectedModel.maxTextTokens || selectedModel.maxImageSize || selectedModel.maxVideoSeconds || selectedModel.maxAudioSeconds || selectedModel.maxVideoSizeGB || selectedModel.maxAudioSizeGB) && (
+                  <>
+                    <div className="pricing-tooltip-section-title">Model Limits</div>
+                    {selectedModel.maxDurationMinutes && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Duration:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxDurationMinutes >= 60 ? `${selectedModel.maxDurationMinutes / 60} hours` : `${selectedModel.maxDurationMinutes} min`}</span>
+                      </div>
+                    )}
+                    {selectedModel.maxVideoSeconds && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Video:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxVideoSeconds}s</span>
+                      </div>
+                    )}
+                    {selectedModel.maxAudioSeconds && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Audio:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxAudioSeconds}s</span>
+                      </div>
+                    )}
+                    {selectedModel.maxSizeGB && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Size:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxSizeGB} GB</span>
+                      </div>
+                    )}
+                    {selectedModel.maxVideoSizeGB && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Video Size:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxVideoSizeGB} GB</span>
+                      </div>
+                    )}
+                    {selectedModel.maxAudioSizeGB && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Audio Size:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxAudioSizeGB} GB</span>
+                      </div>
+                    )}
+                    {selectedModel.maxContextTokens && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Context:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxContextTokens.toLocaleString()} tokens</span>
+                      </div>
+                    )}
+                    {selectedModel.maxTextTokens && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Text:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxTextTokens.toLocaleString()} tokens</span>
+                      </div>
+                    )}
+                    {selectedModel.maxImageSize && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Max Image:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.maxImageSize} MB</span>
+                      </div>
+                    )}
+                    {selectedModel.supportedLanguages && (
+                      <div className="pricing-tooltip-row">
+                        <span className="pricing-tooltip-label">Languages:</span>
+                        <span className="pricing-tooltip-value">{selectedModel.supportedLanguages}+ supported</span>
+                      </div>
+                    )}
+                    <div className="pricing-tooltip-divider"></div>
+                  </>
+                )}
+                
+                <div className="pricing-tooltip-section-title">
+                  Pricing
+                  {selectedModel.pricing.url && (
+                    <a 
+                      href={selectedModel.pricing.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="pricing-tooltip-link"
+                      title="View pricing documentation"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.5 1.5H3.5C2.94772 1.5 2.5 1.94772 2.5 2.5V13.5C2.5 14.0523 2.94772 14.5 3.5 14.5H12.5C13.0523 14.5 13.5 14.0523 13.5 13.5V6.5M10.5 1.5H14.5M14.5 1.5V5.5M14.5 1.5L7 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </a>
+                  )}
+                </div>
+                {selectedModel.pricing.perMinuteVideo && (
+                  <div className="pricing-tooltip-row">
+                    <span className="pricing-tooltip-label">Video:</span>
+                    <span className="pricing-tooltip-value">${selectedModel.pricing.perMinuteVideo.toFixed(5)}/min</span>
+                  </div>
+                )}
+                {selectedModel.pricing.perSecondVideo && (
+                  <div className="pricing-tooltip-row">
+                    <span className="pricing-tooltip-label">Video:</span>
+                    <span className="pricing-tooltip-value">${selectedModel.pricing.perSecondVideo.toFixed(5)}/sec</span>
+                  </div>
+                )}
+                {selectedModel.pricing.perImage && (
+                  <div className="pricing-tooltip-row">
+                    <span className="pricing-tooltip-label">Image:</span>
+                    <span className="pricing-tooltip-value">${selectedModel.pricing.perImage.toFixed(5)}/img</span>
+                  </div>
+                )}
+                {selectedModel.pricing.perTextQuery && (
+                  <div className="pricing-tooltip-row">
+                    <span className="pricing-tooltip-label">Text:</span>
+                    <span className="pricing-tooltip-value">${selectedModel.pricing.perTextQuery.toFixed(5)}/query</span>
+                  </div>
+                )}
+                {selectedModel.pricing.notes && (
+                  <div className="pricing-tooltip-notes">
+                    {selectedModel.pricing.notes}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </h3>
       
       {createError && (

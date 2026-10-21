@@ -43,6 +43,9 @@ Use one terminal per service and leave each one open.
 | 2 | Backend API | `cd backend && .venv/bin/uvicorn app:app --port 8080` | http://localhost:8080 |
 | 3 | Web UI | `cd frontend && npm run dev` | **http://localhost:5173** |
 
+To start all of this (Brev instances, tunnels, API and UI) with one command, use `scripts/local-launch.sh start` from the repo root; see
+the [root README](../README.md#launch-the-demo-with-one-command).
+
 Open http://localhost:5173. The UI has no login; it runs as a single local user (`local-user`).
 
 The backend creates the database and tables on startup. Check it with:
@@ -155,6 +158,21 @@ details from it. Adding a model, or a setting, is a `models.yaml` edit. A new mo
 provider class in `providers/` (see `omni_embed.py`); providers expose `embed_text`, `embed_image` and
 `embed_video`.
 
+## Security
+
+The API has **no login**: it is a single-user app meant to run on your own machine, so keep it that way.
+
+- It listens on `127.0.0.1` only. Do not start it with `--host 0.0.0.0` or put it behind a public URL without an
+  authenticating proxy in front.
+- Other websites cannot drive it: writes must be `application/json`, an `Origin` header must be in `CORS_ORIGINS`, and the
+  `Host` header must be a local name (`ALLOWED_HOSTS` adds more).
+- Files are served only through short-lived HMAC-signed URLs, from `data/files/<bucket>/` with a plain bucket name, so a
+  record cannot point the file server at the database or the signing secret (`data/.signing_secret`).
+- Secrets (`NIM_API_KEY`, ...) belong in `backend/.env`, which git ignores. Never commit it.
+- Model servers on Brev: publish them on the instance's loopback only (for example `docker run -p 127.0.0.1:8001:8000 ...`),
+  because the SSH tunnel reaches loopback, and set an API key if you can (vLLM: `--api-key`). A server on `0.0.0.0` with
+  no key is open to anyone the instance's firewall lets in.
+
 ## Status
 
 Working and tested over HTTP: routing, SQLite tables and GSI queries, signed uploads (multipart) and
@@ -163,7 +181,7 @@ and video understanding through an OpenAI-compatible endpoint (tested against a 
 real Brev/NIM one).
 
 Not yet ported (these fail with a clear error rather than silently):
-- The chatbot (Strands agents on Bedrock) and the existing Gemini handler's key storage.
+- The chatbot (Strands agents on Bedrock; the page is hidden unless `VITE_ENABLE_CHATBOT=true`, and it needs `pip install strands-agents` plus Bedrock access) and the existing Gemini handler's key storage (`pip install google-genai`).
 - Nova MME / Marengo embeddings (Bedrock) — superseded by the provider-based embedding path above.
 - `manage-api-key` (Secrets Manager).
 - The S3-event listeners (`eval-srv-s3-listener*`) were removed from this branch; the embedding worker replaces them. They are still on the `aws-original` branch.

@@ -23,9 +23,10 @@ async function request(method, path, reqbody = null, queryParams = null) {
   Object.entries(queryParams || {}).forEach(([k, v]) => v != null && url.searchParams.set(k, v))
 
   const init = { method, headers: {} }
-  if (reqbody != null && method !== 'GET') {
+  if (method !== 'GET') {
+    // always a JSON body: the backend only accepts application/json for writes (it blocks cross-site form posts)
     init.headers['Content-Type'] = 'application/json'
-    init.body = JSON.stringify(reqbody)
+    init.body = JSON.stringify(reqbody ?? {})
   }
 
   const res = await fetch(url, init)

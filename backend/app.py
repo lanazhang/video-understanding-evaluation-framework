@@ -12,7 +12,8 @@ local_aws.install()  # must precede any handler import
 
 from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi.responses import RedirectResponse, Response  # noqa: E402
+from fastapi.responses import JSONResponse, RedirectResponse, Response  # noqa: E402
+from urllib.parse import urlparse  # noqa: E402
 
 import handlers  # noqa: E402
 from store import files_api  # noqa: E402
@@ -20,9 +21,40 @@ from store import files_api  # noqa: E402
 LOCAL_USERNAME = os.environ.get("LOCAL_USERNAME", "local-user")
 
 app = FastAPI(title="Video Understanding Evaluation Framework (local)")
+
+# This API has no login (it is a single-user local app), so it must not be drivable by other web pages:
+#  - Host check: only localhost names (plus ALLOWED_HOSTS and the PUBLIC_BASE_URL host) are served, which stops DNS rebinding.
+#  - Cross-site check: a write needs Content-Type: application/json, which makes browsers send a CORS preflight, and an
+#    Origin header, when present, must be one of CORS_ORIGINS. Without this any website could POST "simple" requests here.
+CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+ALLOWED_HOSTS = {"localhost", "127.0.0.1", "[::1]"} | {h.strip().lower() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()}
+if os.environ.get("PUBLIC_BASE_URL"):
+    ALLOWED_HOSTS.add((urlparse(os.environ["PUBLIC_BASE_URL"]).hostname or "").lower())
+
+
+def _hostname(host_header: str) -> str:
+    host = host_header.strip().lower()
+    if host.startswith("["):  # IPv6 literal
+        return host.split("]")[0] + "]"
+    return host.rsplit(":", 1)[0] if ":" in host else host
+
+
+@app.middleware("http")
+async def guard(request: Request, call_next):
+    if _hostname(request.headers.get("host", "")) not in ALLOWED_HOSTS:
+        return JSONResponse({"error": "Host not allowed (set ALLOWED_HOSTS)"}, status_code=403)
+    if request.url.path.startswith("/v1/") and request.method not in ("GET", "HEAD", "OPTIONS"):
+        origin = request.headers.get("origin")
+        if origin is not None and origin not in CORS_ORIGINS:
+            return JSONResponse({"error": "Origin not allowed (set CORS_ORIGINS)"}, status_code=403)
+        if request.headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
+            return JSONResponse({"error": "Content-Type must be application/json"}, status_code=415)
+    return await call_next(request)
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["ETag"],  # multipart upload completion reads each part's ETag

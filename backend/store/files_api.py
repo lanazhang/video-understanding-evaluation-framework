@@ -15,6 +15,10 @@ _CHUNK_LIMIT = int(os.environ.get("MAX_UPLOAD_BYTES", str(20 * 1024**3)))
 
 
 def _authorize(op, bucket, key, request: Request):
+    try:
+        local_s3.check_bucket(bucket)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid bucket")
     q = request.query_params
     if q.get("op") != op or not local_s3.verify(op, bucket, key, q.get("exp"), q.get("sig"), q.get("uploadId", ""), q.get("partNumber", "")):
         raise HTTPException(status_code=403, detail="Invalid or expired signature")

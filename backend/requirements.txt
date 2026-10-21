@@ -1,7 +1,15 @@
+# Core: the API, the SQLite/file store, the model providers, and video processing
 fastapi>=0.115
 uvicorn[standard]>=0.30
 python-dotenv>=1.0
-boto3>=1.40
-moviepy>=2.2
-openai>=1.50
+boto3>=1.40          # the Lambda handlers call boto3; local_aws.py swaps the AWS services for local ones
+openai>=1.50         # client for OpenAI-compatible endpoints (NVIDIA NIM, vLLM)
 pyyaml>=6.0
+moviepy>=2.2         # video metadata and thumbnails
+imageio-ffmpeg>=0.5  # bundled ffmpeg: segment, keyframe and audio extraction
+numpy>=1.26          # embedding vectors, cosine search
+pillow>=10.0         # thumbnails
+
+# Optional providers: install only what you use. Without them these handlers fail to import and say so.
+#   Gemini (video understanding):          pip install google-genai
+#   Chatbot (Strands agents on Bedrock):    pip install strands-agents

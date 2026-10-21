@@ -57,6 +57,17 @@ def lambda_handler(event, context):
                 })
             }
         
+        # The video must live in this deployment's upload bucket, under a plain relative key. The stored values are later
+        # turned into signed download URLs, so they must not be able to point anywhere else.
+        allowed_bucket = os.environ.get('VIDEO_UPLOAD_S3_BUCKET')
+        key_parts = str(body['S3KeyVideo']).split('/')
+        if (allowed_bucket and body['S3Bucket'] != allowed_bucket) or str(body['S3KeyVideo']).startswith('/') or '..' in key_parts:
+            return {
+                'statusCode': 400,
+                'headers': CORS_HEADERS,
+                'body': json.dumps({'error': 'Invalid S3Bucket or S3KeyVideo'})
+            }
+
         # Prepare item for DynamoDB using PascalCase schema
         timestamp = datetime.utcnow().isoformat() + 'Z'
         item = {

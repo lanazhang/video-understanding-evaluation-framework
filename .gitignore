@@ -1,5 +1,8 @@
 # Local runtime data (SQLite db, uploaded videos)
 /data/
+# logs and pid files of scripts/local-launch.sh (.demo/ is the old name)
+/.local-launch/
+/.demo/
 __pycache__/
 node_modules/
 dist/

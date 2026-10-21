@@ -10,6 +10,7 @@ import io
 import json
 import mimetypes
 import os
+import re
 import secrets
 import shutil
 import time
@@ -52,9 +53,20 @@ def _uploads_root() -> Path:
     return root
 
 
+_BUCKET_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$")
+
+
+def check_bucket(bucket) -> str:
+    """A bucket is one plain directory name under <files>/. Anything else (.., slashes, ...) would let a client-supplied
+    bucket point outside the files directory, e.g. at the database or the signing secret."""
+    if not isinstance(bucket, str) or not _BUCKET_RE.match(bucket) or ".." in bucket:
+        raise _error("InvalidBucketName", f"invalid bucket name: {bucket!r}", "Bucket", 400)
+    return bucket
+
+
 def object_path(bucket: str, key: str) -> Path:
     """Resolve an object path, refusing anything that escapes <files>/<bucket>."""
-    base = (files_root() / bucket).resolve()
+    base = (files_root() / check_bucket(bucket)).resolve()
     path = (base / key).resolve()
     if base != path and base not in path.parents:
         raise _error("InvalidArgument", f"invalid object key: {key!r}", "Path", 400)
@@ -223,7 +235,7 @@ class LocalS3Client:
             shutil.copyfileobj(f, Fileobj)
 
     def list_objects_v2(self, Bucket, Prefix="", MaxKeys=1000, **_):
-        base = (files_root() / Bucket).resolve()
+        base = (files_root() / check_bucket(Bucket)).resolve()
         contents = []
         if base.is_dir():
             for p in sorted(base.rglob("*")):
@@ -245,7 +257,7 @@ class LocalS3Client:
 
     @staticmethod
     def _prune(directory: Path, bucket: str):
-        base = (files_root() / bucket).resolve()
+        base = (files_root() / check_bucket(bucket)).resolve()
         while directory != base and base in directory.parents:
             try:
                 directory.rmdir()
@@ -256,7 +268,7 @@ class LocalS3Client:
     # -- presigned URLs ------------------------------------------------------
     def generate_presigned_url(self, ClientMethod, Params=None, ExpiresIn=3600, **_):
         params = Params or {}
-        bucket, key = params["Bucket"], params["Key"]
+        bucket, key = check_bucket(params["Bucket"]), params["Key"]
         exp = int(time.time()) + int(ExpiresIn)
         op = {"get_object": "get", "put_object": "put", "upload_part": "part"}.get(ClientMethod)
         if op is None:
@@ -271,6 +283,7 @@ class LocalS3Client:
 
     # -- multipart upload ----------------------------------------------------
     def create_multipart_upload(self, Bucket, Key, **_):
+        check_bucket(Bucket)
         upload_id = uuid.uuid4().hex
         d = _uploads_root() / upload_id
         d.mkdir(parents=True)
@@ -311,4 +324,4 @@ class LocalS3Client:
         return {}
 
 
-__all__ = ["LocalS3Client", "NoSuchKey", "object_path", "verify", "files_root"]
+__all__ = ["LocalS3Client", "NoSuchKey", "object_path", "check_bucket", "verify", "files_root"]

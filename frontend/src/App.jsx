@@ -20,6 +20,10 @@ import infoIcon from './assets/icons/info.svg'
 import settingsIcon from './assets/icons/settings.svg'
 import chatIcon from './assets/icons/chat.svg'
 
+// The AI Assistant needs the optional Strands package and AWS Bedrock access (see backend/requirements.txt), which the
+// default local setup does not have, so it is hidden. Set VITE_ENABLE_CHATBOT=true in frontend/.env to show it.
+const SHOW_CHATBOT = import.meta.env.VITE_ENABLE_CHATBOT === 'true'
+
 // Wrapper component for video analyze route
 function VideoAnalyzeRoute({ currentUser }) {
   const { videoId } = useParams()
@@ -277,17 +281,21 @@ function AppContent({ currentUser, setCurrentUser }) {
           </button>
         </div>
         <nav>
-          <button 
-            className={activeMenu === 'chatbot' ? 'active' : ''}
-            onClick={() => handleMenuClick('chatbot')}
-            title="AI Assistant"
-          >
-            <span className="menu-icon">
-              <img src={chatIcon} alt="AI Assistant" />
-            </span>
-            <span className="menu-text">AI Assistant</span>
-          </button>
-          <div className="menu-separator"></div>
+          {SHOW_CHATBOT && (
+            <>
+              <button 
+                className={activeMenu === 'chatbot' ? 'active' : ''}
+                onClick={() => handleMenuClick('chatbot')}
+                title="AI Assistant"
+              >
+                <span className="menu-icon">
+                  <img src={chatIcon} alt="AI Assistant" />
+                </span>
+                <span className="menu-text">AI Assistant</span>
+              </button>
+              <div className="menu-separator"></div>
+            </>
+          )}
           <button 
             className={activeMenu === 'videos' ? 'active' : ''}
             onClick={() => handleMenuClick('videos')}
@@ -367,7 +375,7 @@ function AppContent({ currentUser, setCurrentUser }) {
           <Route path="/ground-truth" element={<GroundTruthManagement key={gtResetKey} currentUser={currentUser} initialVideoFilter={gtVideoFilter} />} />
           <Route path="/evaluation" element={<EvaluationManagement key={evalResetKey} currentUser={currentUser} initialGTFilter={evalGTFilter} />} />
           <Route path="/evaluation/:id" element={<EvaluationDetailRoute currentUser={currentUser} />} />
-          <Route path="/chatbot" element={<ChatBot currentUser={currentUser} />} />
+          {SHOW_CHATBOT && <Route path="/chatbot" element={<ChatBot currentUser={currentUser} />} />}
           <Route path="/settings" element={<Settings currentUser={currentUser} />} />
         </Routes>
       </div>

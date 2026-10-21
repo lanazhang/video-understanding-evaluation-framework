@@ -134,6 +134,29 @@ cd backend && .venv/bin/uvicorn app:app --port 8080   # terminal 1: API
 cd frontend && npm run dev                              # terminal 2: UI at http://localhost:5173
 ```
 
+### Launch the demo with one command
+
+If your embedding models run on Brev instances, `scripts/local-launch.sh` starts everything: the two instances (if they are
+stopped), the Omni-Embed server, the tunnels, the API and the UI, then opens the browser.
+
+```bash
+scripts/local-launch.sh start          # start the instances if needed, start the API + UI, open http://localhost:5173
+scripts/local-launch.sh status         # what is up
+scripts/local-launch.sh stop           # stop the API, UI and tunnels
+scripts/local-launch.sh stop --gpus    # ...and stop the Brev instances so they stop billing
+```
+
+`start` does not wait for the GPU instances. It starts any that are stopped, brings up the app straight away, and connects
+the models in the background (instance boot, Omni server, tunnels). Browsing, labeling and saved evaluations work at once;
+embedding and search work when `status` shows both tunnels up. Follow the connection with `tail -f .local-launch/connect.log`.
+
+- `scripts/local-launch.sh start --wait` waits until both models answer before starting the app.
+- `scripts/local-launch.sh connect` redoes the model connection (for example after a dropped tunnel); it is safe to repeat.
+- Running `start` again is safe: anything already healthy is left alone.
+
+It needs the one-time setup in [backend/README.md](backend/README.md) and a logged-in Brev CLI (`brev login`). Instance names
+and ports can be changed with environment variables (see the top of the script). Logs go to `.local-launch/`.
+
 ### Development (frontend only)
 
 ```bash

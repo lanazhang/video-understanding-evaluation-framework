@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Local architecture of the video understanding evaluation framework</title>
+  <desc id="d">A React web UI talks to a FastAPI backend that runs the Lambda handlers on a boto3 compatibility layer backed by SQLite and local files. An embedding worker and a model registry call NVIDIA-hosted models on Brev and NIM, and optional Gemini or Bedrock providers.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#57606a"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="780" fill="#ffffff"/>
+  <text x="30" y="40" font-size="22" font-weight="700" fill="#1f2328">Local architecture</text>
+  <text x="30" y="62" font-size="13" fill="#57606a">Everything runs on one machine; only the models are remote (NVIDIA Brev / NIM) or on your network.</text>
+
+  <!-- ===== Web UI ===== -->
+  <rect x="30" y="90" width="220" height="440" rx="10" fill="#fff6ec" stroke="#f58220" stroke-width="1.5"/>
+  <text x="46" y="118" font-size="16" font-weight="700" fill="#1f2328">Web UI</text>
+  <text x="46" y="137" font-size="12" fill="#57606a">React + Vite · localhost:5173</text>
+  <g font-size="13" fill="#1f2328">
+    <rect x="46" y="156" width="188" height="36" rx="6" fill="#ffffff" stroke="#f5c89a"/><text x="60" y="179">Videos: upload, preview</text>
+    <rect x="46" y="200" width="188" height="36" rx="6" fill="#ffffff" stroke="#f5c89a"/><text x="60" y="223">Analyze: embed, search</text>
+    <rect x="46" y="244" width="188" height="36" rx="6" fill="#ffffff" stroke="#f5c89a"/><text x="60" y="267">Ground truth: label</text>
+    <rect x="46" y="288" width="188" height="36" rx="6" fill="#ffffff" stroke="#f5c89a"/><text x="60" y="311">Evaluation: score, compare</text>
+    <rect x="46" y="332" width="188" height="36" rx="6" fill="#ffffff" stroke="#f5c89a"/><text x="60" y="355">Chatbot, Settings</text>
+  </g>
+  <rect x="46" y="388" width="188" height="124" rx="6" fill="#ffffff" stroke="#f5c89a" stroke-dasharray="4 3"/>
+  <text x="58" y="410" font-size="12" font-weight="700" fill="#1f2328">Runs in the browser</text>
+  <text x="58" y="430" font-size="12" fill="#57606a">Matching and metrics:</text>
+  <text x="58" y="447" font-size="12" fill="#57606a">Precision, Recall, F1, mAP,</text>
+  <text x="58" y="464" font-size="12" fill="#57606a">Recall@K, MRR, NDCG@10,</text>
+  <text x="58" y="481" font-size="12" fill="#57606a">efficiency (time, tokens, cost)</text>
+  <text x="58" y="502" font-size="12" fill="#57606a">No login: one local user</text>
+
+  <!-- UI <-> backend -->
+  <line x1="250" y1="230" x2="298" y2="230" stroke="#57606a" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="274" y="214" font-size="11" text-anchor="middle" fill="#57606a">REST</text>
+  <text x="274" y="226" font-size="11" text-anchor="middle" fill="#57606a">/v1</text>
+  <text x="274" y="252" font-size="11" text-anchor="middle" fill="#57606a">signed</text>
+  <text x="274" y="264" font-size="11" text-anchor="middle" fill="#57606a">file URLs</text>
+
+  <!-- ===== Backend ===== -->
+  <rect x="300" y="90" width="560" height="440" rx="10" fill="#f0f7ff" stroke="#0969da" stroke-width="1.5"/>
+  <text x="316" y="118" font-size="16" font-weight="700" fill="#1f2328">FastAPI backend</text>
+  <text x="316" y="137" font-size="12" fill="#57606a">backend/ · localhost:8080 · Python</text>
+
+  <rect x="316" y="152" width="528" height="46" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
+  <text x="330" y="172" font-size="13" font-weight="700" fill="#1f2328">API routes and handler loader</text>
+  <text x="330" y="189" font-size="12" fill="#57606a">app.py, handlers.py: POST /v1/... runs the matching handler, on demand</text>
+
+  <rect x="316" y="208" width="528" height="52" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
+  <text x="330" y="228" font-size="13" font-weight="700" fill="#1f2328">Handlers (backend/lambdas, 27)</text>
+  <text x="330" y="246" font-size="12" fill="#57606a">videos, analysis tasks, ground truth, evaluations, search; the original Lambda code</text>
+
+  <rect x="316" y="270" width="528" height="104" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
+  <text x="330" y="290" font-size="13" font-weight="700" fill="#1f2328">boto3 compatibility layer (local_aws.py)</text>
+  <text x="330" y="306" font-size="11" fill="#57606a">the handlers call boto3 as before; each AWS service is swapped for a local one</text>
+  <g font-size="12" fill="#1f2328">
+    <rect x="330" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="389" y="337" text-anchor="middle">S3</text><text x="389" y="353" text-anchor="middle" fill="#57606a">local files</text>
+    <rect x="456" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="515" y="337" text-anchor="middle">DynamoDB</text><text x="515" y="353" text-anchor="middle" fill="#57606a">SQLite tables</text>
+    <rect x="582" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="641" y="337" text-anchor="middle">Lambda invoke</text><text x="641" y="353" text-anchor="middle" fill="#57606a">thread pool</text>
+    <rect x="708" y="316" width="122" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="769" y="337" text-anchor="middle">S3 Vectors</text><text x="769" y="353" text-anchor="middle" fill="#57606a">SQLite vectors</text>
+  </g>
+
+  <rect x="316" y="386" width="258" height="130" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
+  <text x="330" y="406" font-size="13" font-weight="700" fill="#1f2328">Embedding worker</text>
+  <text x="330" y="427" font-size="12" fill="#57606a">1. cut the video into segments (ffmpeg)</text>
+  <text x="330" y="445" font-size="12" fill="#57606a">2. embed video / audio / keyframe</text>
+  <text x="330" y="463" font-size="12" fill="#57606a">3. store the vectors exactly as returned</text>
+  <text x="330" y="487" font-size="12" fill="#57606a">Search: exact cosine over stored</text>
+  <text x="330" y="504" font-size="12" fill="#57606a">vectors, filtered by input type</text>
+
+  <rect x="586" y="386" width="258" height="130" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
+  <text x="600" y="406" font-size="13" font-weight="700" fill="#1f2328">Model registry (models.yaml)</text>
+  <text x="600" y="427" font-size="12" fill="#57606a">providers: openai_compat (NIM, vLLM),</text>
+  <text x="600" y="445" font-size="12" fill="#57606a">omni_embed (custom /embed)</text>
+  <text x="600" y="469" font-size="12" fill="#57606a">per-model settings: segment length,</text>
+  <text x="600" y="487" font-size="12" fill="#57606a">inputs, dimensions; they drive the</text>
+  <text x="600" y="505" font-size="12" fill="#57606a">UI forms and the validation</text>
+
+  <!-- ===== Models ===== -->
+  <text x="930" y="108" font-size="16" font-weight="700" fill="#1f2328">Models</text>
+
+  <rect x="930" y="120" width="240" height="170" rx="10" fill="#f3f9e6" stroke="#76b900" stroke-width="1.5"/>
+  <text x="946" y="144" font-size="13" font-weight="700" fill="#1f2328">NVIDIA Brev instances</text>
+  <text x="946" y="161" font-size="11" fill="#57606a">reached through brev port-forward</text>
+  <rect x="946" y="172" width="208" height="46" rx="5" fill="#ffffff" stroke="#c5e08a"/>
+  <text x="958" y="192" font-size="12" font-weight="700" fill="#1f2328">Qwen3-VL-Embedding-8B</text>
+  <text x="958" y="208" font-size="11" fill="#57606a">OpenAI-compatible /embeddings</text>
+  <rect x="946" y="226" width="208" height="50" rx="5" fill="#ffffff" stroke="#c5e08a"/>
+  <text x="958" y="246" font-size="12" font-weight="700" fill="#1f2328">Omni-Embed-Nemotron-3B</text>
+  <text x="958" y="262" font-size="11" fill="#57606a">custom /embed API (multimodal)</text>
+
+  <rect x="930" y="310" width="240" height="108" rx="10" fill="#f3f9e6" stroke="#76b900" stroke-width="1.5"/>
+  <text x="946" y="334" font-size="13" font-weight="700" fill="#1f2328">NVIDIA NIM API</text>
+  <text x="946" y="351" font-size="11" fill="#57606a">or any OpenAI-compatible endpoint,</text>
+  <text x="946" y="366" font-size="11" fill="#57606a">on Brev or your network</text>
+  <text x="946" y="390" font-size="12" fill="#1f2328">Video understanding: vision-language</text>
+  <text x="946" y="406" font-size="12" fill="#1f2328">models (chat / frame sampling)</text>
+
+  <rect x="930" y="438" width="240" height="92" rx="10" fill="#ffffff" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="946" y="462" font-size="13" font-weight="700" fill="#1f2328">Optional providers</text>
+  <text x="946" y="482" font-size="12" fill="#57606a">Google Gemini, AWS Bedrock</text>
+  <text x="946" y="500" font-size="12" fill="#57606a">(plug in with an API key; not</text>
+  <text x="946" y="516" font-size="12" fill="#57606a">needed for the default setup)</text>
+
+  <!-- backend -> models -->
+  <line x1="860" y1="205" x2="928" y2="205" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="860" y1="364" x2="928" y2="364" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="860" y1="484" x2="928" y2="484" stroke="#8c959f" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="894" y="196" font-size="11" text-anchor="middle" fill="#57606a">HTTP</text>
+  <text x="894" y="355" font-size="11" text-anchor="middle" fill="#57606a">HTTP</text>
+  <text x="894" y="475" font-size="11" text-anchor="middle" fill="#57606a">API</text>
+
+  <!-- backend -> storage -->
+  <line x1="580" y1="530" x2="580" y2="588" stroke="#57606a" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="592" y="564" font-size="11" fill="#57606a">read / write</text>
+
+  <!-- ===== Storage ===== -->
+  <rect x="300" y="590" width="560" height="150" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="316" y="618" font-size="16" font-weight="700" fill="#1f2328">Local storage</text>
+  <text x="316" y="637" font-size="12" fill="#57606a">data/ at the repo root; delete it to reset</text>
+  <rect x="316" y="652" width="256" height="72" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="330" y="674" font-size="13" font-weight="700" fill="#1f2328">app.db (SQLite)</text>
+  <text x="330" y="692" font-size="12" fill="#57606a">videos, analysis tasks, ground truth,</text>
+  <text x="330" y="708" font-size="12" fill="#57606a">evaluations, embedding vectors</text>
+  <rect x="588" y="652" width="256" height="72" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="602" y="674" font-size="13" font-weight="700" fill="#1f2328">files/</text>
+  <text x="602" y="692" font-size="12" fill="#57606a">uploaded videos and thumbnails,</text>
+  <text x="602" y="708" font-size="12" fill="#57606a">served with signed URLs</text>
+
+  <!-- legend -->
+  <line x1="930" y1="610" x2="970" y2="610" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="980" y="614" font-size="12" fill="#57606a">default path</text>
+  <line x1="930" y1="634" x2="970" y2="634" stroke="#8c959f" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="980" y="638" font-size="12" fill="#57606a">optional</text>
+</svg>

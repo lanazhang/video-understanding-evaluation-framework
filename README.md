@@ -2,6 +2,10 @@
 
 A flexible tool that streamlines video labeling and evaluation, enabling teams to work with their own data, reduce ground-truth bias, and accelerate model development.
 
+> **Branches.** `main` runs entirely on your machine (FastAPI + SQLite + local files, models on NVIDIA Brev / NIM / any
+> OpenAI-compatible endpoint). The original AWS serverless version (Lambda, API Gateway, DynamoDB, S3, Bedrock, Cognito and
+> the CDK deployment) is kept on the [`aws-original`](https://github.com/lanazhang/video-understanding-evaluation-framework/tree/aws-original) branch.
+
 ## Why This Matters
 
 Video understanding is a core growth driver in the GenAI market, enabling new revenue streams across media, advertising, education, retail, and enterprise. By transforming video into structured, actionable intelligence, it powers monetization use cases like contextual ads, shoppable content, personalization, and automation—making it a strategic capability, not just a technical one.
@@ -25,10 +29,59 @@ This framework helps teams quickly assess customer-provided videos and recommend
 ### Key Features
 
 - **User-uploaded videos & custom labeling**: Efficiently label videos for specific use cases, reducing dependence on public/licensed datasets and minimizing ground-truth bias
-- **Cross-model comparison**: Supports TwelveLabs, Gemini, LLaMA, OpenAI, and Nova Understanding with different video understanding methods (frame-sampling, embedding-based)
+- **Cross-model comparison**: Compare video understanding (frame-sampling) and embedding-based methods side by side. NVIDIA-hosted models are the default (Qwen3-VL-Embedding-8B, Omni-Embed-Nemotron-3B, NIM / OpenAI-compatible vision-language models); Gemini, Bedrock and other providers can be plugged in through `backend`'s model registry
 - **Human-in-the-loop efficiency**: Auto-label with a base model and quickly refine with human input, reducing labeling time from weeks to hours
 - **Flexible evaluation workflow**: Compare outputs across models and methods to identify optimal solutions, adaptable for different industries and content types
 - **Interactive review tools**: Side-by-side comparison of predicted vs ground truth labels with metrics (precision, recall, F1) and individual label verification
+
+## Architecture
+
+![Local architecture](assets/architecture.svg)
+
+The web UI talks to a FastAPI backend over REST. The backend runs the original Lambda handlers in-process, with each AWS
+service replaced by a local one (S3 by files, DynamoDB and S3 Vectors by SQLite, Lambda invokes by a thread pool), so the
+whole app needs no AWS account and no Docker. Only the models are remote.
+
+- **Upload**: the UI sends the video to the backend, which stores it under `data/files/` and records its metadata
+  (duration, resolution, thumbnail) in SQLite.
+- **Embed**: an embedding task cuts the video into segments, sends each one to the chosen model (Qwen3-VL-Embedding or
+  Omni-Embed-Nemotron, on NVIDIA Brev) and stores the returned vectors unchanged. What a task accepts (segment length,
+  inputs, dimension) is declared per model in `backend/models.yaml`.
+- **Search and label**: a text query is embedded with the same model and ranked by exact cosine distance. Results can be
+  compared across models and turned into ground-truth labels.
+- **Evaluate**: the UI matches the returned clips to the verified ground truth and computes the metrics below, then
+  saves the evaluation for comparison.
+
+## Screenshots
+
+### 1. Label the ground truth
+
+![Ground-truth labeling](assets/eval-screenshot-gt-labeling.png)
+
+Create the reference moments for a video. Play it, mark the start and end on the timeline (or with *Set Current* and the
+-1s / +1s nudges), and type the label. Labels you add by hand are marked **Manual**; labels suggested automatically (for
+example from a model search) wait in the **Unreviewed** tab until you verify them. Only **Verified** labels (right) count as ground truth. The example
+has two verified "woman in the mirror" moments, one 1 s long and one 16 s long.
+
+### 2. Compare embedding models on the same query
+
+![Compare embeddings](assets/eval-screenshot-compare-search.png)
+
+Run one text query against several embedding tasks at once. Here *"woman in the mirror"* is searched over a
+Qwen3-VL-Embedding-8B task and an Omni-Embed-Nemotron-3B task, both built from 5 s segments. Each model lists its top results
+with the time range and the cosine distance (lower is closer). Click a range to play it in the player above, filter by the
+input type that was embedded (video, audio, image), and sort by distance or timestamp. Use it to sanity-check models and to
+pick clips for the ground truth.
+
+### 3. Score a model against the ground truth
+
+![Evaluation report](assets/eval-screenshot-eval-report.png)
+
+The evaluation report scores the clips a model returned against the verified ground truth: **Precision, Recall, F1,
+Accuracy, Mean IoU and mAP**, then **ranking quality** (Recall@1/5/10, MRR, NDCG@10, mAP at IoU 0.3 / 0.5 / 0.7) and
+**efficiency** (processing time, speed as a multiple of real time, tokens and cost). The *Re-score with different matching*
+control recalculates the same results with another matching rule without saving. Every card has an info icon with its
+definition; see [Evaluation metrics](#evaluation-metrics) below for how a clip is matched to a moment.
 
 ## Evaluation metrics
 
@@ -74,34 +127,34 @@ a new evaluation to get the corrected metrics. The settings used are stored with
 
 The backend (FastAPI + SQLite + local files) and the web UI run on your machine, and models run on NVIDIA
 NIM / Brev (or any OpenAI-compatible endpoint). Setup, start commands and troubleshooting are in
-[local/README.md](local/README.md). In short, after the one-time setup there:
+[backend/README.md](backend/README.md). In short, after the one-time setup there:
 
 ```bash
-cd local/backend && ../.venv/bin/uvicorn app:app --port 8080   # terminal 1: API
-cd source/frontend && npm run dev                              # terminal 2: UI at http://localhost:5173
+cd backend && .venv/bin/uvicorn app:app --port 8080   # terminal 1: API
+cd frontend && npm run dev                              # terminal 2: UI at http://localhost:5173
 ```
 
 ### Development (frontend only)
 
 ```bash
-cd source/frontend
+cd frontend
 npm install
 npm run dev
 ```
 
 Open http://localhost:5173 in your browser. The UI calls the backend at `http://localhost:8080/v1/`
-(change it with `VITE_API_BASE_URL`, see `source/frontend/.env.example`).
+(change it with `VITE_API_BASE_URL`, see `frontend/.env.example`).
 
 ### Production Build
 
 To create a production build for deployment as a static website:
 
 ```bash
-cd source/frontend
+cd frontend
 npm run build
 ```
 
-The build output will be in the `source/frontend/dist` directory. You can deploy this folder to any static hosting service (AWS S3, Netlify, Vercel, GitHub Pages, etc.).
+The build output will be in the `frontend/dist` directory. You can deploy this folder to any static hosting service (AWS S3, Netlify, Vercel, GitHub Pages, etc.).
 
 **Subfolder Deployment**: The app is served from the root (`/`) by default. To deploy under a subfolder, build with
 the path set, e.g. `VITE_BASE_PATH=/my-app/ npm run build`, then deploy the `dist` folder to that subfolder of your domain.
@@ -115,5 +168,5 @@ npm run preview
 ## Tech Stack
 
 - React + Vite (frontend)
-- FastAPI, SQLite and local file storage (local runtime, see [local/README.md](local/README.md))
-- AWS serverless stack (Lambda, API Gateway, DynamoDB, S3, Bedrock) in `deployment/` and `source/eval_service/`
+- FastAPI, SQLite and local file storage (local runtime, see [backend/README.md](backend/README.md))
+- The API handlers in `backend/lambdas` come from the original AWS serverless stack (Lambda, API Gateway, DynamoDB, S3, Bedrock); the local runtime loads them with AWS replaced by local equivalents. The AWS deployment (CDK) is on the `aws-original` branch

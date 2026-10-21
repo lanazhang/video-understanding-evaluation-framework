@@ -6,7 +6,8 @@ import refreshIcon from '../assets/icons/refresh.svg'
 import trashIcon from '../assets/icons/trash.svg'
 import EvaluationDetail from './EvaluationDetail'
 import CreateEvaluationInline from './CreateEvaluationInline'
-import { calculateEvaluationMetrics } from './CreateEvaluation/evaluationUtils'
+import { calculateEvaluationMetrics, matchOptionsForTask, isLegacyEvaluation, RANKING_METRICS, describeMatching, describeThreshold, formatRange, describeOverlap } from './CreateEvaluation/evaluationUtils'
+import { efficiencyRows } from '../utils/evaluationEfficiency'
 import MultiEvaluationComparisonModal from './CreateEvaluation/MultiEvaluationComparisonModal'
 
 function EvaluationManagement({ currentUser, initialGTFilter = null }) {
@@ -20,6 +21,7 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
   const [sortField, setSortField] = useState('createdAt')
   const [sortDirection, setSortDirection] = useState('desc')
   const [selectedEvals, setSelectedEvals] = useState([])
+  const [previewVideo, setPreviewVideo] = useState(null)
   const [showComparison, setShowComparison] = useState(false)
   const [showMultiVideoModal, setShowMultiVideoModal] = useState(false)
   
@@ -101,7 +103,17 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
         Status: task.Status || 'created',
         video: task.video || null,
         groundTruth: task.groundTruth || null,
-        analyzeTask: task.analyzeTask || null
+        analyzeTask: task.analyzeTask || null,
+        // list columns (also the sort keys)
+        modelId: task.analyzeTask?.ModelId || '',
+        groundTruthName: task.groundTruth?.Name || '',
+        // Settings the metrics were computed with (missing on evaluations saved by earlier versions)
+        BufferTime: task.BufferTime,
+        MatchVersion: task.MatchVersion,
+        MatchIouThreshold: task.MatchIouThreshold,
+        MatchBy: task.MatchBy,
+        MatchThreshold: task.MatchThreshold,
+        OneToOne: task.OneToOne
       }))
         
       setEvaluationTasks(transformedTasks)
@@ -139,6 +151,17 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
     } else {
       setSelectedEvals(selectedEvals.filter(e => e.id !== task.id))
     }
+  }
+
+  // "Select all" picks every listed evaluation that shares a ground truth (the one already selected, else the first row's),
+  // because only evaluations of the same ground truth can be compared
+  const selectableForAll = () => {
+    const gtId = selectedEvals[0]?.groundTruthId ?? sortedAndFilteredTasks[0]?.groundTruthId
+    return sortedAndFilteredTasks.filter(t => t.groundTruthId === gtId)
+  }
+
+  const handleSelectAll = (checked) => {
+    setSelectedEvals(checked ? selectableForAll() : [])
   }
 
   const handleCompare = () => {
@@ -244,7 +267,8 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
       return false
     }
     
-    return taskName.includes(query) || videoName.includes(query) || gtName.includes(query)
+    const modelName = task.modelId?.toLowerCase() || ''
+    return taskName.includes(query) || videoName.includes(query) || gtName.includes(query) || modelName.includes(query)
   })
 
   const sortedAndFilteredTasks = getSortedEvaluationTasks(filteredTasks)
@@ -300,7 +324,8 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                 searchResults,
                 '',
                 [],
-                bufferTime
+                bufferTime,
+                matchOptionsForTask(task)
               )
               matchingDetails = result.details
             }
@@ -354,6 +379,39 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                 </div>
                 
                 <div className="comparison-confusion">
+                  <h4>Ranking quality</h4>
+                  <div className="comparison-metrics">
+                    {RANKING_METRICS.map(m => (
+                      <div className="comparison-metric" key={m.key} title={m.description}>
+                        <div className="metric-label">{m.label}</div>
+                        <div className="metric-value">
+                          {metrics?.[m.key] !== undefined ? `${(metrics[m.key] * 100).toFixed(1)}%` : 'N/A'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <small style={{ display: 'block', marginTop: 6, opacity: 0.75 }}>
+                    {isLegacyEvaluation(task)
+                      ? 'Saved with the earlier matching method (any overlap); ranking metrics need a new evaluation.'
+                      : `Matching: ${describeMatching(matchOptionsForTask(task), task.BufferTime)}`}
+                  </small>
+                </div>
+
+                {efficiencyRows(task).length > 0 && (
+                  <div className="comparison-confusion">
+                    <h4>Efficiency</h4>
+                    <div className="comparison-metrics">
+                      {efficiencyRows(task).map(row => (
+                        <div className="comparison-metric" key={row.label} title={row.title}>
+                          <div className="metric-label">{row.label}</div>
+                          <div className="metric-value">{row.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="comparison-confusion">
                   <h4>Confusion Matrix</h4>
                   <div className="confusion-grid-compact">
                     <div className="confusion-item-compact tp">
@@ -375,6 +433,36 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                   </div>
                 </div>
                 
+                {matchingDetails?.gtMatches && (
+                  <div className="comparison-labels">
+                    <h4>Ground Truth Ranges ({matchingDetails.gtMatches.length})</h4>
+                    <div className="comparison-labels-list">
+                      {[...matchingDetails.gtMatches]
+                        .sort((a, b) => parseFloat(a.gtLabel.StartTs || 0) - parseFloat(b.gtLabel.StartTs || 0))
+                        .map((m) => {
+                          const matchSettings = matchOptionsForTask(task)
+                          return (
+                            <div key={m.gtIndex} className={`comparison-label-item ${m.status.toLowerCase()}`}>
+                              <div className="label-time">{formatRange(m.gtLabel)}</div>
+                              <div className="label-info comparison-overlap-block">
+                                {m.clips.length === 0 ? (
+                                  <div className="comparison-overlap-line">No returned clip touches this range</div>
+                                ) : m.clips.slice(0, 3).map(c => (
+                                  <div className="comparison-overlap-line" key={c.predIndex}>
+                                    {c.claimed ? 'Found by' : 'Touched by'} clip {formatRange(c.predLabel)}: {describeOverlap(c)}
+                                    {!c.claimed ? (c.meetsThreshold ? ' \u00b7 a better-ranked clip already found it' : ` \u00b7 does not reach ${describeThreshold(matchSettings)}`) : ''}
+                                  </div>
+                                ))}
+                                {m.clips.length > 3 && <div className="comparison-overlap-line">+{m.clips.length - 3} more clips</div>}
+                              </div>
+                              <div className={`label-result-badge ${m.status.toLowerCase()}`}>{m.status}</div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="comparison-labels">
                   <h4>Segment Details ({task.Labels?.length || 0} segments)</h4>
                   <div className="comparison-labels-list">
@@ -382,21 +470,33 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                       task.Labels.map((label, idx) => {
                         // Get the evaluation status from matching details
                         let status = '—'
+                        let overlaps = []
                         
                         if (matchingDetails?.predMatches) {
                           const match = matchingDetails.predMatches.find(m => m.predIndex === idx)
                           if (match) {
                             status = match.status
+                            overlaps = match.overlaps || []
                           }
                         }
+                        const matchSettings = matchOptionsForTask(task)
                         
                         return (
                           <div key={idx} className={`comparison-label-item ${status.toLowerCase()}`}>
                             <div className="label-time">
                               {label.StartTs?.toFixed(2)}s - {label.EndTs?.toFixed(2)}s
                             </div>
-                            <div className="label-info">
+                            <div className="label-info comparison-overlap-block">
                               <span className="label-text">{label.Label}</span>
+                              {matchingDetails?.predMatches && (overlaps.length === 0 ? (
+                                <div className="comparison-overlap-line">No overlap with any ground-truth range</div>
+                              ) : overlaps.slice(0, 2).map(o => (
+                                <div className="comparison-overlap-line" key={o.gtIndex}>
+                                  vs GT {formatRange(o.gtLabel)}: {describeOverlap(o)}
+                                  {!o.claimed ? (o.meetsThreshold ? ' \u00b7 duplicate: that range is already found' : ` \u00b7 does not reach ${describeThreshold(matchSettings)}`) : ''}
+                                </div>
+                              )))}
+                              {overlaps.length > 2 && <div className="comparison-overlap-line">+{overlaps.length - 2} more ground-truth ranges</div>}
                             </div>
                             <div className={`label-result-badge ${status.toLowerCase()}`}>
                               {status}
@@ -439,7 +539,8 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                     })),
                     '',
                     [],
-                    task.BufferTime !== undefined ? task.BufferTime : 0
+                    task.BufferTime !== undefined ? task.BufferTime : 0,
+                    matchOptionsForTask(task)
                   ).details
                 : null
             }))}
@@ -464,6 +565,24 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
   // List view
   return (
     <div className="evaluation-management">
+      {previewVideo && (
+        <div
+          className="video-preview-overlay"
+          role="dialog"
+          aria-label="Video preview"
+          onClick={() => setPreviewVideo(null)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setPreviewVideo(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 8, padding: 16, maxWidth: '80vw' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <strong>{previewVideo.Name}</strong>
+              <button type="button" aria-label="Close preview" onClick={() => setPreviewVideo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
+            </div>
+            <video src={previewVideo.video_url} controls autoPlay muted style={{ maxWidth: '100%', maxHeight: '70vh' }} />
+          </div>
+        </div>
+      )}
       <div className="content-header">
         <h1>Evaluation</h1>
         <div className="header-actions">
@@ -544,10 +663,26 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
           <table>
             <thead>
               <tr>
-                <th></th>
-                <th style={{ width: '30px' }}></th>
+                <th style={{ width: '30px' }}>
+                  <input
+                    type="checkbox"
+                    className="eval-select-all"
+                    title="Select all evaluations with the same ground truth"
+                    aria-label="Select all"
+                    checked={selectedEvals.length > 0 && selectableForAll().every(t => selectedEvals.some(e => e.id === t.id))}
+                    ref={(el) => { if (el) el.indeterminate = selectedEvals.length > 0 && !selectableForAll().every(t => selectedEvals.some(e => e.id === t.id)) }}
+                    disabled={sortedAndFilteredTasks.length === 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </th>
                 <th onClick={() => handleSort('taskName')} style={{ cursor: 'pointer' }}>
                   Evaluation Name {getSortIcon('taskName')}
+                </th>
+                <th onClick={() => handleSort('modelId')} style={{ cursor: 'pointer' }}>
+                  Model {getSortIcon('modelId')}
+                </th>
+                <th onClick={() => handleSort('groundTruthName')} style={{ cursor: 'pointer' }}>
+                  Ground Truth {getSortIcon('groundTruthName')}
                 </th>
                 <th>Metrics</th>
                 <th onClick={() => handleSort('createdAt')} style={{ cursor: 'pointer' }}>
@@ -559,7 +694,7 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
             <tbody>
               {sortedAndFilteredTasks.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="no-results-cell">
+                  <td colSpan="7" className="no-results-cell">
                     {searchQuery ? `No evaluations found matching "${searchQuery}"` : 'No evaluations created yet'}
                   </td>
                 </tr>
@@ -577,17 +712,6 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                       className={`evaluation-row ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
                       onClick={() => handleTaskClick(task)}
                     >
-                      <td>
-                        {task.video?.thumbnail_url ? (
-                          <img 
-                            src={task.video.thumbnail_url} 
-                            alt={task.video.Name}
-                            className="evaluation-thumbnail"
-                          />
-                        ) : (
-                          <div className="thumbnail-placeholder">No thumbnail</div>
-                        )}
-                      </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
@@ -597,7 +721,23 @@ function EvaluationManagement({ currentUser, initialGTFilter = null }) {
                           className="eval-checkbox"
                         />
                       </td>
-                      <td className="eval-name-cell">{task.taskName || task.Name || 'N/A'}</td>
+                      <td className="eval-name-cell">
+                        {task.taskName || task.Name || 'N/A'}
+                        {task.video?.video_url && (
+                          <div>
+                            <button
+                              type="button"
+                              className="btn-link-preview"
+                              onClick={(e) => { e.stopPropagation(); setPreviewVideo(task.video) }}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#2563eb', textDecoration: 'underline', font: 'inherit', fontSize: 12 }}
+                            >
+                              Preview video{task.video.Name ? `: ${task.video.Name}` : ''}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="eval-model-cell" title={task.analyzeTask?.Name || task.modelId}>{task.modelId || 'N/A'}</td>
+                      <td className="eval-gt-cell" title={task.groundTruthName}>{task.groundTruthName || 'N/A'}</td>
                       <td className="metrics-combined-cell">
                         {metrics ? (
                           <div className="metrics-grid-compact">

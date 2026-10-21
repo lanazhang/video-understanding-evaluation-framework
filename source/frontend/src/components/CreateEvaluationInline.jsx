@@ -8,7 +8,8 @@ import VideoGroundTruthSelector from './CreateEvaluation/VideoGroundTruthSelecto
 import AnalysisTaskSelector from './CreateEvaluation/AnalysisTaskSelector'
 import EvaluationReport from './CreateEvaluation/EvaluationReport'
 import SegmentDetailModal from './CreateEvaluation/SegmentDetailModal'
-import { calculateEvaluationMetrics } from './CreateEvaluation/evaluationUtils'
+import { calculateEvaluationMetrics, DEFAULT_MATCH_OPTIONS, matchFieldsToSave } from './CreateEvaluation/evaluationUtils'
+import { embeddingLabel, isEmbeddingTask } from '../utils/embeddingTasks'
 
 function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
   const [step, setStep] = useState(1)
@@ -21,6 +22,8 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
   const [evaluationName, setEvaluationName] = useState('')
   const [evaluationDescription, setEvaluationDescription] = useState('')
   const [bufferTime, setBufferTime] = useState(1.00) // Buffer time in seconds with 2 decimal places
+  // How a clip is matched to a ground-truth moment: the measure, the minimum (0 = any overlap) and one-to-one claiming
+  const [matchOptions, setMatchOptions] = useState(DEFAULT_MATCH_OPTIONS)
   const [evaluationMetrics, setEvaluationMetrics] = useState(null)
   const [matchingDetails, setMatchingDetails] = useState(null)
   const [selectedSegment, setSelectedSegment] = useState(null)
@@ -170,7 +173,7 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     }
     
     // For embedding tasks, require search results
-    if ((selectedAnalyzeTask.Type === 'nova-mme' || selectedAnalyzeTask.Type === 'tlabs-mme') && finalResults.length === 0) {
+    if ((isEmbeddingTask(selectedAnalyzeTask)) && finalResults.length === 0) {
       setError('Please run a search and get valid results before proceeding')
       return
     }
@@ -180,13 +183,11 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
     setAllSearches(finalSearches)
     
     // Generate comprehensive default description
-    const modelType = selectedAnalyzeTask.Type === 'nova-mme' ? 'Nova MME' : 
-                      selectedAnalyzeTask.Type === 'tlabs-mme' ? 'TwelveLabs' : 
-                      'Video Understanding'
+    const modelType = isEmbeddingTask(selectedAnalyzeTask) ? embeddingLabel(selectedAnalyzeTask) : 'Video Understanding'
     const modelId = selectedAnalyzeTask.ModelId
     
-    // Set default evaluation name: video name + model name
-    setEvaluationName(`${selectedVideo.Name} - ${modelId}`)
+    // Default evaluation name: video name - ground truth name - analysis task (falls back to the model)
+    setEvaluationName([selectedVideo.Name, selectedGroundTruth.Name, selectedAnalyzeTask.Name || modelId].filter(Boolean).join(' - '))
     const searchQueries = finalSearches.map(s => `"${s.query}"`).join(', ')
     const numResults = finalResults.length
     const gtDescription = selectedGroundTruth.Description ? `\n\nGround Truth: ${selectedGroundTruth.Description}` : ''
@@ -201,7 +202,8 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
       finalResults,
       finalSearches.map(s => s.query).join(', '),
       finalSearches,
-      bufferTime // Pass buffer time to calculation
+      bufferTime, // Pass buffer time to calculation
+      matchOptions
     )
     setEvaluationMetrics(result.metrics)
     setMatchingDetails(result.details)
@@ -326,7 +328,9 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
         CompletedAt: new Date().toISOString(),
         Labels: labels,
         EvaluationMetrics: evaluationMetrics,
-        BufferTime: parseFloat(bufferTime.toFixed(2))
+        BufferTime: parseFloat(bufferTime.toFixed(2)),
+        // Matching settings the metrics were computed with, so the evaluation can be shown and recomputed consistently
+        ...matchFieldsToSave(matchOptions)
       }
 
       await evalAPI.upsertEvaluationTask(payload)
@@ -423,17 +427,20 @@ function CreateEvaluationInline({ currentUser, onCancel, onSuccess }) {
           onSegmentClick={handleSegmentClick}
           onPrevious={handlePreviousStep}
           onSave={handleGenerateReport}
-          onRecalculate={() => {
+          onRecalculate={(nextOptions) => {
             const result = calculateEvaluationMetrics(
               selectedGroundTruth.Labels || [],
               searchResults,
               allSearches.map(s => s.query).join(', '),
               allSearches,
-              bufferTime
+              bufferTime,
+              nextOptions || matchOptions
             )
             setEvaluationMetrics(result.metrics)
             setMatchingDetails(result.details)
           }}
+          matchOptions={matchOptions}
+          onMatchOptionsChange={setMatchOptions}
         />
       )}
 

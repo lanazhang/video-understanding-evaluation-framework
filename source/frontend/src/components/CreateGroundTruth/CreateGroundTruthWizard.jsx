@@ -16,6 +16,8 @@ function CreateGroundTruthWizard({ currentUser, onCancel, onSuccess }) {
   const [isMaximized, setIsMaximized] = useState(false)
 
   const handleVideoSelect = (video) => {
+    setAllSearches([])
+    setAllResults([])
     setSelectedVideo(video)
     setStep(2)
   }
@@ -89,6 +91,7 @@ function CreateGroundTruthWizard({ currentUser, onCancel, onSuccess }) {
 
         {step === 2 && selectedVideo && (
           <LabelCreator
+            key={selectedVideo.Id || selectedVideo.id}
             video={selectedVideo}
             currentUser={currentUser}
             initialSearches={allSearches}

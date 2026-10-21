@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './ChatBot.css'
 import { evalAPI } from '../../utils/api'
 import { FetchPost } from '../../utils/apiHelper'
-import { fetchUserAttributes } from 'aws-amplify/auth'
+import { fetchUserAttributes } from '../../utils/auth'
 import GroundTruthTaskDetail from '../GroundTruthTaskDetail'
 import EvaluationDetail from '../EvaluationDetail'
 

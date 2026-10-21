@@ -1,0 +1,7 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-dotenv>=1.0
+boto3>=1.40
+moviepy>=2.2
+openai>=1.50
+pyyaml>=6.0

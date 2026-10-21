@@ -526,7 +526,7 @@
 
 .overlap-table-header {
   display: grid;
-  grid-template-columns: 50px 1fr 80px 80px 120px;
+  grid-template-columns: 36px 150px 56px 70px minmax(0, 1fr);
   gap: 8px;
   padding: 10px 12px;
   background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
@@ -540,13 +540,19 @@
 
 .overlap-table-row {
   display: grid;
-  grid-template-columns: 50px 1fr 80px 80px 120px;
+  grid-template-columns: 36px 150px 56px 70px minmax(0, 1fr);
   gap: 8px;
   padding: 12px;
   border-bottom: 1px solid var(--neutral-200);
   font-size: 13px;
   transition: all 0.2s ease;
   align-items: center;
+}
+
+/* The ground-truth table has an extra Label column */
+.overlap-table-header.with-label,
+.overlap-table-row.with-label {
+  grid-template-columns: 36px 150px minmax(60px, 0.6fr) 56px 70px minmax(0, 1.6fr);
 }
 
 .overlap-table-row:last-child {
@@ -632,7 +638,14 @@
 .overlap-col-match {
   font-size: 12px;
   color: var(--neutral-600);
-  text-align: center;
+  text-align: left;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.overlap-col-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Video Modal */
@@ -810,4 +823,12 @@
   .metadata-section {
     flex: 1 1 100%;
   }
+}
+
+/* second line in the "Matched To" cells: the range it was matched to and how the two ranges compare */
+.overlap-detail-line {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #777;
 }

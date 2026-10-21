@@ -2,6 +2,8 @@ import refreshIcon from '../../assets/icons/refresh.svg'
 import SearchEmbeddings from './SearchEmbeddings'
 import { modelGroups } from '../../static/modelConfig'
 import './TaskList.css'
+import { isEmbeddingTask } from '../../utils/embeddingTasks'
+import { embeddingTaskParamRows } from '../../utils/embeddingParams'
 
 function TaskList({
   analyzeTasks,
@@ -40,7 +42,7 @@ function TaskList({
 }) {
   // Filter to show only MME (Multimodal Embedding) type tasks
   const mmeTasks = analyzeTasks.filter(t => 
-    t.Type === 'nova-mme' || t.Type === 'tlabs-mme'
+    isEmbeddingTask(t)
   )
   
   const completedTasks = mmeTasks.filter(t => t.Status === 'completed' && t.Result && t.Result.S3VectorIndex)
@@ -266,7 +268,22 @@ function TaskList({
                         </div>
                       )}
                       
-                      {task.Type === 'tlabs-mme' ? (
+                      {task.Type === 'embedding' ? (
+                        <>
+                          {embeddingTaskParamRows(task).map(row => (
+                            <div className="task-list__detail-row" key={row.label}>
+                              <span className="task-list__detail-label">{row.label}:</span>
+                              <span className="task-list__detail-value">{row.value}</span>
+                            </div>
+                          ))}
+                          {task.Status === 'failed' && task.Result?.ErrorMessage && (
+                            <div className="task-list__detail-row">
+                              <span className="task-list__detail-label">Error:</span>
+                              <span className="task-list__detail-value">{task.Result.ErrorMessage}</span>
+                            </div>
+                          )}
+                        </>
+                      ) : task.Type === 'tlabs-mme' ? (
                         <>
                           {(task.Request?.Segmentation || task.Request?.segmentation) && (
                             <>
@@ -398,12 +415,14 @@ function TaskList({
                     
                     {task.Status === 'completed' && task.Result && (
                       <div className="task-list__details-full">
+                        {task.Type !== 'embedding' && (
+                          <div className="task-list__detail-row">
+                            <span className="task-list__detail-label">S3 Vector Bucket:</span>
+                            <span className="task-list__detail-value">{task.Result.S3VectorBucket || 'N/A'}</span>
+                          </div>
+                        )}
                         <div className="task-list__detail-row">
-                          <span className="task-list__detail-label">S3 Vector Bucket:</span>
-                          <span className="task-list__detail-value">{task.Result.S3VectorBucket || 'N/A'}</span>
-                        </div>
-                        <div className="task-list__detail-row">
-                          <span className="task-list__detail-label">S3 Vector Index:</span>
+                          <span className="task-list__detail-label">{task.Type === 'embedding' ? 'Vector Index:' : 'S3 Vector Index:'}</span>
                           <span className="task-list__detail-value">{task.Result.S3VectorIndex || 'N/A'}</span>
                         </div>
                       </div>

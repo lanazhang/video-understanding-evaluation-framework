@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom'
 import './App.css'
-import '@aws-amplify/ui-react/styles.css'
-import { Authenticator } from '@aws-amplify/ui-react'
-import { signOut } from 'aws-amplify/auth'
+import { LOCAL_USER } from './utils/auth'
 import VideoManagement from './components/VideoManagement'
 import GroundTruthManagement from './components/GroundTruthManagement'
 import EvaluationManagement from './components/EvaluationManagement'
@@ -237,15 +235,6 @@ function AppContent({ currentUser, setCurrentUser }) {
     }
   }, [navigate])
 
-  const handleLogout = async () => {
-    try {
-      await signOut()
-      setShowUserMenu(false)
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
-
   const handleMenuClick = (menu) => {
     setGtVideoFilter(null)
     setEvalGTFilter(null)
@@ -364,7 +353,6 @@ function AppContent({ currentUser, setCurrentUser }) {
             {showUserMenu && (
               <div className="user-menu">
                 <div className="username">{currentUser?.username || 'User'}</div>
-                <button onClick={handleLogout}>Logout</button>
               </div>
             )}
           </div>
@@ -388,25 +376,16 @@ function AppContent({ currentUser, setCurrentUser }) {
 }
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null)
+  // Single-user local mode: no sign-in
+  const [currentUser, setCurrentUser] = useState(LOCAL_USER)
+  // '/' by default; follows vite's `base` when deployed under a subfolder
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
 
   return (
-    <BrowserRouter basename="/video-eval-mock">
-      <Authenticator hideSignUp={true}>
-        {({ user }) => {
-          // Update currentUser when user changes, but only if different
-          if (user && user !== currentUser) {
-            // Use setTimeout to defer the state update to avoid updating during render
-            setTimeout(() => setCurrentUser(user), 0)
-          }
-          
-          return (
-            <div className="App">
-              <AppContent currentUser={currentUser} setCurrentUser={setCurrentUser} />
-            </div>
-          )
-        }}
-      </Authenticator>
+    <BrowserRouter basename={basename}>
+      <div className="App">
+        <AppContent currentUser={currentUser} setCurrentUser={setCurrentUser} />
+      </div>
     </BrowserRouter>
   )
 }

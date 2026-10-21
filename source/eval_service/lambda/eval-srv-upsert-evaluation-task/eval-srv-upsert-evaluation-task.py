@@ -87,6 +87,12 @@ def lambda_handler(event, context):
         # Add CompletedAt if provided
         if body.get('CompletedAt'):
             item['CompletedAt'] = body['CompletedAt']
+
+        # Settings the metrics were computed with. Without these the evaluation cannot be shown or recomputed
+        # consistently later (BufferTime used to be sent by the UI but silently dropped here).
+        for optional_field in ('BufferTime', 'MatchVersion', 'MatchBy', 'MatchThreshold', 'MatchIouThreshold', 'OneToOne'):
+            if optional_field in body and body[optional_field] is not None:
+                item[optional_field] = body[optional_field]
         
         # Convert float values to Decimal for DynamoDB
         item = convert_floats_to_decimal(item)
@@ -121,7 +127,9 @@ def lambda_handler(event, context):
         if item['EvaluationMetrics']:
             metrics = item['EvaluationMetrics']
             # Validate metric values are within valid ranges
-            for metric_name in ['Precision', 'Recall', 'F1Score', 'Accuracy', 'MeanIoU', 'MeanAveragePrecision']:
+            for metric_name in ['Precision', 'Recall', 'F1Score', 'Accuracy', 'MeanIoU', 'MeanAveragePrecision',
+                                'RecallAt1', 'RecallAt5', 'RecallAt10', 'MRR', 'NDCG10',
+                                'MeanAveragePrecisionIoU30', 'MeanAveragePrecisionIoU50', 'MeanAveragePrecisionIoU70']:
                 if metric_name in metrics:
                     value = float(metrics[metric_name])
                     if not (0 <= value <= 1):
@@ -134,7 +142,8 @@ def lambda_handler(event, context):
                         }
             
             # Validate count metrics are non-negative integers
-            for metric_name in ['TruePositives', 'FalsePositives', 'TrueNegatives', 'FalseNegatives']:
+            for metric_name in ['TruePositives', 'FalsePositives', 'TrueNegatives', 'FalseNegatives',
+                                'MatchedGroundTruth', 'TotalGroundTruth']:
                 if metric_name in metrics:
                     value = int(metrics[metric_name])
                     if value < 0:

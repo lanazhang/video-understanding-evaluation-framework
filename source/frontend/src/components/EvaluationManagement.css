@@ -167,7 +167,7 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 1400px;
+  min-width: 1100px;
 }
 
 .evaluation-table th, 
@@ -184,27 +184,21 @@
   font-weight: 400;
   color: #666;
   line-height: 1.4;
-  max-width: 15%;
 }
 
-.evaluation-table th:nth-child(1), 
-.evaluation-table td:nth-child(1) { width: 15%; } /* Thumbnail */
-.evaluation-table th:nth-child(2), 
-.evaluation-table td:nth-child(2) { width: 25px; } /* Checkbox */
-.evaluation-table th:nth-child(3), 
-.evaluation-table td:nth-child(3) { width: 15%; } /* Evaluation Name */
-.evaluation-table th:nth-child(4), 
-.evaluation-table td:nth-child(4) { width: 100px; } /* Precision */
-.evaluation-table th:nth-child(5), 
-.evaluation-table td:nth-child(5) { width: 100px; } /* Recall */
-.evaluation-table th:nth-child(6), 
-.evaluation-table td:nth-child(6) { width: 100px; } /* F1 Score */
-.evaluation-table th:nth-child(7), 
-.evaluation-table td:nth-child(7) { width: 100px; } /* Mean IoU */
-.evaluation-table th:nth-child(8), 
-.evaluation-table td:nth-child(8) { width: 140px; } /* Created Date */
-.evaluation-table th:nth-child(9), 
-.evaluation-table td:nth-child(9) { width: 80px; } /* Actions */
+/* Columns: checkbox | name (takes the remaining width) | model | ground truth | metrics | created | actions */
+.evaluation-table th:nth-child(1),
+.evaluation-table td:nth-child(1) { width: 36px; padding-left: 8px; padding-right: 4px; text-align: center; }
+.evaluation-table th:nth-child(3),
+.evaluation-table td:nth-child(3) { width: 200px; }
+.evaluation-table th:nth-child(4),
+.evaluation-table td:nth-child(4) { width: 160px; }
+.evaluation-table th:nth-child(5),
+.evaluation-table td:nth-child(5) { width: 260px; }
+.evaluation-table th:nth-child(6),
+.evaluation-table td:nth-child(6) { width: 120px; }
+.evaluation-table th:nth-child(7),
+.evaluation-table td:nth-child(7) { width: 80px; }
 
 .evaluation-table thead {
   background: white;
@@ -239,10 +233,7 @@
 }
 
 /* Metric data cells in default color */
-.evaluation-table td:nth-child(3),
-.evaluation-table td:nth-child(4),
-.evaluation-table td:nth-child(5),
-.evaluation-table td:nth-child(6) {
+.evaluation-table td:nth-child(5) {
   color: inherit;
   font-weight: 600;
 }
@@ -961,4 +952,33 @@
 .metric-value-compact {
   font-weight: 700;
   color: inherit;
+}
+
+
+/* Ground truth vs returned range comparison */
+.comparison-overlap-block {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.comparison-overlap-line {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #666;
+}
+
+.comparison-label-item.tp,
+.comparison-label-item.true_positive {
+  border-left-color: #10b981;
+}
+
+.comparison-label-item.fp,
+.comparison-label-item.false_positive {
+  border-left-color: #ef4444;
+}
+
+.comparison-label-item.fn,
+.comparison-label-item.false_negative {
+  border-left-color: #f59e0b;
 }

@@ -1,0 +1,5 @@
+# Local runtime data (SQLite db, uploaded videos)
+/data/
+__pycache__/
+node_modules/
+dist/

@@ -1,3 +1,5 @@
+import { embeddingLabel } from '../../utils/embeddingTasks'
+
 function VideoGroundTruthSelector({
   videos,
   groundTruths,
@@ -67,7 +69,7 @@ function VideoGroundTruthSelector({
                         <span className="tasks-label">Source Models:</span>
                         {gt.analyzeTasks.map((task, idx) => (
                           <span key={task.Id || idx} className="task-badge">
-                            {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {task.ModelId}
+                            {embeddingLabel(task)} - {task.ModelId}
                           </span>
                         ))}
                       </div>

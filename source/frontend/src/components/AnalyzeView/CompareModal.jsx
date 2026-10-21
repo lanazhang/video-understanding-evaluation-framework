@@ -1,4 +1,6 @@
 import './CompareModal.css'
+import { embeddingTaskParamRows, embeddingTaskTitle } from '../../utils/embeddingParams'
+import { bindMutedPreference, persistMutedChange } from '../../utils/mutePreference'
 
 function CompareModal({
   show,
@@ -35,10 +37,10 @@ function CompareModal({
           <div className="compare-top-section">
             <div className="compare-video-container">
               <video 
-                ref={modalVideoPlayerRef}
+                ref={bindMutedPreference(modalVideoPlayerRef)}
+                onVolumeChange={persistMutedChange}
                 src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
                 controls
-                muted
                 className="compare-video-player"
               >
                 Your browser does not support the video tag.
@@ -115,6 +117,8 @@ function CompareModal({
                 let tooltipContent = ''
                 if (task.Type === 'nova-mme') {
                   tooltipContent = `Duration: ${task.Request?.DurationS || 'N/A'}s\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
+                } else if (task.Type === 'embedding') {
+                  tooltipContent = embeddingTaskParamRows(task).map(r => `${r.label}: ${r.value}`).join('\n')
                 } else if (task.Type === 'tlabs-mme') {
                   const segMethod = task.Request?.Segmentation?.Method || task.Request?.segmentation?.method || 'N/A'
                   const minDur = task.Request?.Segmentation?.Dynamic?.MinDurationSec || 
@@ -132,7 +136,7 @@ function CompareModal({
                   <div key={task.Id} className="compare-result-column">
                     <div className="compare-result-header" title={tooltipContent}>
                       <h4>
-                        {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}
+                        {embeddingTaskTitle(task)}
                         <span className="info-icon" title={tooltipContent}>ⓘ</span>
                       </h4>
                       <div className="compare-model-id">{task.ModelId}</div>

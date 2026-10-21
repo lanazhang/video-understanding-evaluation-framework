@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import './SearchEmbeddings.css'
+import { embeddingTaskParamRows, embeddingTaskTitle } from '../../utils/embeddingParams'
+import { bindMutedPreference, persistMutedChange } from '../../utils/mutePreference'
 
 function SearchEmbeddings({
   video,
@@ -80,10 +82,10 @@ function SearchEmbeddings({
           <div className="search-modal-content-compare">
             <div className="search-modal-video-section-compare">
               <video 
-                ref={videoPlayerRef}
+                ref={bindMutedPreference(videoPlayerRef)}
+                onVolumeChange={persistMutedChange}
                 src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
                 controls
-                muted
                 className="search-modal-video-player-compare"
               >
                 Your browser does not support the video tag.
@@ -111,6 +113,7 @@ function SearchEmbeddings({
                 <option value="audio-video">Video + Audio</option>
                 <option value="video">Video Only</option>
                 <option value="audio">Audio Only</option>
+                <option value="image">Image Only</option>
               </select>
               <input
                 type="number"
@@ -165,6 +168,8 @@ function SearchEmbeddings({
                 let tooltipContent = ''
                 if (task.Type === 'nova-mme') {
                   tooltipContent = `Duration: ${task.Request?.DurationS || 'N/A'}s\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
+                } else if (task.Type === 'embedding') {
+                  tooltipContent = embeddingTaskParamRows(task).map(r => `${r.label}: ${r.value}`).join('\n')
                 } else if (task.Type === 'tlabs-mme') {
                   const segMethod = task.Request?.Segmentation?.Method || task.Request?.segmentation?.method || 'N/A'
                   const minDur = task.Request?.Segmentation?.Dynamic?.MinDurationSec || 
@@ -182,7 +187,7 @@ function SearchEmbeddings({
                   <div key={task.Id} className="search-result-compare-column">
                     <div className="search-result-compare-header" title={tooltipContent}>
                       <h4>
-                        {task.Name || task.Description || (task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs')}
+                        {embeddingTaskTitle(task)}
                         <span className="info-icon" title={tooltipContent}>ⓘ</span>
                       </h4>
                       {resultData && resultData.results.length > 0 && (
@@ -222,10 +227,10 @@ function SearchEmbeddings({
           <div className="se-modal-content-single">
             <div className="se-modal-video-left">
               <video 
-                ref={videoPlayerRef}
+                ref={bindMutedPreference(videoPlayerRef)}
+                onVolumeChange={persistMutedChange}
                 src={video.video_url || `https://${video.S3Bucket}.s3.us-east-1.amazonaws.com/${video.S3KeyVideo}`}
                 controls
-                muted
                 className="se-modal-video-player"
               >
                 Your browser does not support the video tag.
@@ -276,6 +281,7 @@ function SearchEmbeddings({
                     <option value="audio-video">Video + Audio</option>
                     <option value="video">Video Only</option>
                     <option value="audio">Audio Only</option>
+                    <option value="image">Image Only</option>
                   </select>
                   <label className="se-modal-sort-label">Sort by:</label>
                   <select 
@@ -310,7 +316,9 @@ function SearchEmbeddings({
                   let tooltipContent = ''
                   if (task.Type === 'nova-mme') {
                     tooltipContent = `Duration: ${task.Request?.DurationS || 'N/A'}s\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
-                  } else if (task.Type === 'tlabs-mme') {
+                  } else if (task.Type === 'embedding') {
+                  tooltipContent = embeddingTaskParamRows(task).map(r => `${r.label}: ${r.value}`).join('\n')
+                } else if (task.Type === 'tlabs-mme') {
                     const segMethod = task.Request?.Segmentation?.Method || task.Request?.segmentation?.method || 'N/A'
                     const minDur = task.Request?.Segmentation?.Dynamic?.MinDurationSec || 
                                    task.Request?.segmentation?.dynamic?.minDurationSec || 
@@ -327,7 +335,7 @@ function SearchEmbeddings({
                     <div key={task.Id} className="se-modal-result-column">
                       <div className="se-modal-result-header" title={tooltipContent}>
                         <h4>
-                          {task.Name || task.Description || (task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs')}
+                          {embeddingTaskTitle(task)}
                           <span className="se-modal-info-icon" title={tooltipContent}>ⓘ</span>
                         </h4>
                         {resultData && resultData.results.length > 0 && (

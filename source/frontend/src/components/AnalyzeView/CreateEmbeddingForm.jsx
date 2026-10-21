@@ -1,5 +1,7 @@
 import './CreateEmbeddingForm.css'
 import { modelGroups } from '../../static/modelConfig'
+import EmbeddingParamFields from '../EmbeddingParamFields'
+import { defaultParams } from '../../utils/embeddingParams'
 
 function CreateEmbeddingForm({ 
   createParams, 
@@ -175,6 +177,71 @@ function CreateEmbeddingForm({
             </select>
           </div>
         </div>
+
+        {selectedModel?.parameterType === 'openai-embed' && (
+          <>
+            <div className="form-row">
+              <div className="form-group" style={{ flex: '1 1 100%' }}>
+                <label htmlFor="taskName">Task Name</label>
+                <input
+                  type="text"
+                  id="taskName"
+                  value={createParams.taskName}
+                  onChange={(e) => setCreateParams(prev => ({ ...prev, taskName: e.target.value }))}
+                  placeholder="Task name..."
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              {/* The parameters this model declares in models.yaml */}
+              <EmbeddingParamFields
+                model={selectedModel}
+                values={{ ...defaultParams(selectedModel), ...createParams.embedParams?.[selectedModel.modelId] }}
+                onChange={(key, value) => setCreateParams(prev => ({
+                  ...prev,
+                  embedParams: {
+                    ...prev.embedParams,
+                    [selectedModel.modelId]: { ...defaultParams(selectedModel), ...prev.embedParams?.[selectedModel.modelId], [key]: value }
+                  }
+                }))}
+              />
+
+              {!selectedModel.parameters?.some(p => p.key === 'EmbeddingDim') && (
+                <div className="form-group">
+                  <label htmlFor="embeddingDimFixed">Dimension</label>
+                  <input type="text" id="embeddingDimFixed" value={selectedModel.dims?.[0] || ''} disabled />
+                  <small style={{ display: 'block', marginTop: 4, opacity: 0.75 }}>
+                    Fixed size: this model offers no other dimensions. If it should, restart the backend so it
+                    sends the model's Dimension options.
+                  </small>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label htmlFor="description">Description (Optional)</label>
+                <input
+                  type="text"
+                  id="description"
+                  value={createParams.description}
+                  onChange={(e) => setCreateParams(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Additional notes..."
+                />
+              </div>
+
+              <div className="form-group form-group-button">
+                <label>&nbsp;</label>
+                <button
+                  className="btn-create-embedding"
+                  onClick={onCreateEmbedding}
+                  disabled={creating}
+                >
+                  {creating ? 'Creating...' : 'Create Embedding'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {selectedModel?.parameterType === 'nova-mme' && (
           <>

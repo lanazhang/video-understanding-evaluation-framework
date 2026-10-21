@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import VideoComparisonModal from './VideoComparisonModal'
+import { embeddingLabel, isEmbeddingTask } from '../../utils/embeddingTasks'
+import { RANKING_METRICS, describeMatching, counterpartSummary } from './evaluationUtils'
+import MatchOptionsControls from './MatchOptionsControls'
+import { efficiencyRows } from '../../utils/evaluationEfficiency'
 
 function EvaluationReport({
   evaluationName,
   evaluationDescription,
   bufferTime,
   onBufferTimeChange,
+  matchOptions,
+  onMatchOptionsChange,
   selectedVideo,
   selectedGroundTruth,
   selectedAnalyzeTask,
@@ -70,9 +76,7 @@ function EvaluationReport({
           <div className="summary-item">
             <span className="summary-label">Analyze Task:</span>
             <span className="summary-value">
-              {selectedAnalyzeTask?.Type === 'nova-mme' ? 'Nova MME' : 
-               selectedAnalyzeTask?.Type === 'tlabs-mme' ? 'TwelveLabs' : 
-               'Video Understanding'} - {selectedAnalyzeTask?.ModelId}
+              {isEmbeddingTask(selectedAnalyzeTask) ? embeddingLabel(selectedAnalyzeTask) : 'Video Understanding'} - {selectedAnalyzeTask?.ModelId}
             </span>
           </div>
           <div className="summary-item">
@@ -117,6 +121,14 @@ function EvaluationReport({
           </div>
         </div>
 
+        <MatchOptionsControls
+          options={matchOptions}
+          onChange={(next) => {
+            onMatchOptionsChange(next)
+            if (onRecalculate) onRecalculate(next)
+          }}
+        />
+
         {evaluationMetrics && (
           <div className="metrics-section">
             <h3>Evaluation Metrics</h3>
@@ -124,12 +136,12 @@ function EvaluationReport({
               <div className="metric-card">
                 <div className="metric-label">Precision</div>
                 <div className="metric-value">{(evaluationMetrics.Precision * 100).toFixed(2)}%</div>
-                <div className="metric-description">TP / (TP + FP)</div>
+                <div className="metric-description">Hit clips / clips returned</div>
               </div>
               <div className="metric-card">
                 <div className="metric-label">Recall</div>
                 <div className="metric-value">{(evaluationMetrics.Recall * 100).toFixed(2)}%</div>
-                <div className="metric-description">TP / (TP + FN)</div>
+                <div className="metric-description">Moments found / moments in ground truth</div>
               </div>
               <div className="metric-card">
                 <div className="metric-label">F1 Score</div>
@@ -139,7 +151,7 @@ function EvaluationReport({
               <div className="metric-card">
                 <div className="metric-label">Accuracy</div>
                 <div className="metric-value">{(evaluationMetrics.Accuracy * 100).toFixed(2)}%</div>
-                <div className="metric-description">Overall accuracy</div>
+                <div className="metric-description">Found / (found + wrong + missed)</div>
               </div>
               <div className="metric-card">
                 <div className="metric-label">Mean IoU</div>
@@ -149,9 +161,42 @@ function EvaluationReport({
               <div className="metric-card">
                 <div className="metric-label">mAP</div>
                 <div className="metric-value">{(evaluationMetrics.MeanAveragePrecision * 100).toFixed(2)}%</div>
-                <div className="metric-description">Mean Avg Precision</div>
+                <div className="metric-description">Mean Avg Precision at the chosen IoU</div>
               </div>
             </div>
+
+            <h4 style={{ marginTop: 16 }}>Ranking quality</h4>
+            <div className="metrics-grid">
+              {RANKING_METRICS.map(m => (
+                <div className="metric-card" key={m.key}>
+                  <div className="metric-label">{m.label}</div>
+                  <div className="metric-value">
+                    {evaluationMetrics[m.key] !== undefined ? `${(evaluationMetrics[m.key] * 100).toFixed(2)}%` : 'N/A'}
+                  </div>
+                  <div className="metric-description">{m.description}</div>
+                </div>
+              ))}
+            </div>
+            {(() => {
+              const rows = efficiencyRows({ analyzeTask: selectedAnalyzeTask, video: selectedVideo })
+              return rows.length > 0 && (
+                <>
+                  <h4 style={{ marginTop: 16 }}>Efficiency</h4>
+                  <div className="metrics-grid">
+                    {rows.map(row => (
+                      <div className="metric-card" key={row.label} title={row.title}>
+                        <div className="metric-label">{row.label}</div>
+                        <div className="metric-value">{row.value}</div>
+                        <div className="metric-description">{row.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )
+            })()}
+            <small style={{ display: 'block', marginTop: 8, opacity: 0.75 }}>
+              Matching: {describeMatching(matchOptions, bufferTime)}
+            </small>
             
             <div className="confusion-matrix">
               <h4>Confusion Matrix</h4>
@@ -187,7 +232,8 @@ function EvaluationReport({
               Compare on Video Timeline
             </button>
             <p className="overlap-description">
-              Segments are matched based on any temporal overlap. IoU (Intersection over Union) is calculated for display purposes.
+              A returned clip is matched to a ground-truth range when their overlap reaches the minimum chosen above. Each row
+              shows the range it was matched to, how much the two overlap, and how far the start and end are off.
             </p>
             
             <div className="overlap-tables">
@@ -228,7 +274,10 @@ function EvaluationReport({
                         {match.status === 'TP' ? `${(match.iou * 100).toFixed(1)}%` : '-'}
                       </div>
                       <div className="overlap-col-match">
-                        {match.predIndex !== null ? `Prediction #${match.predIndex + 1}` : 'None'}
+                        {(() => {
+                          const s = counterpartSummary(match, 'gt', matchOptions)
+                          return (<><div>{s.headline}</div><div className="overlap-detail-line">{s.detail}</div></>)
+                        })()}
                       </div>
                     </div>
                   ))}
@@ -271,7 +320,10 @@ function EvaluationReport({
                         {match.status === 'TP' ? `${(match.iou * 100).toFixed(1)}%` : '-'}
                       </div>
                       <div className="overlap-col-match">
-                        {match.gtIndex !== null ? `GT #${match.gtIndex + 1}` : 'None'}
+                        {(() => {
+                          const s = counterpartSummary(match, 'pred', matchOptions)
+                          return (<><div>{s.headline}</div><div className="overlap-detail-line">{s.detail}</div></>)
+                        })()}
                       </div>
                     </div>
                   ))}

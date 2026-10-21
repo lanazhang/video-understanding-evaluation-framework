@@ -5,9 +5,12 @@ import { evalAPI } from '../utils/api'
 import arrowLeftIcon from '../assets/icons/arrow-left.svg'
 import SegmentDetailModal from './CreateEvaluation/SegmentDetailModal'
 import VideoComparisonModal from './CreateEvaluation/VideoComparisonModal'
-import { calculateEvaluationMetrics } from './CreateEvaluation/evaluationUtils'
+import { calculateEvaluationMetrics, matchOptionsForTask, isLegacyEvaluation, RANKING_METRICS, describeMatching, describeThreshold, counterpartSummary } from './CreateEvaluation/evaluationUtils'
+import { efficiencyRows, EFFICIENCY_DEFINITIONS } from '../utils/evaluationEfficiency'
+import MatchOptionsControls from './CreateEvaluation/MatchOptionsControls'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import { embeddingLabel } from '../utils/embeddingTasks'
 
 function EvaluationDetail({ task, onBack }) {
   const navigate = useNavigate()
@@ -23,20 +26,25 @@ function EvaluationDetail({ task, onBack }) {
   const [showSegmentModal, setShowSegmentModal] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [matchingDetails, setMatchingDetails] = useState(null)
+  // Re-scoring with different matching settings (shown only, never saved); null = as saved with the evaluation
+  const [matchOverride, setMatchOverride] = useState(null)
+  const [liveMetrics, setLiveMetrics] = useState(null)
+  const activeMatchOptions = matchOverride || matchOptionsForTask(task)
   const [groundTruth, setGroundTruth] = useState(null)
   const [exporting, setExporting] = useState(false)
 
   const metricExplanations = {
+    ...Object.fromEntries(Object.entries(EFFICIENCY_DEFINITIONS).map(([label, d]) => [`efficiency:${label}`, { title: d.title, formula: d.formula, description: d.details, interpretation: d.interpretation }])),
     Precision: {
       title: "Precision",
       formula: "TP / (TP + FP)",
-      description: "Measures the accuracy of positive predictions. It represents the proportion of predicted segments that actually overlap with ground truth segments.",
+      description: "The proportion of returned clips that match a ground-truth moment (overlap reaching the IoU threshold).",
       interpretation: "Higher precision means fewer false alarms - the model is more conservative and only predicts when confident."
     },
     Recall: {
       title: "Recall (Sensitivity)",
-      formula: "TP / (TP + FN)",
-      description: "Measures the completeness of detection. It represents the proportion of ground truth segments that were successfully detected by the model.",
+      formula: "Moments found / moments in ground truth",
+      description: "The proportion of ground-truth moments that at least one returned clip matched. A moment counts once, however many clips land on it.",
       interpretation: "Higher recall means fewer missed detections - the model catches more of the actual events."
     },
     F1Score: {
@@ -47,9 +55,9 @@ function EvaluationDetail({ task, onBack }) {
     },
     Accuracy: {
       title: "Accuracy",
-      formula: "(TP + TN) / (TP + TN + FP + FN)",
-      description: "The overall correctness of the model across all predictions, including both positive and negative cases.",
-      interpretation: "While intuitive, accuracy can be misleading with imbalanced datasets. Use precision, recall, and F1 for better insights."
+      formula: "Found / (found + wrong clips + missed moments)",
+      description: "Temporal segments have no true negatives, so this is found moments divided by everything that was found, wrong or missed.",
+      interpretation: "A strict single number; read it with precision and recall rather than on its own."
     },
     MeanIoU: {
       title: "Mean IoU (Intersection over Union)",
@@ -59,10 +67,18 @@ function EvaluationDetail({ task, onBack }) {
     },
     MeanAveragePrecision: {
       title: "Mean Average Precision (mAP)",
-      formula: "Average precision across all ground truth segments",
-      description: "Evaluates both detection accuracy and temporal localization quality. Considers the ranking of predictions by confidence scores.",
-      interpretation: "mAP provides a comprehensive measure of detection performance, accounting for both precision and temporal accuracy."
-    }
+      formula: "Mean over queries of: sum of precision at each hit rank / ground-truth moments",
+      description: "Rewards finding the right moments near the top of the ranked results, at the chosen IoU threshold. Hits are counted one-to-one.",
+      interpretation: "Higher means correct moments are ranked higher and few are missed."
+    },
+    RecallAt1: { title: "Recall@1", formula: "Moments found by the best-ranked clip / moments", description: "How much of the ground truth the single top result already finds.", interpretation: "Matters when users only look at the first result." },
+    RecallAt5: { title: "Recall@5", formula: "Moments found in the top 5 clips / moments", description: "How much of the ground truth the first five results find.", interpretation: "A practical measure of 'is it on the first page'." },
+    RecallAt10: { title: "Recall@10", formula: "Moments found in the top 10 clips / moments", description: "How much of the ground truth the first ten results find.", interpretation: "Shows whether a larger result list recovers what Recall@5 misses." },
+    MRR: { title: "Mean Reciprocal Rank", formula: "Mean over queries of 1 / rank of the first matching clip", description: "How early the first correct clip appears: 1 if it is first, 0.5 if second, 0 if no clip matches.", interpretation: "Good for 'find me at least one right moment' searches." },
+    NDCG10: { title: "NDCG@10", formula: "DCG@10 / ideal DCG@10, DCG = sum of 1 / log2(rank + 1) over hit clips in the top 10", description: "Rewards hits near the top of the first ten results. A clip scores 1 only if it finds a moment no better-ranked clip found; misses and duplicates score 0.", interpretation: "1 means every moment is found at the very top; lower means hits are ranked lower or missed." },
+    MeanAveragePrecisionIoU30: { title: "mAP at IoU 0.3", formula: "mAP with a 0.3 IoU match threshold", description: "mAP when a clip only needs to overlap loosely.", interpretation: "Tolerant of imprecise boundaries." },
+    MeanAveragePrecisionIoU50: { title: "mAP at IoU 0.5", formula: "mAP with a 0.5 IoU match threshold", description: "mAP at the most commonly reported overlap threshold.", interpretation: "The usual headline number for temporal localization." },
+    MeanAveragePrecisionIoU70: { title: "mAP at IoU 0.7", formula: "mAP with a 0.7 IoU match threshold", description: "mAP when clips must line up closely with the moment.", interpretation: "A drop from IoU 0.3 to 0.7 means the model finds moments but with loose boundaries." }
   }
 
   const [activeTooltip, setActiveTooltip] = useState(null)
@@ -107,8 +123,10 @@ function EvaluationDetail({ task, onBack }) {
         searchResults,
         '',
         [],
-        bufferTime
+        bufferTime,
+        activeMatchOptions
       )
+      setLiveMetrics(matchOverride ? result.metrics : null)
       
       // Add all ground truth labels to gtMatches, marking non-true_positive ones as TN
       const allGTMatches = (groundTruth.Labels || []).map((label, idx) => {
@@ -136,7 +154,7 @@ function EvaluationDetail({ task, onBack }) {
         predMatches: result.details.predMatches
       })
     }
-  }, [groundTruth, task])
+  }, [groundTruth, task, matchOverride])
 
   const handleSegmentClick = (match, type) => {
     setSelectedSegment({ ...match, type })
@@ -221,7 +239,7 @@ function EvaluationDetail({ task, onBack }) {
     )
   }
 
-  const metrics = task.EvaluationMetrics
+  const metrics = liveMetrics || task.EvaluationMetrics
   const searchLabels = task.Labels || []
 
   return (
@@ -274,7 +292,7 @@ function EvaluationDetail({ task, onBack }) {
             <div className="summary-item">
               <span className="summary-label">Model:</span>
               <span className="summary-value">
-                {task.analyzeTask?.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {task.analyzeTask?.ModelId || 'N/A'}
+                {embeddingLabel(task.analyzeTask)} - {task.analyzeTask?.ModelId || 'N/A'}
               </span>
             </div>
             <div className="summary-item">
@@ -295,11 +313,39 @@ function EvaluationDetail({ task, onBack }) {
                 <span className="summary-value">{task.BufferTime.toFixed(2)}s</span>
               </div>
             )}
+            <div className="summary-item">
+              <span className="summary-label">Matching:</span>
+              <span className="summary-value">
+                {matchOverride
+                  ? `${describeMatching(matchOverride, task.BufferTime)} (re-scored, not saved)`
+                  : isLegacyEvaluation(task) ? 'Earlier method (any overlap, duplicate hits allowed)' : describeMatching(matchOptionsForTask(task), task.BufferTime)}
+              </span>
+            </div>
           </div>
 
           {metrics && (
             <div className="metrics-section">
               <h3>Evaluation Metrics</h3>
+              <details className="rescore-section" open={Boolean(matchOverride)} style={{ marginBottom: 12 }}>
+                <summary style={{ cursor: 'pointer' }}>Re-score with different matching</summary>
+                <div style={{ marginTop: 8 }}>
+                  <MatchOptionsControls options={activeMatchOptions} onChange={setMatchOverride} />
+                  {matchOverride && (
+                    <div className="alert alert-warning" role="note" style={{ marginTop: 8 }}>
+                      These metrics and tables are recalculated here from the stored clips and ground truth. Nothing is saved.
+                      {' '}<button type="button" className="btn-link" onClick={() => setMatchOverride(null)}>Back to the saved scoring</button>
+                    </div>
+                  )}
+                </div>
+              </details>
+              {isLegacyEvaluation(task) && !matchOverride && (
+                <div className="alert alert-warning" role="note" style={{ marginBottom: 12 }}>
+                  This evaluation was saved with the earlier matching method: any overlap counted as a hit and every
+                  overlapping clip was a true positive, and recall divided clip counts by clip + moment counts. Recall,
+                  F1 and Accuracy are overstated when several clips land on one moment. The numbers below are the ones
+                  stored with it; create a new evaluation for corrected metrics and the ranking metrics.
+                </div>
+              )}
               <div className="metrics-grid">
                 <div className="metric-card">
                   <div className="metric-header">
@@ -321,7 +367,7 @@ function EvaluationDetail({ task, onBack }) {
                     </button>
                   </div>
                   <div className="metric-value">{(metrics.Precision * 100).toFixed(2)}%</div>
-                  <div className="metric-description">TP / (TP + FP)</div>
+                  <div className="metric-description">Hit clips / clips returned</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-header">
@@ -339,7 +385,7 @@ function EvaluationDetail({ task, onBack }) {
                     </button>
                   </div>
                   <div className="metric-value">{(metrics.Recall * 100).toFixed(2)}%</div>
-                  <div className="metric-description">TP / (TP + FN)</div>
+                  <div className="metric-description">Moments found / moments in ground truth</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-header">
@@ -414,7 +460,65 @@ function EvaluationDetail({ task, onBack }) {
                   <div className="metric-description">Mean Avg Precision</div>
                 </div>
               </div>
+
+              {RANKING_METRICS.some(m => metrics[m.key] !== undefined) && (
+                <>
+                  <h4 style={{ marginTop: 16 }}>Ranking quality</h4>
+                  <div className="metrics-grid">
+                    {RANKING_METRICS.map(m => (
+                      <div className="metric-card" key={m.key}>
+                        <div className="metric-header">
+                          <div className="metric-label">{m.label}</div>
+                          <button
+                            className="metric-info-btn"
+                            onMouseEnter={(e) => {
+                              setActiveTooltip(m.key)
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                            }}
+                            onMouseLeave={() => setActiveTooltip(null)}
+                          >
+                            <InfoIcon />
+                          </button>
+                        </div>
+                        <div className="metric-value">
+                          {metrics[m.key] !== undefined ? `${(metrics[m.key] * 100).toFixed(2)}%` : 'N/A'}
+                        </div>
+                        <div className="metric-description">{m.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               
+              {efficiencyRows(task).length > 0 && (
+                <>
+                  <h4 style={{ marginTop: 16 }}>Efficiency</h4>
+                  <div className="metrics-grid">
+                    {efficiencyRows(task).map(row => (
+                      <div className="metric-card" key={row.label} title={row.title}>
+                        <div className="metric-header">
+                          <div className="metric-label">{row.label}</div>
+                          <button
+                            className="metric-info-btn"
+                            onMouseEnter={(e) => {
+                              setActiveTooltip(`efficiency:${row.label}`)
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.bottom + 8 })
+                            }}
+                            onMouseLeave={() => setActiveTooltip(null)}
+                          >
+                            <InfoIcon />
+                          </button>
+                        </div>
+                        <div className="metric-value">{row.value}</div>
+                        <div className="metric-description">{row.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <div className="confusion-matrix">
                 <h4>Confusion Matrix</h4>
                 <div className="confusion-grid">
@@ -452,14 +556,16 @@ function EvaluationDetail({ task, onBack }) {
                 </button>
               </div>
               <p className="overlap-description">
-                Segments are matched based on any temporal overlap. IoU (Intersection over Union) is calculated for display purposes.
+                {isLegacyEvaluation(task) && !matchOverride
+                  ? 'This evaluation used the earlier rule: any temporal overlap counts as a hit.'
+                  : `A clip is a hit when it reaches ${describeThreshold(activeMatchOptions)}. With one-to-one matching, a second clip on an already-found moment is a hit only if it covers a new part of that moment; otherwise it is a duplicate (false positive). IoU is shown for reference.`}
               </p>
               
               <div className="overlap-tables">
                 <div className="overlap-table-container">
                   <h4>Ground Truth Segments ({matchingDetails.gtMatches.length})</h4>
                   <div className="overlap-table">
-                    <div className="overlap-table-header">
+                    <div className="overlap-table-header with-label">
                       <div className="overlap-col-index">#</div>
                       <div className="overlap-col-time">Time Range</div>
                       <div className="overlap-col-label">Label</div>
@@ -476,7 +582,7 @@ function EvaluationDetail({ task, onBack }) {
                       .map((match, idx) => (
                       <div 
                         key={idx} 
-                        className={`overlap-table-row status-${match.status.toLowerCase()} clickable`}
+                        className={`overlap-table-row with-label status-${match.status.toLowerCase()} clickable`}
                         onClick={() => handleSegmentClick(match, 'gt')}
                         title="Click to view segment details"
                       >
@@ -496,7 +602,10 @@ function EvaluationDetail({ task, onBack }) {
                           {match.status === 'TP' ? `${(match.iou * 100).toFixed(1)}%` : '-'}
                         </div>
                         <div className="overlap-col-match">
-                          {match.predIndex !== null ? `Prediction #${match.predIndex + 1}` : 'None'}
+                          {(() => {
+                          const s = counterpartSummary(match, 'gt', activeMatchOptions)
+                          return (<><div>{s.headline}</div><div className="overlap-detail-line">{s.detail}</div></>)
+                        })()}
                         </div>
                       </div>
                     ))}
@@ -539,7 +648,10 @@ function EvaluationDetail({ task, onBack }) {
                           {match.status === 'TP' ? `${(match.iou * 100).toFixed(1)}%` : '-'}
                         </div>
                         <div className="overlap-col-match">
-                          {match.gtIndex !== null ? `GT #${match.gtIndex + 1}` : 'None'}
+                          {(() => {
+                            const s = counterpartSummary(match, 'pred', activeMatchOptions)
+                            return (<><div>{s.headline}</div><div className="overlap-detail-line">{s.detail}</div></>)
+                          })()}
                         </div>
                       </div>
                     ))}

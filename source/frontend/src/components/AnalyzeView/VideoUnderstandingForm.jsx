@@ -506,8 +506,8 @@ function VideoUnderstandingForm({ video, onSuccess }) {
         }
       }
       
-      // Add tool config for Bedrock Converse if toggle is on
-      if (selectedModelConfig.apiType === 'bedrock_converse' && useToolConfig && editableToolConfig) {
+      // Add tool config for Bedrock Converse / OpenAI-compatible (NVIDIA) models if toggle is on
+      if ((selectedModelConfig.apiType === 'bedrock_converse' || selectedModelConfig.apiType === 'openai_compat') && useToolConfig && editableToolConfig) {
         try {
           payload.Request.ToolConfig = JSON.parse(editableToolConfig)
         } catch (e) {

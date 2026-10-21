@@ -61,12 +61,16 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
   }
 
   const handleVideoSelect = (video) => {
+    setAllSearches([])
+    setAllResults([])
     setSelectedVideo(video)
     setStep(2)
   }
 
   const handleBackToVideoList = () => {
     setSelectedVideo(null)
+    setAllSearches([]) // the previous video's searches and clips must not carry over to the next one
+    setAllResults([])
     setStep(1)
   }
 
@@ -224,6 +228,7 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
 
         <div className="wizard-step-content">
           <EmbeddingSearch 
+            key={selectedVideo?.Id || selectedVideo?.id}
             video={selectedVideo} 
             onNext={handleStep2Next}
             currentUser={currentUser}
@@ -284,6 +289,7 @@ function CreateGroundTruthInline({ currentUser, onCancel, onSuccess }) {
         </div>
 
         <EmbeddingSearch 
+          key={selectedVideo?.Id || selectedVideo?.id}
           video={selectedVideo} 
           onGroundTruthSaved={handleGroundTruthSaved}
           currentUser={currentUser}

@@ -9,6 +9,8 @@ table_name = os.environ.get('DYNAMO_VIDEO_TABLE')
 metadata_lambda_name = os.environ.get('METADATA_LAMBDA_NAME')
 nova_mme_lambda_name = os.environ.get('NOVA_MME_LAMBDA_NAME')
 tlabs_mme_lambda_name = os.environ.get('TLABS_MME_LAMBDA_NAME')
+# local runtime: any other embedding model (e.g. Qwen3-VL on Brev) goes through this handler
+embed_lambda_name = os.environ.get('EMBED_LAMBDA_NAME')
 table = dynamodb.Table(table_name)
 
 # CORS headers for all responses
@@ -99,7 +101,7 @@ def lambda_handler(event, context):
         
         # Invoke embedding task creation if embedding configs are provided
         embedding_configs = body.get('EmbeddingConfigs', [])
-        if embedding_configs and (nova_mme_lambda_name or tlabs_mme_lambda_name):
+        if embedding_configs and (nova_mme_lambda_name or tlabs_mme_lambda_name or embed_lambda_name):
             for config in embedding_configs:
                 model_name = config.get('ModelName', '').lower()
                 model_id = config.get('ModelId', '')
@@ -155,6 +157,25 @@ def lambda_handler(event, context):
                         print(f"TwelveLabs MME task creation Lambda invoked asynchronously")
                     except Exception as e:
                         print(f"Error invoking TwelveLabs MME Lambda: {str(e)}")
+                        # Don't fail the whole operation if embedding invocation fails
+
+                elif embed_lambda_name:
+                    try:
+                        # Settings come from the upload form; anything missing falls back to the model's defaults in models.yaml
+                        embed_payload = {
+                            'VideoId': body['Id'],
+                            'ModelId': model_id,
+                            'Description': f"Auto-generated embeddings using {config.get('ModelName')}",
+                            'Request': {**config.get('Config', {}), 'RequestedBy': uploaded_by}
+                        }
+                        print(f"Invoking embedding Lambda: {embed_lambda_name}")
+                        lambda_client.invoke(
+                            FunctionName=embed_lambda_name,
+                            InvocationType='Event',  # Async invocation
+                            Payload=json.dumps(embed_payload)
+                        )
+                    except Exception as e:
+                        print(f"Error invoking embedding Lambda: {str(e)}")
                         # Don't fail the whole operation if embedding invocation fails
         
         return {

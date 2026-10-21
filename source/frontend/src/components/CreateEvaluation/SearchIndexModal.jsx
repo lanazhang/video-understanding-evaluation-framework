@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { FetchPost } from '../../utils/apiHelper'
 import './SearchIndexModal.css'
+import { searchEndpoint } from '../../utils/embeddingTasks'
+import { embeddingTaskParamRows } from '../../utils/embeddingParams'
 
 function SearchIndexModal({ 
   selectedVideo,
@@ -39,10 +41,7 @@ function SearchIndexModal({
         EmbeddingOptions: ['audio-video', 'video', 'audio']
       }
 
-      let endpoint = '/model/nova-mme-search-vector'
-      if (selectedAnalyzeTask.Type === 'tlabs-mme') {
-        endpoint = '/model/tlabs-mme-search-vector'
-      }
+      const endpoint = searchEndpoint(selectedAnalyzeTask)
 
       const data = await FetchPost(endpoint, payload, 'EvalService')
       
@@ -64,6 +63,7 @@ function SearchIndexModal({
       }
       
       const searchEntry = {
+        taskId: selectedAnalyzeTask.Id,
         query: searchText,
         topK: searchTopK,
         results: results,
@@ -163,6 +163,12 @@ function SearchIndexModal({
                     <span className="metadata-value">{selectedAnalyzeTask?.Request?.DurationS || 'N/A'}s</span>
                   </>
                 )}
+                {selectedAnalyzeTask?.Type === 'embedding' && embeddingTaskParamRows(selectedAnalyzeTask).filter(r => r.label !== 'Provider' && r.label !== 'Input Tokens').map(row => (
+                  <span key={row.label}>
+                    <span className="metadata-separator">•</span>
+                    <span className="metadata-value">{row.label}: {row.value}</span>
+                  </span>
+                ))}
                 {selectedAnalyzeTask?.Type === 'tlabs-mme' && (
                   <>
                     <span className="metadata-separator">•</span>

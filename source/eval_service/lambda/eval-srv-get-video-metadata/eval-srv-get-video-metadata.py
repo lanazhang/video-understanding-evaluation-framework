@@ -19,6 +19,9 @@ bedrock = boto3.client('bedrock-runtime')
 
 table_name = os.environ.get('DYNAMO_VIDEO_TABLE')
 MODEL_ID_IMAGE_UNDERSTANDING = os.environ.get('MODEL_ID_IMAGE_UNDERSTANDING')
+# 'model' (default): ask a Bedrock model whether a frame is a usable thumbnail.
+# 'local': pixel-statistics check, no model call (used by the local runtime).
+THUMBNAIL_CHECK = os.environ.get('THUMBNAIL_CHECK', 'model')
 DYNAMO_VIDEO_USAGE_TABLE = os.environ.get('DYNAMO_VIDEO_USAGE_TABLE')
 
 table = dynamodb.Table(table_name)
@@ -195,6 +198,12 @@ def update_usage_to_db(video_id, index, name, model_id, input_tokens, output_tok
         print(f"Error updating usage: {ex}")
         return None
 
+def is_blank_frame_local(image_path, min_stddev=6.0):
+    """True if the frame is (nearly) a single flat colour, judged by grayscale standard deviation."""
+    from PIL import Image, ImageStat
+    with Image.open(image_path) as img:
+        return ImageStat.Stat(img.convert('L')).stddev[0] < min_stddev
+
 def is_solid_color_frame(video_id, index, thumbnail_s3_bucket, thumbnail_s3_key):
     """
     Check if an image is suitable as a video thumbnail using Nova Lite.
@@ -294,6 +303,15 @@ def get_video_metadata(s3_bucket, s3_key_video, file_path):
             # Get frame and store on local disk
             video_clip.save_frame(thumbnail_local_path, t=t)
             
+            if THUMBNAIL_CHECK == 'local':
+                if is_blank_frame_local(thumbnail_local_path):
+                    print(f"Skipping blank frame at t={t}s")
+                    continue
+                s3.upload_file(thumbnail_local_path, s3_bucket, thumbnail_s3_key)
+                print(f"Good thumbnail generated at t={t}s and uploaded to s3://{s3_bucket}/{thumbnail_s3_key}")
+                thumbnail_generated = True
+                break
+
             # Upload to S3 temporarily for Nova Lite analysis
             temp_s3_key = f'{base_path}/temp_thumbnail_{i}.jpg'
             s3.upload_file(thumbnail_local_path, s3_bucket, temp_s3_key)

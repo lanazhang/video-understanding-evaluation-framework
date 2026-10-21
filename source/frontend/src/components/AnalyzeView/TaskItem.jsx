@@ -1,4 +1,6 @@
 import './TaskItem.css'
+import { embeddingLabel } from '../../utils/embeddingTasks'
+import { embeddingTaskParamRows } from '../../utils/embeddingParams'
 
 function TaskItem({ 
   task, 
@@ -32,11 +34,11 @@ function TaskItem({
           )}
           <div className="task-main-info">
             <span className="task-model-name">{task.ModelId || 'N/A'}</span>
-            <span className="task-type-badge">{task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}</span>
+            <span className="task-type-badge">{embeddingLabel(task)}</span>
           </div>
           <div className="task-meta-info">
-            {task.Type === 'nova-mme' ? (
-              <span className="task-param">{task.Request?.DurationS || 'N/A'}s • {task.Request?.EmbedMode || 'N/A'}</span>
+            {task.Type === 'nova-mme' || task.Type === 'embedding' ? (
+              <span className="task-param">{task.Request?.DurationS || 'N/A'}s • {task.Type === 'embedding' ? `${task.Request?.EmbeddingDim || 'N/A'}d` : (task.Request?.EmbedMode || 'N/A')}</span>
             ) : (
               <span className="task-param">{task.Request?.segmentation?.method || task.Request?.Segmentation?.Method || 'N/A'}</span>
             )}
@@ -93,7 +95,22 @@ function TaskItem({
               <span className="detail-value">{formatDate(task.CompletedTs)}</span>
             </div>
             
-            {task.Type === 'tlabs-mme' ? (
+            {task.Type === 'embedding' ? (
+              <>
+                {embeddingTaskParamRows(task).map(row => (
+                  <div className="task-detail-row" key={row.label}>
+                    <span className="detail-label">{row.label}:</span>
+                    <span className="detail-value">{row.value}</span>
+                  </div>
+                ))}
+                {task.Status === 'failed' && task.Result?.ErrorMessage && (
+                  <div className="task-detail-row">
+                    <span className="detail-label">Error:</span>
+                    <span className="detail-value">{task.Result.ErrorMessage}</span>
+                  </div>
+                )}
+              </>
+            ) : task.Type === 'tlabs-mme' ? (
               <>
                 {(task.Request?.Segmentation || task.Request?.segmentation) && (
                   <>
@@ -162,7 +179,7 @@ function TaskItem({
           
           <div className="task-detail-full-width">
             <div className="task-detail-row">
-              <span className="detail-label">S3 Vector Index:</span>
+              <span className="detail-label">{task.Type === 'embedding' ? 'Vector Index:' : 'S3 Vector Index:'}</span>
               <span className="detail-value detail-value-mono">{task.Result?.S3VectorIndex || 'N/A'}</span>
             </div>
           </div>

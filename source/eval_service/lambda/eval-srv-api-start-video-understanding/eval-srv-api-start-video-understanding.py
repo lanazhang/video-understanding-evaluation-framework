@@ -12,6 +12,7 @@ DYNAMO_VIDEO_TABLE = os.environ.get("DYNAMO_VIDEO_TABLE")
 LAMBDA_BEDROCK_CONVERSE = os.environ.get("LAMBDA_BEDROCK_CONVERSE")
 LAMBDA_TLABS_PEGASUS = os.environ.get("LAMBDA_TLABS_PEGASUS")
 LAMBDA_GEMINI = os.environ.get("LAMBDA_GEMINI")
+LAMBDA_OPENAI_COMPAT = os.environ.get("LAMBDA_OPENAI_COMPAT")  # local runtime: NVIDIA NIM / any OpenAI-compatible endpoint
 
 # CORS headers for all responses
 CORS_HEADERS = {
@@ -98,7 +99,7 @@ def lambda_handler(event, context):
             }
         
         # Validate ApiType
-        valid_api_types = ['bedrock_converse', 'tlabs_pegasus', 'gemini']
+        valid_api_types = ['bedrock_converse', 'tlabs_pegasus', 'gemini', 'openai_compat']
         if api_type not in valid_api_types:
             return {
                 'statusCode': 400,
@@ -195,7 +196,7 @@ def lambda_handler(event, context):
             api_payload["top_p"] = inference_config["topP"]
         
         # Add tool_config for bedrock_converse
-        if api_type == "bedrock_converse" and tool_config:
+        if api_type in ("bedrock_converse", "openai_compat") and tool_config:
             api_payload["ToolConfig"] = tool_config
             api_payload["tool_config"] = tool_config
         
@@ -229,7 +230,9 @@ def lambda_handler(event, context):
             lambda_function_name = LAMBDA_TLABS_PEGASUS
         elif api_type == "gemini":
             lambda_function_name = LAMBDA_GEMINI
-        
+        elif api_type == "openai_compat":
+            lambda_function_name = LAMBDA_OPENAI_COMPAT
+
         if not lambda_function_name:
             return {
                 'statusCode': 500,

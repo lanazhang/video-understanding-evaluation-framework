@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import SearchIndexModal from './SearchIndexModal'
 import '../AnalyzeView/VideoUnderstandingForm.css'
+import { embeddingLabel, isEmbeddingTask } from '../../utils/embeddingTasks'
 
 function AnalysisTaskSelector({
   selectedVideo,
@@ -117,7 +118,7 @@ function AnalysisTaskSelector({
   useEffect(() => {
     if (selectedAnalyzeTask && !hasOpenedModalOnce && searchResults.length === 0) {
       // Only auto-open for embedding tasks
-      if (selectedAnalyzeTask.Type === 'nova-mme' || selectedAnalyzeTask.Type === 'tlabs-mme') {
+      if (isEmbeddingTask(selectedAnalyzeTask)) {
         setShowSearchModal(true)
         setHasOpenedModalOnce(true)
       }
@@ -125,9 +126,15 @@ function AnalysisTaskSelector({
   }, [selectedAnalyzeTask, hasOpenedModalOnce, searchResults.length])
 
   const handleAnalyzeTaskClick = (task) => {
+    // An evaluation scores ONE analysis task: switching to another one drops the searches made with the previous one,
+    // so results from different models are never combined
+    if (selectedAnalyzeTask && selectedAnalyzeTask.Id !== task.Id) {
+      setSearchResults([])
+      setAllSearches([])
+    }
     onAnalyzeTaskSelect(task)
     // Only open modal for embedding tasks (MME), not for video understanding
-    if (task.Type === 'nova-mme' || task.Type === 'tlabs-mme') {
+    if (isEmbeddingTask(task)) {
       setShowSearchModal(true)
     } else if (task.Type === 'video-understanding') {
       // Open review modal for video understanding tasks
@@ -149,7 +156,9 @@ function AnalysisTaskSelector({
   }
 
   const handleNextStep = () => {
-    onNext(searchResults, allSearches)
+    // Defence in depth: only searches run against the selected task go forward
+    const own = allSearches.filter(search => !search.taskId || search.taskId === selectedAnalyzeTask?.Id)
+    onNext(own.flatMap(search => search.results || []), own)
   }
 
   return (
@@ -180,7 +189,7 @@ function AnalysisTaskSelector({
           ) : (() => {
             // Filter to only show MME tasks (nova-mme and tlabs-mme)
             const mmeTasks = analyzeTasks.filter(task => 
-              task.Type === 'nova-mme' || task.Type === 'tlabs-mme'
+              isEmbeddingTask(task)
             )
             
             return mmeTasks.length === 0 ? (
@@ -206,7 +215,7 @@ function AnalysisTaskSelector({
                           />
                           <div className="task-details">
                             <div className="task-name">
-                              {task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'} - {task.ModelId}
+                              {embeddingLabel(task)} - {task.ModelId}
                             </div>
                             <div className="task-meta">
                               Status: {task.Status} • Created {new Date(task.CreatedAt).toLocaleDateString()}
@@ -304,6 +313,7 @@ function AnalysisTaskSelector({
 
       {showSearchModal && (
         <SearchIndexModal
+          key={selectedAnalyzeTask?.Id}
           selectedVideo={selectedVideo}
           selectedAnalyzeTask={selectedAnalyzeTask}
           onClose={() => setShowSearchModal(false)}

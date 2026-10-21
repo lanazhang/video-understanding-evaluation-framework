@@ -86,8 +86,13 @@ def get_video_details(video_id):
 def get_analyze_task_details(task_id):
     """Fetch analyze task details"""
     try:
-        response = analyze_table.get_item(Key={'Id': task_id})
-        return response.get('Item')
+        # The table is keyed by Id + Type, so look the task up by its Id alone with a query
+        response = analyze_table.query(
+            KeyConditionExpression='Id = :task_id',
+            ExpressionAttributeValues={':task_id': task_id}
+        )
+        items = response.get('Items', [])
+        return items[0] if items else None
     except Exception as e:
         print(f"Error fetching analyze task {task_id}: {str(e)}")
         return None

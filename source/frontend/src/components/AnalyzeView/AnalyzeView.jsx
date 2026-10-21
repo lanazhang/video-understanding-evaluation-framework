@@ -9,6 +9,9 @@ import CreateEmbeddingForm from './CreateEmbeddingForm'
 import SearchEmbeddings from './SearchEmbeddings'
 import VideoUnderstandingForm from './VideoUnderstandingForm'
 import './AnalyzeView.css'
+import { searchEndpoint } from '../../utils/embeddingTasks'
+import { defaultParams } from '../../utils/embeddingParams'
+import { applyMutedPreference } from '../../utils/mutePreference'
 
 function AnalyzeView({ video, onBack }) {
   const [activeTab, setActiveTab] = useState('embedding')
@@ -29,8 +32,9 @@ function AnalyzeView({ video, onBack }) {
   const [sortBy, setSortBy] = useState('distance') // 'distance' or 'timestamp'
   const [sortOrder, setSortOrder] = useState('asc') // 'asc' or 'desc'
   const [createParams, setCreateParams] = useState({
-    modelId: 'amazon.nova-2-multimodal-embeddings-v1:0',
+    modelId: modelGroups.find(g => g.groupName === 'Multimodal Embedding')?.models[0]?.modelId || '',
     durationS: 5,
+    embedParams: {}, // per-model values for provider-based embedding models (declared in models.yaml), keyed by model id
     embedMode: 'AUDIO_VIDEO_COMBINED',
     embeddingDim: 1024,
     segmentationMethod: 'dynamic',
@@ -60,6 +64,12 @@ function AnalyzeView({ video, onBack }) {
     } else if (selectedModel?.parameterType === 'twelvelabs') {
       const modelShortName = selectedModel.displayName.replace(/\s+/g, '-').toLowerCase()
       return `${modelShortName}-${createParams.segmentationMethod}-${createParams.minDurationSec}s`
+    } else if (selectedModel?.parameterType === 'openai-embed') {
+      const modelShortName = selectedModel.displayName.replace(/\s*\(.*\)\s*$/, '').replace(/\s+/g, '-').toLowerCase()
+      const values = { ...defaultParams(selectedModel), ...createParams.embedParams?.[selectedModel.modelId] }
+      const inputs = values.Inputs || ['video']
+      const smaller = values.EmbeddingDim && values.EmbeddingDim !== selectedModel.dims?.[0] ? `-${values.EmbeddingDim}d` : ''
+      return `${modelShortName}-${values.DurationS}s-${inputs.join('+')}${inputs.length > 1 && values.Combine === false ? '-separate' : ''}${smaller}`
     }
     return ''
   }
@@ -71,6 +81,7 @@ function AnalyzeView({ video, onBack }) {
     createParams.modelId, 
     createParams.embedMode, 
     createParams.durationS,
+    JSON.stringify(createParams.embedParams),
     createParams.embeddingDim, 
     createParams.segmentationMethod,
     createParams.minDurationSec
@@ -192,7 +203,11 @@ function AnalyzeView({ video, onBack }) {
         const modelId = task.ModelId || ''
         const isTlabs30 = modelId.includes('3-0') || modelId.includes('3.0')
         
-        if (compareEmbeddingType === 'all') {
+        if (compareEmbeddingType === 'image') {
+          embeddingOptions = ['image']
+        } else if (compareEmbeddingType === 'all' && task.Type === 'embedding') {
+          embeddingOptions = undefined // every kind of vector the task has
+        } else if (compareEmbeddingType === 'all') {
           // All options
           embeddingOptions = isTlabs30 
             ? ['visual', 'audio', 'transcription']
@@ -223,10 +238,7 @@ function AnalyzeView({ video, onBack }) {
           EmbeddingOptions: embeddingOptions
         }
 
-        let endpoint = '/model/nova-mme-search-vector'
-        if (task.Type === 'tlabs-mme') {
-          endpoint = '/model/tlabs-mme-search-vector'
-        }
+        const endpoint = searchEndpoint(task)
 
         const data = await FetchPost(endpoint, payload, 'EvalService')
         
@@ -304,7 +316,7 @@ function AnalyzeView({ video, onBack }) {
       const endTime = parseFloat(endSec || 0)
       
       videoElement.currentTime = parseFloat(startSec || 0)
-      videoElement.muted = true
+      applyMutedPreference(videoElement)
       
       const existingListener = videoElement._stopAtEndListener
       if (existingListener) {
@@ -398,6 +410,15 @@ function AnalyzeView({ video, onBack }) {
             embeddingOption: createParams.embeddingOption
           }
         }
+      } else if (selectedModel?.parameterType === 'openai-embed') {
+        payload = {
+          VideoId: video.Id || video.id,
+          ModelId: createParams.modelId,
+          Name: createParams.taskName,
+          Description: createParams.taskName || createParams.description,
+          // Only the parameters this model declares; the backend validates and clamps them
+          Request: { ...defaultParams(selectedModel), ...createParams.embedParams?.[selectedModel.modelId] }
+        }
       } else {
         setCreateError('Unknown model type')
         setCreating(false)
@@ -430,6 +451,8 @@ function AnalyzeView({ video, onBack }) {
             taskName: '',
             description: ''
           }))
+        } else if (selectedModel?.parameterType === 'openai-embed') {
+          setCreateParams(prev => ({ ...prev, embedParams: {}, taskName: '', description: '' }))
         } else if (selectedModel?.parameterType === 'twelvelabs') {
           setCreateParams(prev => ({
             ...prev,

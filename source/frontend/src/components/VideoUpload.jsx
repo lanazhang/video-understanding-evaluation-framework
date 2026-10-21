@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react'
 import './VideoUpload.css'
 import { FetchPost } from '../utils/apiHelper'
-import { fetchUserAttributes } from 'aws-amplify/auth'
+import { fetchUserAttributes } from '../utils/auth'
 import { modelGroups } from '../static/modelConfig'
+import EmbeddingParamFields from './EmbeddingParamFields'
+import { defaultParams } from '../utils/embeddingParams'
 
 function VideoUpload({ onSuccess, onCancel }) {
   // Get only Multimodal Embedding models
@@ -27,6 +29,9 @@ function VideoUpload({ onSuccess, onCancel }) {
     EmbeddingScope: ['clip'],
     EmbeddingOption: ['visual', 'audio', 'transcription']
   })
+  // Per-model task parameters (declared in models.yaml), keyed by model id; missing keys fall back to the model's defaults
+  const [embedParams, setEmbedParams] = useState({})
+  const [expandedEmbedPanels, setExpandedEmbedPanels] = useState({})
   const [isNovaConfigExpanded, setIsNovaConfigExpanded] = useState(false)
   const [isTwelveLabsConfigExpanded, setIsTwelveLabsConfigExpanded] = useState(false)
   const [alert, setAlert] = useState(null)
@@ -305,6 +310,13 @@ function VideoUpload({ onSuccess, onCancel }) {
             EmbeddingOption: twelveLabsConfig.EmbeddingOption
           }
         }
+      } else if (model.parameterType === 'openai-embed') {
+        // Provider-based embedding model (e.g. Qwen3-VL on Brev)
+        return {
+          ModelId: model.modelId,
+          ModelName: model.displayName,
+          Config: { ...defaultParams(model), ...embedParams[model.modelId] }
+        }
       } else {
         // Nova MME or other models
         return {
@@ -503,6 +515,40 @@ function VideoUpload({ onSuccess, onCancel }) {
               </p>
             )}
             
+            {/* Provider-based embedding models: each shows the parameters it declares in models.yaml */}
+            {selectedEmbeddings.filter(m => m.parameterType === 'openai-embed' && m.parameters?.length).map(model => (
+              <div className="mme-config-panel nova-mme-config" key={model.modelId}>
+                <div
+                  className="config-title-collapsible"
+                  onClick={() => setExpandedEmbedPanels(prev => ({ ...prev, [model.modelId]: !prev[model.modelId] }))}
+                >
+                  <h4 className="config-title">{model.displayName.replace(/\s*\(.*\)\s*$/, '')} Configuration</h4>
+                  <span className="collapse-icon">{expandedEmbedPanels[model.modelId] ? '▼' : '▶'}</span>
+                </div>
+                {expandedEmbedPanels[model.modelId] && (
+                  <div className="config-grid">
+                    <EmbeddingParamFields
+                      variant="upload"
+                      model={model}
+                      values={{ ...defaultParams(model), ...embedParams[model.modelId] }}
+                      onChange={(key, value) => setEmbedParams(prev => ({
+                        ...prev,
+                        [model.modelId]: { ...defaultParams(model), ...prev[model.modelId], [key]: value }
+                      }))}
+                      disabled={isUploading}
+                    />
+                    {!model.parameters?.some(p => p.key === 'EmbeddingDim') && (
+                      <div className="config-field">
+                        <label>Dimension</label>
+                        <input type="text" value={model.dims?.[0] || ''} disabled />
+                        <small style={{ display: 'block', marginTop: 4, opacity: 0.75 }}>Fixed size for this model</small>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
             {/* Nova MME Configuration */}
             {selectedEmbeddings.some(m => m.displayName.includes('Nova')) && (
               <div className="mme-config-panel nova-mme-config">

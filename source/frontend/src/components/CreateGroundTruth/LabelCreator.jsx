@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import './LabelCreator.css'
 import { FetchPost } from '../../utils/apiHelper'
+import { embeddingLabel, searchEndpoint } from '../../utils/embeddingTasks'
 
 function LabelCreator({ video, currentUser, initialSearches = [], initialResults = [], onNext, onTabChange }) {
   const [activeTab, setActiveTab] = useState('embedding')
@@ -18,6 +19,8 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState(null)
+  // Identifies the latest search: an answer that is not from it (slow, or from a model/dialog since left) is ignored
+  const searchRequestRef = useRef(0)
   
   const [allSearches, setAllSearches] = useState(initialSearches)
   const [allResults, setAllResults] = useState(initialResults)
@@ -116,6 +119,8 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
   }
 
   const handleSelectTask = (task) => {
+    searchRequestRef.current += 1 // a search still running for the previous model must not land here
+    setSearching(false)
     setSelectedTask(task)
     setShowSearchModal(true)
     setSearchResults([])
@@ -124,6 +129,8 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
   }
 
   const handleCloseModal = () => {
+    searchRequestRef.current += 1
+    setSearching(false)
     setShowSearchModal(false)
   }
 
@@ -138,8 +145,10 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
       return
     }
 
+    const requestId = ++searchRequestRef.current
     setSearching(true)
     setSearchError(null)
+    setSearchResults([]) // never show the previous run's clips while this one runs, or if it fails
 
     try {
       const payload = {
@@ -153,12 +162,10 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
         EmbeddingOptions: ['audio-video', 'video', 'audio']
       }
 
-      let endpoint = '/model/nova-mme-search-vector'
-      if (selectedTask.Type === 'tlabs-mme') {
-        endpoint = '/model/tlabs-mme-search-vector'
-      }
+      const endpoint = searchEndpoint(selectedTask)
 
       const data = await FetchPost(endpoint, payload, 'EvalService')
+      if (requestId !== searchRequestRef.current) return // superseded by a newer search, or the model/dialog changed
       
       let responseBody
       if (data.statusCode) {
@@ -180,10 +187,11 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
       const results = responseBody || []
       setSearchResults(results)
     } catch (err) {
+      if (requestId !== searchRequestRef.current) return
       console.error('Error searching embeddings:', err)
       setSearchError('Search failed: ' + err.message)
     } finally {
-      setSearching(false)
+      if (requestId === searchRequestRef.current) setSearching(false)
     }
   }
 
@@ -513,11 +521,11 @@ function LabelCreator({ video, currentUser, initialSearches = [], initialResults
                   >
                     <div className="index-card-header">
                       <span className="index-model">{task.ModelId}</span>
-                      <span className="index-type">{task.Type === 'nova-mme' ? 'Nova MME' : 'TwelveLabs'}</span>
+                      <span className="index-type">{embeddingLabel(task)}</span>
                     </div>
                     <div className="index-card-details">
-                      {task.Type === 'nova-mme' ? (
-                        <span>{task.Request?.DurationS}s • {task.Request?.EmbedMode}</span>
+                      {task.Type === 'nova-mme' || task.Type === 'embedding' ? (
+                        <span>{task.Request?.DurationS}s • {task.Type === 'embedding' ? `${task.Request?.EmbeddingDim}d` : task.Request?.EmbedMode}</span>
                       ) : (
                         <span>{task.Request?.segmentation?.method || task.Request?.Segmentation?.Method}</span>
                       )}

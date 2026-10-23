@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import SearchIndexModal from './SearchIndexModal'
 import '../AnalyzeView/VideoUnderstandingForm.css'
-import { embeddingLabel, isEmbeddingTask } from '../../utils/embeddingTasks'
+import { isEmbeddingTask } from '../../utils/embeddingTasks'
+import { embeddingTaskTitle, segmentSummary } from '../../utils/embeddingParams'
 
 function AnalysisTaskSelector({
   selectedVideo,
@@ -214,11 +215,12 @@ function AnalysisTaskSelector({
                             className="task-radio"
                           />
                           <div className="task-details">
-                            <div className="task-name">
-                              {embeddingLabel(task)} - {task.ModelId}
-                            </div>
+                            {/* The task's own name says how it was built (e.g. cosmos-embed1-shots-max5s-video), so tasks of
+                                the same model with different segmenting are told apart */}
+                            <div className="task-name">{embeddingTaskTitle(task)}</div>
                             <div className="task-meta">
-                              Status: {task.Status} • Created {new Date(task.CreatedAt).toLocaleDateString()}
+                              {task.ModelId} • Segments: {segmentSummary(task.Request)}
+                              {task.Request?.EmbeddingDim ? ` • ${task.Request.EmbeddingDim}d` : ''} • Status: {task.Status} • Created {new Date(task.CreatedAt).toLocaleDateString()}
                             </div>
                           </div>
                         </div>

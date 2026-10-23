@@ -62,7 +62,7 @@
 
   <rect x="316" y="386" width="258" height="130" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
   <text x="330" y="406" font-size="13" font-weight="700" fill="#1f2328">Embedding worker</text>
-  <text x="330" y="427" font-size="12" fill="#57606a">1. cut the video into segments (ffmpeg)</text>
+  <text x="330" y="427" font-size="12" fill="#57606a">1. cut into segments: fixed or by shot (ffmpeg)</text>
   <text x="330" y="445" font-size="12" fill="#57606a">2. embed video / audio / keyframe</text>
   <text x="330" y="463" font-size="12" fill="#57606a">3. store the vectors exactly as returned</text>
   <text x="330" y="487" font-size="12" fill="#57606a">Search: exact cosine over stored</text>
@@ -71,7 +71,7 @@
   <rect x="586" y="386" width="258" height="130" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
   <text x="600" y="406" font-size="13" font-weight="700" fill="#1f2328">Model registry (models.yaml)</text>
   <text x="600" y="427" font-size="12" fill="#57606a">providers: openai_compat (NIM, vLLM),</text>
-  <text x="600" y="445" font-size="12" fill="#57606a">omni_embed (custom /embed)</text>
+  <text x="600" y="445" font-size="12" fill="#57606a">omni_embed, cosmos_embed (own APIs)</text>
   <text x="600" y="469" font-size="12" fill="#57606a">per-model settings: segment length,</text>
   <text x="600" y="487" font-size="12" fill="#57606a">inputs, dimensions; they drive the</text>
   <text x="600" y="505" font-size="12" fill="#57606a">UI forms and the validation</text>
@@ -79,7 +79,7 @@
   <!-- ===== Models ===== -->
   <text x="930" y="108" font-size="16" font-weight="700" fill="#1f2328">Models</text>
 
-  <rect x="930" y="120" width="240" height="170" rx="10" fill="#f3f9e6" stroke="#76b900" stroke-width="1.5"/>
+  <rect x="930" y="120" width="240" height="224" rx="10" fill="#f3f9e6" stroke="#76b900" stroke-width="1.5"/>
   <text x="946" y="144" font-size="13" font-weight="700" fill="#1f2328">NVIDIA Brev instances</text>
   <text x="946" y="161" font-size="11" fill="#57606a">reached through brev port-forward</text>
   <rect x="946" y="172" width="208" height="46" rx="5" fill="#ffffff" stroke="#c5e08a"/>
@@ -88,27 +88,30 @@
   <rect x="946" y="226" width="208" height="50" rx="5" fill="#ffffff" stroke="#c5e08a"/>
   <text x="958" y="246" font-size="12" font-weight="700" fill="#1f2328">Omni-Embed-Nemotron-3B</text>
   <text x="958" y="262" font-size="11" fill="#57606a">custom /embed API (multimodal)</text>
+  <rect x="946" y="280" width="208" height="50" rx="5" fill="#ffffff" stroke="#c5e08a"/>
+  <text x="958" y="300" font-size="12" font-weight="700" fill="#1f2328">Cosmos-Embed1 (NIM)</text>
+  <text x="958" y="316" font-size="11" fill="#57606a">/v1/embeddings, text + video, 256-d</text>
 
-  <rect x="930" y="310" width="240" height="108" rx="10" fill="#f3f9e6" stroke="#76b900" stroke-width="1.5"/>
-  <text x="946" y="334" font-size="13" font-weight="700" fill="#1f2328">NVIDIA NIM API</text>
-  <text x="946" y="351" font-size="11" fill="#57606a">or any OpenAI-compatible endpoint,</text>
-  <text x="946" y="366" font-size="11" fill="#57606a">on Brev or your network</text>
-  <text x="946" y="390" font-size="12" fill="#1f2328">Video understanding: vision-language</text>
-  <text x="946" y="406" font-size="12" fill="#1f2328">models (chat / frame sampling)</text>
+  <rect x="930" y="364" width="240" height="108" rx="10" fill="#f3f9e6" stroke="#76b900" stroke-width="1.5"/>
+  <text x="946" y="388" font-size="13" font-weight="700" fill="#1f2328">NVIDIA NIM API</text>
+  <text x="946" y="405" font-size="11" fill="#57606a">or any OpenAI-compatible endpoint,</text>
+  <text x="946" y="420" font-size="11" fill="#57606a">on Brev or your network</text>
+  <text x="946" y="444" font-size="12" fill="#1f2328">Video understanding: vision-language</text>
+  <text x="946" y="460" font-size="12" fill="#1f2328">models (chat / frame sampling)</text>
 
-  <rect x="930" y="438" width="240" height="92" rx="10" fill="#ffffff" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="6 4"/>
-  <text x="946" y="462" font-size="13" font-weight="700" fill="#1f2328">Optional providers</text>
-  <text x="946" y="482" font-size="12" fill="#57606a">Google Gemini, AWS Bedrock</text>
-  <text x="946" y="500" font-size="12" fill="#57606a">(plug in with an API key; not</text>
-  <text x="946" y="516" font-size="12" fill="#57606a">needed for the default setup)</text>
+  <rect x="930" y="492" width="240" height="92" rx="10" fill="#ffffff" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="946" y="516" font-size="13" font-weight="700" fill="#1f2328">Optional providers</text>
+  <text x="946" y="536" font-size="12" fill="#57606a">Google Gemini, AWS Bedrock</text>
+  <text x="946" y="554" font-size="12" fill="#57606a">(plug in with an API key; not</text>
+  <text x="946" y="570" font-size="12" fill="#57606a">needed for the default setup)</text>
 
   <!-- backend -> models -->
   <line x1="860" y1="205" x2="928" y2="205" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
-  <line x1="860" y1="364" x2="928" y2="364" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
-  <line x1="860" y1="484" x2="928" y2="484" stroke="#8c959f" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="860" y1="420" x2="928" y2="420" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="860" y1="520" x2="928" y2="520" stroke="#8c959f" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
   <text x="894" y="196" font-size="11" text-anchor="middle" fill="#57606a">HTTP</text>
-  <text x="894" y="355" font-size="11" text-anchor="middle" fill="#57606a">HTTP</text>
-  <text x="894" y="475" font-size="11" text-anchor="middle" fill="#57606a">API</text>
+  <text x="894" y="411" font-size="11" text-anchor="middle" fill="#57606a">HTTP</text>
+  <text x="894" y="511" font-size="11" text-anchor="middle" fill="#57606a">API</text>
 
   <!-- backend -> storage -->
   <line x1="580" y1="530" x2="580" y2="588" stroke="#57606a" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>

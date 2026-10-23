@@ -29,7 +29,9 @@ This framework helps teams quickly assess customer-provided videos and recommend
 ### Key Features
 
 - **User-uploaded videos & custom labeling**: Efficiently label videos for specific use cases, reducing dependence on public/licensed datasets and minimizing ground-truth bias
-- **Cross-model comparison**: Compare video understanding (frame-sampling) and embedding-based methods side by side. NVIDIA-hosted models are the default (Qwen3-VL-Embedding-8B, Omni-Embed-Nemotron-3B, NIM / OpenAI-compatible vision-language models); Gemini, Bedrock and other providers can be plugged in through `backend`'s model registry
+- **Cross-model comparison**: Compare video understanding (frame-sampling) and embedding-based methods side by side. NVIDIA-hosted models are the default (Qwen3-VL-Embedding-8B, Omni-Embed-Nemotron-3B, Cosmos-Embed1, NIM / OpenAI-compatible vision-language models); Gemini, Bedrock and other providers can be plugged in through `backend`'s model registry
+- **Fixed or shot-based segmenting**: embed fixed-length segments, or let ffmpeg find the shots and cut there (long shots are divided evenly, tiny ones merged), for any embedding model
+- **See how a video was segmented**: each embedding index draws its segments on a timeline (shots, long shots divided, zoom, click to play)
 - **Human-in-the-loop efficiency**: Auto-label with a base model and quickly refine with human input, reducing labeling time from weeks to hours
 - **Flexible evaluation workflow**: Compare outputs across models and methods to identify optimal solutions, adaptable for different industries and content types
 - **Interactive review tools**: Side-by-side comparison of predicted vs ground truth labels with metrics (precision, recall, F1) and individual label verification
@@ -44,8 +46,8 @@ whole app needs no AWS account and no Docker. Only the models are remote.
 
 - **Upload**: the UI sends the video to the backend, which stores it under `data/files/` and records its metadata
   (duration, resolution, thumbnail) in SQLite.
-- **Embed**: an embedding task cuts the video into segments, sends each one to the chosen model (Qwen3-VL-Embedding or
-  Omni-Embed-Nemotron, on NVIDIA Brev) and stores the returned vectors unchanged. What a task accepts (segment length,
+- **Embed**: an embedding task cuts the video into segments, sends each one to the chosen model (Qwen3-VL-Embedding,
+  Omni-Embed-Nemotron or Cosmos-Embed1, on NVIDIA Brev) and stores the returned vectors unchanged. What a task accepts (segment length,
   inputs, dimension) is declared per model in `backend/models.yaml`.
 - **Search and label**: a text query is embedded with the same model and ranked by exact cosine distance. Results can be
   compared across models and turned into ground-truth labels.
@@ -79,7 +81,7 @@ pick clips for the ground truth.
 
 The evaluation report scores the clips a model returned against the verified ground truth: **Precision, Recall, F1,
 Accuracy, Mean IoU and mAP**, then **ranking quality** (Recall@1/5/10, MRR, NDCG@10, mAP at IoU 0.3 / 0.5 / 0.7) and
-**efficiency** (processing time, speed as a multiple of real time, tokens and cost). The *Re-score with different matching*
+**efficiency** (processing time, speed as a multiple of real time, and tokens). The *Re-score with different matching*
 control recalculates the same results with another matching rule without saving. Every card has an info icon with its
 definition; see [Evaluation metrics](#evaluation-metrics) below for how a clip is matched to a moment.
 
@@ -115,8 +117,8 @@ Clips are ranked by score (lower distance first); ranking metrics are computed p
 them) and, under every returned clip, the **ground-truth range it overlaps**: overlap seconds, IoU, and how far its start
 and end are off. A clip that touches a range but does not count says why (below the threshold, or a better-ranked clip
 already found that moment). The detail and report tables show the same in their "Matched To" columns. The comparison
-screen also shows **processing time, speed (x real time), tokens and cost** of the analysis next to the quality metrics; cost is
-N/A for models with no pricing configured (self-hosted). Evaluations saved by earlier versions used a different rule (any
+screen also shows **processing time, speed (x real time) and tokens** of the analysis next to the quality metrics (no cost: NVIDIA-hosted
+and self-hosted models are not priced per token). Evaluations saved by earlier versions used a different rule (any
 overlap counted, and recall mixed clip and moment counts), so they are marked as such and keep their stored numbers; create
 a new evaluation to get the corrected metrics. The settings used are stored with each evaluation (`BufferTime`,
 `MatchVersion`, `MatchBy`, `MatchThreshold`, `OneToOne`; `MatchVersion` 2 evaluations used IoU and keep `MatchIouThreshold`).
@@ -137,7 +139,7 @@ cd frontend && npm run dev                              # terminal 2: UI at http
 ### Launch the demo with one command
 
 If your embedding models run on Brev instances, `scripts/local-launch.sh` starts everything: the two instances (if they are
-stopped), the Omni-Embed server, the tunnels, the API and the UI, then opens the browser.
+stopped), the Omni-Embed server and the Cosmos-Embed1 container (if either is down), the three tunnels, the API and the UI, then opens the browser.
 
 ```bash
 scripts/local-launch.sh start          # start the instances if needed, start the API + UI, open http://localhost:5173
@@ -150,8 +152,14 @@ scripts/local-launch.sh stop --gpus    # ...and stop the Brev instances so they 
 the models in the background (instance boot, Omni server, tunnels). Browsing, labeling and saved evaluations work at once;
 embedding and search work when `status` shows both tunnels up. Follow the connection with `tail -f .local-launch/connect.log`.
 
-- `scripts/local-launch.sh start --wait` waits until both models answer before starting the app.
+- `scripts/local-launch.sh start --wait` waits until the models answer before starting the app.
+- `scripts/local-launch.sh start --no-models` starts only the API and UI. It is also what `start` does when Brev can't be used
+  (not logged in, or its API is down): labeling, saved evaluations and comparisons work without any GPU, and
+  `scripts/local-launch.sh connect` adds the models later.
 - `scripts/local-launch.sh connect` redoes the model connection (for example after a dropped tunnel); it is safe to repeat.
+- `start` leaves a small background process running that checks each model tunnel every 30 s and reopens any that dropped
+  (idle SSH tunnels, in particular the one to the GCP-hosted Cosmos instance, disappear on their own); `scripts/local-launch.sh
+  watch` runs the same loop in the foreground, and `stop` ends it.
 - Running `start` again is safe: anything already healthy is left alone.
 
 It needs the one-time setup in [backend/README.md](backend/README.md) and a logged-in Brev CLI (`brev login`). Instance names

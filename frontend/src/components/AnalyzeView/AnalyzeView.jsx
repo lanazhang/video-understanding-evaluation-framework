@@ -10,7 +10,7 @@ import SearchEmbeddings from './SearchEmbeddings'
 import VideoUnderstandingForm from './VideoUnderstandingForm'
 import './AnalyzeView.css'
 import { searchEndpoint } from '../../utils/embeddingTasks'
-import { defaultParams } from '../../utils/embeddingParams'
+import { defaultParams, segmentNamePart } from '../../utils/embeddingParams'
 import { applyMutedPreference } from '../../utils/mutePreference'
 
 function AnalyzeView({ video, onBack }) {
@@ -69,7 +69,7 @@ function AnalyzeView({ video, onBack }) {
       const values = { ...defaultParams(selectedModel), ...createParams.embedParams?.[selectedModel.modelId] }
       const inputs = values.Inputs || ['video']
       const smaller = values.EmbeddingDim && values.EmbeddingDim !== selectedModel.dims?.[0] ? `-${values.EmbeddingDim}d` : ''
-      return `${modelShortName}-${values.DurationS}s-${inputs.join('+')}${inputs.length > 1 && values.Combine === false ? '-separate' : ''}${smaller}`
+      return `${modelShortName}-${segmentNamePart(values)}-${inputs.join('+')}${inputs.length > 1 && values.Combine === false ? '-separate' : ''}${smaller}`
     }
     return ''
   }

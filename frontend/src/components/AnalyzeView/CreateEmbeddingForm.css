@@ -462,3 +462,23 @@
   width: 14px;
   height: 14px;
 }
+
+.create-embedding-form .model-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.create-embedding-form .model-links a {
+  color: #ea580c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.create-embedding-form .model-links a:hover {
+  text-decoration: underline;
+}

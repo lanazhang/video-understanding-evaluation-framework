@@ -439,3 +439,24 @@
   text-decoration: underline;
   text-decoration-style: dotted;
 }
+
+.task-list__segments {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.task-list__segments-button {
+  padding: 6px 14px;
+  border: 1px solid var(--orange-border, #fdba74);
+  border-radius: 6px;
+  background: var(--orange-bg-lightest, #fff7ed);
+  color: var(--orange-darker, #c2410c);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.task-list__segments-button:hover {
+  background: var(--orange-bg-light, #ffedd5);
+}

@@ -418,3 +418,13 @@
   box-shadow: 0 12px 28px rgba(249, 115, 22, 0.25);
   border-color: #fb923c;
 }
+
+/* the index's full name, never cut: it says how the index was built (model, segmenting, inputs) */
+.embedding-search .index-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

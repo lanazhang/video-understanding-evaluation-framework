@@ -175,6 +175,14 @@ function CreateEmbeddingForm({
                   </option>
                 ))}
             </select>
+            {selectedModel?.links?.length > 0 && (
+              <div className="model-links">
+                Model page:
+                {selectedModel.links.map(link => (
+                  <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">{link.label || link.url}</a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

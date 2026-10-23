@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { modelParameters } from '../utils/embeddingParams'
+import { Fragment, useEffect, useState } from 'react'
+import { modelParameters, paramVisible, optionValue, paramLabel, segmentingNote } from '../utils/embeddingParams'
 
 // Renders the inputs for a model's declared task parameters (number / select / boolean).
 // variant 'upload' matches the upload panel's grid, 'form' the Create Embedding form.
@@ -7,8 +7,9 @@ function EmbeddingParamFields({ model, values, onChange, disabled = false, varia
   const fieldClass = variant === 'upload' ? 'config-field' : 'form-group'
 
   return modelParameters(model).map(param => {
-    // showIf: {key, minSelected} hides a field until enough options of another multiselect are ticked
-    if (param.showIf && (values?.[param.showIf.key] || []).length < (param.showIf.minSelected || 1)) return null
+    // showIf: {key, minSelected} hides a field until enough options of another multiselect are ticked; {key, equals} until
+    // another field has that value (the shot settings appear when segmenting by shot)
+    if (!paramVisible(param, values)) return null
     const id = `${model.modelId}-${param.key}`
     const value = values?.[param.key] ?? param.default
 
@@ -19,14 +20,16 @@ function EmbeddingParamFields({ model, values, onChange, disabled = false, varia
           id={id}
           value={value}
           onChange={(e) => {
-            const picked = param.options.find(o => String(o) === e.target.value)
+            const picked = param.options.map(optionValue).find(o => String(o) === e.target.value)
             onChange(param.key, picked)
           }}
           disabled={disabled}
         >
-          {param.options.map(o => (
-            <option key={o} value={o}>{o}{param.unit ? ` ${param.unit}` : ''}{o === param.default ? ' (default)' : ''}</option>
-          ))}
+          {param.options.map(o => {
+            const v = optionValue(o)
+            const text = o !== null && typeof o === 'object' ? o.label : `${o}${param.unit ? ` ${param.unit}` : ''}`
+            return <option key={v} value={v}>{text}{v === param.default ? ' (default)' : ''}</option>
+          })}
         </select>
       )
     } else if (param.type === 'multiselect') {
@@ -75,6 +78,7 @@ function EmbeddingParamFields({ model, values, onChange, disabled = false, varia
           id={id}
           min={param.min}
           max={param.max}
+          step={param.step}
           value={value}
           onChange={(e) => onChange(param.key, e.target.value === '' ? '' : Number(e.target.value))}
           disabled={disabled}
@@ -90,20 +94,31 @@ function EmbeddingParamFields({ model, values, onChange, disabled = false, varia
     if (param.type === 'number' && (param.min != null || param.max != null)) {
       allowed = `Allowed: ${param.min ?? '…'} to ${param.max ?? '…'}${unit}`
     } else if (param.type === 'select' && param.options?.length) {
-      allowed = `Options: ${param.options.join(', ')}${unit}`
+      allowed = param.options.some(o => o !== null && typeof o === 'object') ? null : `Options: ${param.options.join(', ')}${unit}`
     }
 
+    const note = param.explain === 'shots' ? segmentingNote(values) : null
     return (
-      <ParamField
-        key={param.key}
-        className={fieldClass}
-        label={`${param.label}${variant !== 'upload' && param.unit ? ` (${param.unit})` : ''}`}
-        htmlFor={param.type === 'multiselect' ? undefined : id}
-        allowed={allowed}
-        hint={param.hint}
-      >
-        {input}
-      </ParamField>
+      <Fragment key={param.key}>
+        <ParamField
+          className={fieldClass}
+          label={`${paramLabel(param, values)}${variant !== 'upload' && param.unit ? ` (${param.unit})` : ''}`}
+          htmlFor={param.type === 'multiselect' ? undefined : id}
+          allowed={allowed}
+          hint={param.hint}
+        >
+          {input}
+        </ParamField>
+        {note && (
+          <div
+            role="note"
+            className="segmenting-note"
+            style={{ gridColumn: '1 / -1', margin: '2px 0 6px', padding: '8px 10px', fontSize: 12, lineHeight: 1.45, borderRadius: 6, background: 'rgba(128, 128, 128, 0.14)' }}
+          >
+            {note}
+          </div>
+        )}
+      </Fragment>
     )
   })
 }

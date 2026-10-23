@@ -1,9 +1,12 @@
 import refreshIcon from '../../assets/icons/refresh.svg'
+import { useState } from 'react'
+import { FetchPost } from '../../utils/apiHelper'
 import SearchEmbeddings from './SearchEmbeddings'
+import SegmentTimeline from './SegmentTimeline'
 import { modelGroups } from '../../static/modelConfig'
 import './TaskList.css'
 import { isEmbeddingTask } from '../../utils/embeddingTasks'
-import { embeddingTaskParamRows } from '../../utils/embeddingParams'
+import { embeddingTaskParamRows, segmentSummary } from '../../utils/embeddingParams'
 
 function TaskList({
   analyzeTasks,
@@ -40,6 +43,31 @@ function TaskList({
   sortOrder,
   setSortOrder
 }) {
+  // Segments of an index, loaded when "View segments" is opened: { [taskId]: { open, loading, error, data } }
+  const [segmentView, setSegmentView] = useState({})
+  const setSegmentState = (taskId, patch) => setSegmentView(prev => ({ ...prev, [taskId]: { ...prev[taskId], ...patch } }))
+
+  const toggleSegments = async (task) => {
+    const current = segmentView[task.Id] || {}
+    if (current.open) { setSegmentState(task.Id, { open: false }); return }
+    setSegmentState(task.Id, { open: true })
+    if (current.data) return
+    setSegmentState(task.Id, { loading: true, error: null })
+    try {
+      const data = await FetchPost('/model/embedding-segments', { TaskId: task.Id }, 'EvalService')
+      setSegmentState(task.Id, { loading: false, data })
+    } catch (err) {
+      setSegmentState(task.Id, { loading: false, error: err.message || 'Could not load the segments' })
+    }
+  }
+
+  // Play the clicked segment in the video player at the top of the page, and bring the player into view
+  const playSegment = (start, end) => {
+    if (onTimeRangeClick) onTimeRangeClick(start, end)
+    const player = videoPlayerRef?.current
+    if (player && player.scrollIntoView) player.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
   // Filter to show only MME (Multimodal Embedding) type tasks
   const mmeTasks = analyzeTasks.filter(t => 
     isEmbeddingTask(t)
@@ -350,7 +378,7 @@ function TaskList({
                         <>
                           <div className="task-list__detail-row">
                             <span className="task-list__detail-label">Duration:</span>
-                            <span className="task-list__detail-value">{task.Request?.DurationS || 'N/A'}s</span>
+                            <span className="task-list__detail-value">{segmentSummary(task.Request)}</span>
                           </div>
                           <div className="task-list__detail-row">
                             <span className="task-list__detail-label">Embed Mode:</span>
@@ -425,6 +453,32 @@ function TaskList({
                           <span className="task-list__detail-label">{task.Type === 'embedding' ? 'Vector Index:' : 'S3 Vector Index:'}</span>
                           <span className="task-list__detail-value">{task.Result.S3VectorIndex || 'N/A'}</span>
                         </div>
+                      </div>
+                    )}
+
+                    {task.Type === 'embedding' && task.Status === 'completed' && (
+                      <div className="task-list__segments">
+                        <button
+                          type="button"
+                          className="task-list__segments-button"
+                          onClick={() => toggleSegments(task)}
+                          aria-expanded={!!segmentView[task.Id]?.open}
+                        >
+                          {segmentView[task.Id]?.open ? 'Hide segments' : 'View segments'}
+                        </button>
+                        {segmentView[task.Id]?.open && (
+                          segmentView[task.Id].loading ? <p className="segment-timeline__empty">Loading segments...</p>
+                          : segmentView[task.Id].error ? <div className="alert alert-error">{segmentView[task.Id].error}</div>
+                          : segmentView[task.Id].data && (
+                            <SegmentTimeline
+                              segments={segmentView[task.Id].data.Segments}
+                              duration={video?.Duration}
+                              mode={segmentView[task.Id].data.SegmentMode}
+                              shotCount={segmentView[task.Id].data.ShotCount}
+                              onSegmentClick={playSegment}
+                            />
+                          )
+                        )}
                       </div>
                     )}
                   </div>

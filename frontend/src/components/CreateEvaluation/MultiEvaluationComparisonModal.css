@@ -422,3 +422,34 @@
   color: white;
   border: 1px solid #4b5563;
 }
+
+/* rank of each evaluation result inside its bar (when it fits); the score is in the tooltip, the selection panel and the list below */
+.multi-eval-comparison-modal-content .timeline-segment .segment-score {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 24px;
+  color: #fff;
+  text-align: center;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.multi-eval-comparison-modal-content .results-by-score { margin-top: 16px; }
+.multi-eval-comparison-modal-content .results-by-score-title { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+.multi-eval-comparison-modal-content .results-by-score-hint { font-size: 12px; font-weight: 400; color: #6b7280; margin-left: 6px; }
+.multi-eval-comparison-modal-content .results-by-score-task { margin-bottom: 10px; }
+.multi-eval-comparison-modal-content .results-by-score-task-name { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; overflow-wrap: anywhere; }
+.multi-eval-comparison-modal-content .results-by-score-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 110px; overflow-y: auto; }
+.multi-eval-comparison-modal-content .result-score-item {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px;
+  border: 1px solid #d1d5db; border-left-width: 4px; border-radius: 6px;
+  background: #fff; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.multi-eval-comparison-modal-content .result-score-item:hover { background: #f9fafb; }
+.multi-eval-comparison-modal-content .result-score-item.status-tp { border-left-color: #22c55e; }
+.multi-eval-comparison-modal-content .result-score-item.status-fp { border-left-color: #f97316; }
+.multi-eval-comparison-modal-content .result-score-rank { font-weight: 700; color: #6b7280; }
+.multi-eval-comparison-modal-content .result-score-time { font-family: monospace; color: #374151; }
+.multi-eval-comparison-modal-content .result-score-value { font-weight: 700; color: #1a1a1a; font-family: monospace; }

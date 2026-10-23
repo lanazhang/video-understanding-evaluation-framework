@@ -52,7 +52,7 @@ async def put_file(bucket: str, key: str, request: Request):
         dst.parent.mkdir(parents=True, exist_ok=True)
 
     tmp = dst.with_name(dst.name + f".{uuid.uuid4().hex}.tmp")
-    md5, size = hashlib.md5(), 0
+    md5, size = hashlib.md5(usedforsecurity=False), 0  # S3-style ETag, not a security use
     try:
         with open(tmp, "wb") as f:
             async for chunk in request.stream():

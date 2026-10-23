@@ -50,6 +50,13 @@ def put(index_name, items):
         raise
 
 
+def list_segments(index_name):
+    """[(start_sec, end_sec, option)] of everything indexed, in time order (no vectors read)."""
+    return _conn().execute(
+        "SELECT start_sec, end_sec, option FROM vectors WHERE index_name=? ORDER BY start_sec, end_sec, option", (index_name,)
+    ).fetchall()
+
+
 def query(index_name, vector, top_k=5, options=None):
     """Nearest segments by cosine distance (0 = identical). `options` limits the modalities searched.
     Returns [{key, distance, metadata}]."""

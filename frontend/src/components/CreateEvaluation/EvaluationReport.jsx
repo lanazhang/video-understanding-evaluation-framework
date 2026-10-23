@@ -33,7 +33,8 @@ function EvaluationReport({
   const evaluationLabels = searchResults.map(result => ({
     StartTs: parseFloat(result.StartSec || 0),
     EndTs: parseFloat(result.EndSec || 0),
-    Label: result.query || 'Search Result'
+    Label: result.query || 'Search Result',
+    Score: result.Distance !== undefined ? parseFloat(result.Distance) : undefined
   }))
 
   return (

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import './SearchEmbeddings.css'
-import { embeddingTaskParamRows, embeddingTaskTitle } from '../../utils/embeddingParams'
+import { embeddingTaskParamRows, embeddingTaskTitle, segmentSummary } from '../../utils/embeddingParams'
 import { bindMutedPreference, persistMutedChange } from '../../utils/mutePreference'
 
 function SearchEmbeddings({
@@ -167,7 +167,7 @@ function SearchEmbeddings({
                 
                 let tooltipContent = ''
                 if (task.Type === 'nova-mme') {
-                  tooltipContent = `Duration: ${task.Request?.DurationS || 'N/A'}s\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
+                  tooltipContent = `Duration: ${segmentSummary(task.Request)}\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
                 } else if (task.Type === 'embedding') {
                   tooltipContent = embeddingTaskParamRows(task).map(r => `${r.label}: ${r.value}`).join('\n')
                 } else if (task.Type === 'tlabs-mme') {
@@ -315,7 +315,7 @@ function SearchEmbeddings({
                   
                   let tooltipContent = ''
                   if (task.Type === 'nova-mme') {
-                    tooltipContent = `Duration: ${task.Request?.DurationS || 'N/A'}s\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
+                    tooltipContent = `Duration: ${segmentSummary(task.Request)}\nEmbed Mode: ${task.Request?.EmbedMode || 'N/A'}\nDimension: ${task.Request?.EmbeddingDim || 'N/A'}`
                   } else if (task.Type === 'embedding') {
                   tooltipContent = embeddingTaskParamRows(task).map(r => `${r.label}: ${r.value}`).join('\n')
                 } else if (task.Type === 'tlabs-mme') {

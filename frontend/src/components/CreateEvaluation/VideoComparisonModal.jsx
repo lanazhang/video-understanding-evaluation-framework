@@ -26,6 +26,16 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
     })
   }
 
+  // Score of an evaluation result is its distance to the query (cosine, lower = closer); rank 1 is the closest
+  const scoreOf = (label) => (label && Number.isFinite(Number(label.Score)) && label.Score !== null ? Number(label.Score) : null)
+  const formatScore = (v) => (v === null ? '' : v.toFixed(3))
+  const rankedResults = evaluationLabels
+    .map((label, idx) => ({ label, idx, score: scoreOf(label) }))
+    .filter(r => r.score !== null)
+    .sort((a, b) => (a.score - b.score) || (a.idx - b.idx))
+  const rankOf = {}
+  rankedResults.forEach((r, i) => { rankOf[r.idx] = i + 1 })
+
   useEffect(() => {
     const videoElement = videoRef.current
     if (!videoElement) return
@@ -80,7 +90,7 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
     setHoveredSegment(null)
   }
 
-  const handleSegmentClick = (startTime, endTime, label, type, status, e) => {
+  const handleSegmentClick = (startTime, endTime, label, type, status, e, score = null, rank = null) => {
     e.stopPropagation()
     
     // Set selected range info
@@ -89,7 +99,9 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
       label,
       startTime,
       endTime,
-      status
+      status,
+      score,
+      rank
     })
     
     if (videoRef.current) {
@@ -195,17 +207,21 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
                         left: `${startPercent}%`,
                         width: `${widthPercent}%`
                       }}
-                      onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'Search Result', 'Evaluation Result', status, e)}
+                      onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'Search Result', 'Evaluation Result', status, e, scoreOf(label), rankOf[idx])}
                       onMouseEnter={(e) => handleSegmentHover({
                         type: 'Evaluation Result',
                         label: label.Label || 'Search Result',
                         start: label.StartTs,
                         end: label.EndTs,
-                        status
+                        status,
+                        score: scoreOf(label),
+                        rank: rankOf[idx]
                       }, e)}
                       onMouseMove={(e) => setTooltipPosition({ x: e.clientX, y: e.clientY })}
                       onMouseLeave={handleSegmentLeave}
-                    />
+                    >
+                      {rankOf[idx] && <span className="segment-score">#{rankOf[idx]}</span>}
+                    </div>
                   )
                 })}
               </div>
@@ -215,6 +231,32 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
               {formatTime(currentTime)} / {formatTime(duration)}
             </div>
           </div>
+
+          {rankedResults.length > 0 && (
+            <div className="results-by-score">
+              <div className="results-by-score-title">
+                Results by score <span className="results-by-score-hint">distance to the query, lower is closer; click to play</span>
+              </div>
+              <div className="results-by-score-list">
+                {rankedResults.map((r, i) => {
+                  const status = evalStatusMap[r.idx] || null
+                  return (
+                    <button
+                      key={r.idx}
+                      type="button"
+                      className={`result-score-item ${status ? `status-${status.toLowerCase()}` : ''}`}
+                      onClick={(e) => handleSegmentClick(r.label.StartTs, r.label.EndTs, r.label.Label || 'Search Result', 'Evaluation Result', status, e, r.score, i + 1)}
+                    >
+                      <span className="result-score-rank">#{i + 1}</span>
+                      <span className="result-score-time">{formatTime(r.label.StartTs)} - {formatTime(r.label.EndTs)}</span>
+                      <span className="result-score-value">{formatScore(r.score)}</span>
+                      {status && <span className={`status-badge ${status.toLowerCase()}`}>{status}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {selectedRange && (
             <div className="selected-range-info">
@@ -246,6 +288,14 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
                     {selectedRange.startTime.toFixed(2)}s - {selectedRange.endTime.toFixed(2)}s
                   </span>
                 </div>
+                {selectedRange.score !== null && selectedRange.score !== undefined && (
+                  <div className="range-info-item">
+                    <span className="range-info-label">Score:</span>
+                    <span className="range-info-value">
+                      {formatScore(selectedRange.score)} distance (lower is closer){selectedRange.rank ? `, rank ${selectedRange.rank} of ${rankedResults.length}` : ''}
+                    </span>
+                  </div>
+                )}
                 <div className="range-info-item">
                   <span className="range-info-label">Duration:</span>
                   <span className="range-info-value">
@@ -276,6 +326,11 @@ function VideoComparisonModal({ video, groundTruthLabels, evaluationLabels, matc
               <div className="tooltip-time">
                 {hoveredSegment.start.toFixed(2)}s - {hoveredSegment.end.toFixed(2)}s
               </div>
+              {hoveredSegment.score !== null && hoveredSegment.score !== undefined && (
+                <div className="tooltip-time">
+                  Score {formatScore(hoveredSegment.score)} (distance){hoveredSegment.rank ? `, rank ${hoveredSegment.rank}` : ''}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -40,6 +40,7 @@ Use one terminal per service and leave each one open.
 |---|---|---|---|
 | 1a | Brev tunnel: Qwen3-VL embedding (optional) | `brev port-forward military-tan-rook -p 8011:8001` | http://localhost:8011/v1 |
 | 1b | Brev tunnel: Omni-Embed-Nemotron-3B (optional) | `brev port-forward omni-embed -p 8002:8002` | http://localhost:8002 |
+| 1c | Brev tunnel: Cosmos-Embed1 NIM (optional) | `brev port-forward cosmos-embed1 -p 8012:8000` | http://localhost:8012 |
 | 2 | Backend API | `cd backend && .venv/bin/uvicorn app:app --port 8080` | http://localhost:8080 |
 | 3 | Web UI | `cd frontend && npm run dev` | **http://localhost:5173** |
 
@@ -66,12 +67,13 @@ Notes on the Brev tunnel:
 - If the tunnel drops, running tasks retry for about 35 s and then fail with a clear message. Re-run the
   command, delete the failed task, and create it again.
 - Check them with `curl http://localhost:8011/v1/models` (should list `Qwen/Qwen3-VL-Embedding-8B`) and
-  `curl http://localhost:8002/info` (should report `nvidia/omni-embed-nemotron-3b`, 2048 dims).
+  `curl http://localhost:8002/info` (should report `nvidia/omni-embed-nemotron-3b`, 2048 dims) and
+  `curl http://localhost:8012/v1/health/ready` (should say `NIM Service is ready`).
 
 ### Stop and reset
 
 - Stop a service with `Ctrl+C` in its terminal. If a port stays busy, find the process with
-  `lsof -nP -iTCP:8080 -sTCP:LISTEN` (or 5173, 8011, 8002) and `kill <pid>`.
+  `lsof -nP -iTCP:8080 -sTCP:LISTEN` (or 5173, 8011, 8002, 8012) and `kill <pid>`.
 - Restart the backend after changing `backend/.env`, `models.yaml` or any backend code; the UI reloads by itself.
 - To wipe all videos, tasks and vectors, stop the backend and delete the `data/` folder in the repo root.
 
@@ -111,7 +113,7 @@ their SDKs and credentials are present.
 
 ## Embeddings and search
 
-Two embedding models are registered, and uploading a video creates one `embedding` task per model selected in the
+Three embedding models are registered, and uploading a video creates one `embedding` task per model selected in the
 upload form. Both cut the video into segments, embed each segment, and store the vectors in SQLite (exact cosine
 search). Search is `POST /v1/model/embedding-search` (text or image query), run against one task's vectors.
 
@@ -119,6 +121,54 @@ search). Search is `POST /v1/model/embedding-search` (text or image query), run 
 |---|---|---|---|
 | Qwen3-VL-Embedding-8B | Brev `military-tan-rook`, vLLM (OpenAI-compatible `/v1/embeddings`), tunnel `:8011` | 4096 | segment duration (2-30 s), frame rate, max resolution, dimension (4096 only for now); inputs: video |
 | Omni-Embed-Nemotron-3B | Brev `omni-embed`, small FastAPI wrapper (`POST /embed`), tunnel `:8002` | 2048 | segment duration (2-60 s), inputs: video / audio / image keyframe, combined or separate (default: video only), dimension (2048, fixed) |
+| Cosmos-Embed1 | Brev `cosmos-embed1`, NVIDIA NIM (`POST /v1/embeddings`), tunnel `:8012` | 256 | segment duration (2-30 s), dimension (256, fixed); inputs: video and text only |
+
+**Cosmos-Embed1 (NIM).** The provider is `cosmos_embed` in `providers/`. The NIM is OpenAI-like but needs a `request_type`
+(`query` for one item) and takes video as a base64 `data:video/mp4` string; it rejects a `dimensions` field, returns unit
+vectors, and reports `num_videos` rather than tokens for video. It samples **8 frames per clip** and fails on fewer, so
+the worker raises the frame rate of short segments (such as the 1 s tail of a video) to give it at least that many
+(`min_frames` in `models.yaml`). It decodes video on the GPU, so the instance needs the NVIDIA video libraries; the setup
+script `scripts/brev-cosmos-embed1.sh` installs them and creates the container. Setup needs an NGC API key (free) for the
+image and model download, entered once at a hidden prompt on the instance (it is kept there in a mode-600 file, never in
+the repo).
+
+**Never restart the Cosmos container.** A container that is stopped and started again (which is also what rebooting the
+instance does) still answers health checks and text queries but fails every video request with `All 1 inputs failed during
+processing`, while a freshly created one works. The cause is not known. So the setup script always removes the container and
+creates a new one (it has no restart policy), and `scripts/local-launch.sh connect` checks with a real tiny video request
+through the tunnel, because the health endpoint says "ready" even when video is broken. If that request fails, or the
+container is not running, the launcher runs the setup script on the instance, which takes about a minute; the key is
+already stored there, so there is no prompt. To repair it by hand: `brev exec cosmos-embed1 'bash ~/brev-cosmos-embed1.sh'`. Free use is for development and
+testing under the NVIDIA Developer Program; production use falls under NVIDIA AI Enterprise licensing, and the model has
+its own license, so confirm the terms before you put it in front of customers.
+
+**Segmenting: fixed length or by shot.** Every embedding model offers the same choice (declared once under
+`embedding_parameters` in `models.yaml`, so adding a model gives it for free):
+
+- **Fixed length** (default): a segment every *Segment Duration* seconds, wherever the picture is.
+- **By shot**: segments follow the shots of the video. The shots are found with ffmpeg's scene-change detection (a single
+  pass over a low-resolution copy: under 2 s for a 12 minute video), then made a usable size:
+  - a shot **longer** than *Segment Duration*, which now means the *longest* segment, is divided **evenly** into the fewest
+    pieces that fit (a 13 s shot with a 5 s maximum becomes 3 segments of 4.3 s, not 5 + 5 + 3);
+  - a shot **shorter** than *Shortest segment* (default 1 s) is joined with the shot after it (a short last shot, with the
+    one before), so flashes and quick cuts do not become tiny segments;
+  - *Shot sensitivity* (0.05 to 0.9, default 0.3) is ffmpeg's scene score: lower finds more cuts, including soft ones,
+    higher keeps only hard cuts.
+
+  The segments cover the whole video with no gaps or overlaps, and each is embedded and stored like a fixed segment (search,
+  comparison and evaluation need no changes). The task records how many shots were found and the shortest and longest
+  segment. On the keynote sample (281 s), shot mode with a 5 s maximum gives 42 shots and 78 segments of 1.0 to 4.9 s.
+  Cosmos-Embed1's frame-count rule still applies to short segments (see above). A long shot is only divided by length, not by
+  content, so a video with few cuts (a lecture, a long take) ends up like fixed segments; raise the sensitivity to find more.
+
+**Seeing the segments of an index.** In the Analyze view, expand an index in *Multimodal Embedding Indexes* and click **View
+segments**. A timeline draws every segment to scale. By shot, the blocks of one shot share a colour, shots alternate between
+two colours, and a long shot that was divided shows as several blocks of one colour separated by thin lines; fixed-length
+indexes alternate colours segment by segment. Hover a block for its time range, length and shot piece, zoom up to 16x for dense
+passages, open the list for exact times, and click a block (or a row) to play that range in the video player above. The data
+comes from `POST /v1/model/embedding-segments {TaskId}`, which reads the stored vectors, so it works for every index; the shot
+grouping comes from the `SegmentMap` the embedding worker records for tasks made by shot, so a shot task made before that
+existed lists its segments without the shot grouping.
 
 **Inputs.** The Omni server has no "modality" setting: what it embeds is whichever fields you send in `/embed`
 (`video`, `audio`, `image`, `text`). The UI mirrors that with a checkbox per input, and the default is **video only**.

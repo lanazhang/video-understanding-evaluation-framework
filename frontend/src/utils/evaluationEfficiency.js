@@ -1,8 +1,5 @@
-// Processing time, token use and cost of the analysis behind an evaluation, to show next to its quality metrics.
+// Processing time and token use of the analysis behind an evaluation, to show next to its quality metrics.
 // Reads the analyze task that the evaluation was made from (task.analyzeTask) and the video (task.video).
-import { modelGroups } from '../static/modelConfig'
-
-const findModel = (modelId) => modelGroups.flatMap(g => g.models).find(m => m.modelId === modelId)
 const positive = (value) => (Number(value) > 0 ? Number(value) : null)
 
 export function evaluationEfficiency(task) {
@@ -17,27 +14,12 @@ export function evaluationEfficiency(task) {
   const inputTokens = Number(result.InputTokens ?? meta.inputTokens) || 0
   const outputTokens = Number(meta.outputTokens) || 0
 
-  const pricing = findModel(analyze.ModelId)?.pricing
-  let cost = null
-  if (pricing) {
-    if (pricing.inputTokensPer1M || pricing.outputTokensPer1M) {
-      cost = (inputTokens * (pricing.inputTokensPer1M || 0) + outputTokens * (pricing.outputTokensPer1M || 0)) / 1e6
-    } else if (pricing.perMinuteVideo && videoSeconds) {
-      cost = (videoSeconds / 60) * pricing.perMinuteVideo
-    } else if (pricing.perSecondVideo && videoSeconds) {
-      cost = videoSeconds * pricing.perSecondVideo
-    }
-  }
-
   return {
     seconds,
     videoSeconds,
     speed: seconds && videoSeconds ? videoSeconds / seconds : null,   // how many times faster than real time
     inputTokens,
     outputTokens,
-    cost,
-    costPerVideoMinute: cost !== null && videoSeconds ? cost / (videoSeconds / 60) : null,
-    pricingConfigured: Boolean(pricing),
   }
 }
 
@@ -46,11 +28,6 @@ export function formatDuration(seconds) {
   if (seconds < 60) return `${seconds.toFixed(1)} s`
   const minutes = Math.floor(seconds / 60)
   return `${minutes} m ${Math.round(seconds - minutes * 60)} s`
-}
-
-export function formatCost(cost) {
-  if (cost === null || cost === undefined) return 'N/A'
-  return cost < 0.01 && cost > 0 ? `$${cost.toFixed(4)}` : `$${cost.toFixed(2)}`
 }
 
 // What each efficiency figure means: a short line for the cards and the full definition for the info tooltip
@@ -74,14 +51,7 @@ export const EFFICIENCY_DEFINITIONS = {
     title: 'Tokens',
     formula: 'Sum of the tokens the model reported, input and output',
     details: 'Embedding models report input tokens only. Some servers (for example Omni-Embed) do not report tokens at all, so the figure is then absent.',
-    interpretation: 'Drives token-priced cost. Not comparable between models that tokenize video differently.',
-  },
-  Cost: {
-    description: 'Estimated cost of the analysis',
-    title: 'Cost',
-    formula: 'input tokens x input price + output tokens x output price, or video minutes x per-minute price',
-    details: 'Uses the price configured for the model in the model registry. N/A means no pricing is configured, which is the case for self-hosted models.',
-    interpretation: 'Lower is cheaper. Hover the value for the cost per minute of video when it can be computed.',
+    interpretation: 'Not comparable between models that tokenize video differently.',
   },
 }
 
@@ -94,13 +64,5 @@ export function efficiencyRows(task) {
   if (e.inputTokens || e.outputTokens) {
     rows.push({ label: 'Tokens', value: `${e.inputTokens.toLocaleString()} in${e.outputTokens ? ` / ${e.outputTokens.toLocaleString()} out` : ''}`, description: EFFICIENCY_DEFINITIONS.Tokens.description })
   }
-  rows.push({
-    label: 'Cost',
-    description: EFFICIENCY_DEFINITIONS.Cost.description,
-    value: e.cost !== null ? formatCost(e.cost) : 'N/A',
-    title: e.cost !== null
-      ? (e.costPerVideoMinute !== null ? `${formatCost(e.costPerVideoMinute)} per minute of video` : undefined)
-      : (e.pricingConfigured ? 'Pricing is configured but the inputs needed to price this task are missing' : 'No pricing configured for this model (self-hosted models are free per call)'),
-  })
   return rows
 }

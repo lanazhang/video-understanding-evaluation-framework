@@ -55,16 +55,18 @@ def resolve_parameters(spec, requested):
             wanted = raw if isinstance(raw, list) else ([raw] if _present(raw) else [])
             value = [v for v in valid if v in wanted] or list(default or valid[:1])  # keep declared order, drop unknowns
         elif kind == "select":
-            options = param.get("options", [])
+            # options are plain values, or {value, label} for a readable list in the UI
+            options = [o["value"] if isinstance(o, dict) else o for o in param.get("options", [])]
             try:
                 value = type(default)(raw) if _present(raw) else default
             except (TypeError, ValueError):
                 value = default
             if value not in options:
                 value = default
-        else:  # number
+        else:  # number (whole by default; `float: true` keeps decimals)
+            parse = float if param.get("float") else (lambda x: int(float(x)))
             try:
-                value = int(float(raw)) if _present(raw) else default
+                value = parse(raw) if _present(raw) else default
             except (TypeError, ValueError):
                 value = default
             if value is not None:
@@ -77,7 +79,15 @@ def default_task_name(spec, params):
     """e.g. omni-embed-nemotron-3b-5s-video+audio-separate-1024d (same pattern as the UI's default name)."""
     short = re.sub(r"\s*\(.*\)\s*$", "", spec.name or spec.id.split("/")[-1]).replace(" ", "-").lower()
     inputs = params.get("Inputs") or ["video"]
-    parts = [short, f"{params.get('DurationS')}s", "+".join(inputs)]
+    if params.get("SegmentMode") == "shots":   # DurationS is then the longest a segment may be
+        segment = f"shots-max{params.get('DurationS')}s"
+        if params.get("ShotThreshold") not in (None, 0.3):
+            segment += f"-th{params['ShotThreshold']:g}"
+        if params.get("MinShotS") not in (None, 1, 1.0):
+            segment += f"-min{params['MinShotS']:g}s"
+    else:
+        segment = f"{params.get('DurationS')}s"
+    parts = [short, segment, "+".join(inputs)]
     if len(inputs) > 1 and params.get("Combine") is False:
         parts.append("separate")
     dim = params.get("EmbeddingDim")

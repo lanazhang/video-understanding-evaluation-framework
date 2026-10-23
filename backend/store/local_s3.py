@@ -104,7 +104,7 @@ def public_base_url() -> str:
 
 
 def _etag(path: Path) -> str:
-    h = hashlib.md5()
+    h = hashlib.md5(usedforsecurity=False)  # S3-style ETag, not a security use
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)

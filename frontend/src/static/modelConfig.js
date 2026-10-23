@@ -68,6 +68,8 @@ function toEmbeddingModel(m) {
     dims: m.dims ? [m.dims] : [],
     maxVideoSeconds: m.maxClipSeconds || undefined,
     parameters: m.parameters || [],
+    // model pages (Hugging Face, NGC ...); only https links are kept
+    links: (m.links || []).filter(l => l && /^https:\/\//i.test(l.url || '')),
     provider: m.provider,
     pricing: toPricing(m.pricing),
   }

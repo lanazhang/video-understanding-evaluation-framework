@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { FetchPost } from '../../utils/apiHelper'
 import './SearchIndexModal.css'
 import { searchEndpoint } from '../../utils/embeddingTasks'
-import { embeddingTaskParamRows } from '../../utils/embeddingParams'
+import { embeddingTaskParamRows, segmentSummary } from '../../utils/embeddingParams'
 
 function SearchIndexModal({ 
   selectedVideo,
@@ -160,7 +160,7 @@ function SearchIndexModal({
                     <span className="metadata-separator">•</span>
                     <span className="metadata-value">{selectedAnalyzeTask?.Request?.EmbedMode || 'N/A'}</span>
                     <span className="metadata-separator">•</span>
-                    <span className="metadata-value">{selectedAnalyzeTask?.Request?.DurationS || 'N/A'}s</span>
+                    <span className="metadata-value">{segmentSummary(selectedAnalyzeTask?.Request)}</span>
                   </>
                 )}
                 {selectedAnalyzeTask?.Type === 'embedding' && embeddingTaskParamRows(selectedAnalyzeTask).filter(r => r.label !== 'Provider' && r.label !== 'Input Tokens').map(row => (

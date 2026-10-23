@@ -6,6 +6,8 @@ import './VideoUnderstandingReview.css'
 import { FetchPost } from '../../utils/apiHelper'
 import ManualLabel from './ManualLabel'
 import { embeddingLabel, searchEndpoint } from '../../utils/embeddingTasks'
+import { segmentSummary, embeddingTaskTitle } from '../../utils/embeddingParams'
+
 
 function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults = [] }) {
   const [activeTab, setActiveTab] = useState('embedding')
@@ -584,13 +586,14 @@ function EmbeddingSearch({ video, onNext, initialSearches = [], initialResults =
                     className="index-card clickable"
                     onClick={() => handleSelectTask(task)}
                   >
+                    <div className="index-card-name">{embeddingTaskTitle(task)}</div>
                     <div className="index-card-header">
                       <span className="index-model">{task.ModelId}</span>
                       <span className="index-type">{embeddingLabel(task)}</span>
                     </div>
                     <div className="index-card-details">
                       {task.Type === 'nova-mme' || task.Type === 'embedding' ? (
-                        <span>{task.Request?.DurationS}s • {task.Type === 'embedding' ? `${task.Request?.EmbeddingDim}d` : task.Request?.EmbedMode}</span>
+                        <span>{segmentSummary(task.Request)} • {task.Type === 'embedding' ? `${task.Request?.EmbeddingDim}d` : task.Request?.EmbedMode}</span>
                       ) : (
                         <span>{task.Request?.segmentation?.method || task.Request?.Segmentation?.Method}</span>
                       )}

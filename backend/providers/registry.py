@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from .cosmos_embed import CosmosEmbedProvider
 from .omni_embed import OmniEmbedProvider
 from .openai_compat import OpenAICompatProvider
 
@@ -44,10 +45,21 @@ class Registry:
         raw = _expand(raw or {})
         self.provider_cfg: dict[str, dict] = raw.get("providers", {})
         self.models: dict[str, ModelSpec] = {}
+        # Options every embedding model offers (how the video is segmented): declared once in models.yaml and added to each
+        # embedding model's own `parameters`, right after its DurationS. A model can override one by declaring the same key.
+        shared = list(raw.get("embedding_parameters") or [])
         for m in raw.get("models", []):
             known = {f for f in ModelSpec.__dataclass_fields__ if f != "extra"}
             spec = ModelSpec(**{k: v for k, v in m.items() if k in known})
             spec.extra = {k: v for k, v in m.items() if k not in known}
+            if spec.task == "embedding" and shared:
+                own = list(spec.extra.get("parameters") or [])
+                have = {p["key"] for p in own}
+                at = next((i for i, p in enumerate(own) if p["key"] == "DurationS"), -1) + 1
+                if any(p["key"] == "SegmentMode" for p in shared):
+                    # by shot, DurationS is the longest a segment may be: say so in the label instead of "Segment Duration"
+                    own = [({**p, "labelIf": {"key": "SegmentMode", "equals": "shots", "label": "Longest segment"}} if p["key"] == "DurationS" and "labelIf" not in p else p) for p in own]
+                spec.extra["parameters"] = own[:at] + [dict(p) for p in shared if p["key"] not in have] + own[at:]
             if spec.id:
                 self.models[spec.id] = spec
         self._providers: dict[str, object] = {}
@@ -69,6 +81,10 @@ class Registry:
                 )
             elif kind == "omni_embed":
                 self._providers[name] = OmniEmbedProvider(
+                    name=name, base_url=cfg.get("base_url", ""), timeout_s=float(cfg.get("timeout_s", 300))
+                )
+            elif kind == "cosmos_embed":
+                self._providers[name] = CosmosEmbedProvider(
                     name=name, base_url=cfg.get("base_url", ""), timeout_s=float(cfg.get("timeout_s", 300))
                 )
             else:
@@ -100,6 +116,7 @@ class Registry:
                 "dims": spec.extra.get("dims"),
                 "maxClipSeconds": spec.extra.get("max_clip_seconds"),
                 "parameters": spec.extra.get("parameters", []),
+                "links": spec.extra.get("links", []),
                 "pricing": spec.pricing,
                 "available": available,
                 "default": spec.provider == self.default_provider,

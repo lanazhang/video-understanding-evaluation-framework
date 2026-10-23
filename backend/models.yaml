@@ -37,12 +37,64 @@ providers:
     base_url: ${OMNI_EMBED_BASE_URL:-http://localhost:8002}
     timeout_s: 300
 
+  # Cosmos-Embed1 NIM (text and video -> 256-d) on Brev (instance cosmos-embed1). NVIDIA NIM API: like OpenAI embeddings but
+  # needs `request_type`, so it has its own type. Reach it with:  brev port-forward cosmos-embed1 -p 8012:8000
+  brev_cosmos:
+    type: cosmos_embed
+    base_url: ${COSMOS_EMBED_BASE_URL:-http://localhost:8012}
+    timeout_s: 300
+
   # Any other OpenAI-compatible server (vLLM, Ollama, OpenAI ...). Enabled when OPENAI_COMPAT_BASE_URL is set.
   custom:
     type: openai_compat
     base_url: ${OPENAI_COMPAT_BASE_URL:-}
     api_key_env: OPENAI_COMPAT_API_KEY
     api_key_required: false
+
+# How a video is cut into segments, offered by EVERY embedding model (added to each model's own `parameters`, after its
+# DurationS). "Fixed length" cuts every DurationS seconds. "By shot" follows the shots of the video, found with ffmpeg's
+# scene-change detection, and then makes the pieces a usable size: a shot longer than DurationS is divided evenly, a shot
+# shorter than MinShotS is joined with its neighbour.
+embedding_parameters:
+  - key: SegmentMode
+    label: Segmenting
+    type: select
+    options:
+      - {value: fixed, label: Fixed length}
+      - {value: shots, label: By shot}
+    default: fixed
+    hint: >-
+      Fixed length cuts a segment every "Segment Duration" seconds, wherever the picture is. By shot cuts where the picture
+      changes (detected with ffmpeg), so a segment is one continuous scene. In this mode the first field changes from "Segment
+      Duration" to "Longest segment": a shot longer than that is divided EVENLY into the fewest pieces that fit (a 13 s shot with
+      a 5 s maximum becomes three 4.3 s segments, not 5 + 5 + 3), and a shot shorter than "Shortest segment" is joined with the
+      shot after it.
+  - key: ShotThreshold
+    label: Shot sensitivity
+    type: number
+    float: true
+    step: 0.05
+    min: 0.05
+    max: 0.9
+    default: 0.3
+    showIf: {key: SegmentMode, equals: shots}
+    hint: >-
+      How much the picture must change between two frames to count as a cut (ffmpeg's scene score, 0 to 1). Lower finds more
+      cuts, including soft ones; higher keeps only hard cuts. 0.3 suits most footage.
+  - key: MinShotS
+    label: Shortest segment
+    type: number
+    float: true
+    step: 0.5
+    unit: s
+    min: 0.5
+    max: 10
+    default: 1
+    showIf: {key: SegmentMode, equals: shots}
+    explain: shots      # the form prints a short, always-visible explanation of the shot rules after this field
+    hint: >-
+      A shot shorter than this is joined with the shot after it (a short last shot, with the one before), so flashes and
+      quick cuts do not become tiny segments.
 
 models:
   # --- embeddings -----------------------------------------------------------
@@ -60,6 +112,8 @@ models:
     segment_max_side: 480
     concurrency: 2               # the vLLM server runs --max-num-seqs 2
     pricing: null
+    links:
+      - {label: Hugging Face, url: "https://huggingface.co/Qwen/Qwen3-VL-Embedding-8B"}
     # What the user can set per task (rendered by the UI, validated by the backend). Keys are stored on the
     # task's Request. type: number (min/max) | select (options) | boolean | multiselect (options: [{value,label}]). Frame rate and resolution decide
     # the token cost of each segment (context limit 8192).
@@ -97,6 +151,8 @@ models:
     segment_max_side: 480
     concurrency: 2               # the server runs one forward pass at a time; 2 keeps it fed while ffmpeg works
     pricing: null
+    links:
+      - {label: Hugging Face, url: "https://huggingface.co/nvidia/omni-embed-nemotron-3b"}
     parameters:
       - {key: DurationS, label: Segment Duration, type: number, unit: s, min: 2, max: 60, default: 5}
       - key: Inputs
@@ -121,6 +177,47 @@ models:
         hint: >-
           Fixed at 2048: the Omni-Embed-Nemotron model card lists a single output size and the server has no dimensions
           option. The app never cuts vectors itself.
+
+  # Cosmos-Embed1 NIM (224p model, TensorRT + Triton). Verified against the live NIM: text and base64 mp4 queries, 256-d unit
+  # vectors, ~0.7 s per text query and 1-4 s per 5 s clip. It decodes and resizes video itself and samples 8 frames per clip,
+  # so the app only cuts the segment. Video and text only: no audio, no image keyframes. The NIM recommends ~15 s clips.
+  - id: ${COSMOS_EMBED_MODEL:-nvidia/cosmos-embed1}
+    name: Cosmos-Embed1 (NIM, Brev)
+    provider: brev_cosmos
+    task: embedding
+    dims: 256
+    max_clip_seconds: 30
+    segment_fps: 4               # the NIM takes 8 frames per clip; 4 fps gives it enough on short segments
+    segment_max_side: 448        # the model works at 224 px; this keeps the upload small without hurting it
+    min_frames: 8                # the NIM samples 8 frames per clip and fails on fewer (6 and 7 failed, 8 worked), so short
+                                 # segments such as the tail of a video are cut at a higher frame rate
+    concurrency: 4              # Triton batches concurrent requests on the L4
+    pricing: null                # self-hosted
+    # Where to read about the model, shown as links under the model choice (https only). They name the default model; if you
+    # point COSMOS_EMBED_MODEL at another one, change these too.
+    links:
+      - {label: NGC (NIM container), url: "https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos-embed1"}
+      - {label: build.nvidia.com, url: "https://build.nvidia.com/nvidia/cosmos-embed1"}
+      - {label: Hugging Face (model), url: "https://huggingface.co/nvidia/Cosmos-Embed1-224p"}
+    parameters:
+      - key: DurationS
+        label: Segment Duration
+        type: number
+        unit: s
+        min: 2
+        max: 30
+        default: 5
+        hint: >-
+          Each segment becomes one vector from 8 sampled frames. NVIDIA recommends about 15 s per clip and the NIM does not
+          enforce a maximum; shorter segments locate moments more precisely.
+      - key: EmbeddingDim
+        label: Dimension
+        type: select
+        options: [256]
+        default: 256
+        hint: >-
+          Fixed at 256: the NIM serves the 224p model, returns one size and rejects a dimensions option. The app never cuts
+          vectors itself.
 
   # --- video understanding --------------------------------------------------
   # Model ids below come from NVIDIA's docs/catalog pages and are NOT verified against a live endpoint.

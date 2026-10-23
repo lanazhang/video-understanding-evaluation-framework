@@ -489,3 +489,13 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* the index's full name, never cut: it says how the index was built (model, segmenting, inputs) */
+.index-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

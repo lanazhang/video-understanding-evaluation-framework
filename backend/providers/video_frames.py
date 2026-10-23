@@ -28,6 +28,22 @@ def probe_duration(path) -> float | None:
     return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
 
 
+def detect_shots(path, threshold=0.3, analysis_fps=10, analysis_width=320, timeout_s=1800) -> list[float]:
+    """Times (seconds) where the picture cuts to a new shot, from ffmpeg's scene-change score (0..1, the share of the picture
+    that changed between two frames; higher = only harder cuts count).
+
+    The video is decoded once, at a low frame rate and size, so this is much faster than playing it: a few seconds per
+    minute of HD video. The returned time is the first frame of the new shot. Soft transitions (fades) may be missed or give
+    one cut; lowering the threshold finds more cuts, raising it fewer."""
+    vf = f"fps={int(analysis_fps)},scale={int(analysis_width)}:-2,select='gt(scene,{float(threshold)})',showinfo"
+    cmd = [_ffmpeg(), "-hide_banner", "-nostats", "-i", str(path), "-an", "-sn", "-vf", vf, "-f", "null", "-"]
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
+    if proc.returncode != 0:
+        raise RuntimeError(f"shot detection failed: {proc.stderr.strip()[-300:] or 'ffmpeg error'}")
+    times = sorted({round(float(t), 3) for t in re.findall(r"pts_time:\s*([0-9]+(?:\.[0-9]+)?)", proc.stderr)})
+    return [t for t in times if t > 0]
+
+
 def sample_frames(path, duration: float | None, max_frames=32, max_side=768, min_interval=1.0, timeout_s=600):
     """Evenly sample up to max_frames JPEGs. Returns (frames, interval_s) with frames = [(timestamp_s, jpeg_bytes)]."""
     if not duration or duration <= 0:

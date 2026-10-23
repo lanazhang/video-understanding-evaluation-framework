@@ -21,6 +21,7 @@ ROUTES = {
     # local runtime: provider-based embeddings (Qwen3-VL on Brev by default)
     "/v1/model/start-embedding": "eval-srv-api-start-embedding",
     "/v1/model/embedding-search": "eval-srv-api-embedding-search",
+    "/v1/model/embedding-segments": "eval-srv-api-embedding-segments",
     "/v1/model/nova-mme-search-vector": "eval-srv-api-nova-mme-search-vector",
     "/v1/model/tlabs-mme-search-vector": "eval-srv-api-tlabs-mme-search-vector",
     "/v1/model/tlabs-pegasus": "eval-srv-api-tlabs-pegasus",

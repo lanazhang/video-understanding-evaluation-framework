@@ -8,7 +8,7 @@ pyyaml>=6.0
 moviepy>=2.2         # video metadata and thumbnails
 imageio-ffmpeg>=0.5  # bundled ffmpeg: segment, keyframe and audio extraction
 numpy>=1.26          # embedding vectors, cosine search
-pillow>=10.0         # thumbnails
+pillow>=10.0         # thumbnails. moviepy 2.2 needs pillow<12, so the Pillow CVEs fixed in 12.x/13.x cannot be taken until moviepy is replaced
 
 # Optional providers: install only what you use. Without them these handlers fail to import and say so.
 #   Gemini (video understanding):          pip install google-genai

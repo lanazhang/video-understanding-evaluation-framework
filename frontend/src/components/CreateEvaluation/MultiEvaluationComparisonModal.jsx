@@ -12,6 +12,15 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
 
   const timelineRefs = useRef({})
 
+  // Score of an evaluation result is its distance to the query (cosine, lower = closer); rank 1 is the closest in its evaluation
+  const scoreOf = (label) => (label && label.Score !== null && label.Score !== undefined && Number.isFinite(Number(label.Score)) ? Number(label.Score) : null)
+  const formatScore = (v) => v.toFixed(3)
+  const rankResults = (labels) => labels
+    .map((label, idx) => ({ label, idx, score: scoreOf(label) }))
+    .filter(r => r.score !== null)
+    .sort((a, b) => (a.score - b.score) || (a.idx - b.idx))
+  const statusOf = (task, idx) => task.matchingDetails?.predMatches?.find(m => m.predIndex === idx)?.status || null
+
   useEffect(() => {
     const videoElement = videoRef.current
     if (!videoElement) return
@@ -66,7 +75,7 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
     setHoveredSegment(null)
   }
 
-  const handleSegmentClick = (startTime, endTime, label, type, status, taskName, e) => {
+  const handleSegmentClick = (startTime, endTime, label, type, status, taskName, e, score = null, rank = null, rankedOf = null) => {
     e.stopPropagation()
     
     setSelectedRange({
@@ -75,7 +84,10 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
       startTime,
       endTime,
       status,
-      taskName
+      taskName,
+      score,
+      rank,
+      rankedOf
     })
     
     if (videoRef.current) {
@@ -162,6 +174,9 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
             {/* Evaluation Result Timelines */}
             {evaluationTasks.map((task, taskIdx) => {
               const evalLabels = task.Labels || []
+              const ranked = rankResults(evalLabels)
+              const rankOf = {}
+              ranked.forEach((r, i) => { rankOf[r.idx] = i + 1 })
               
               return (
                 <div key={taskIdx} className="timeline-row">
@@ -178,14 +193,7 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
                       const startPercent = (label.StartTs / duration) * 100
                       const widthPercent = ((label.EndTs - label.StartTs) / duration) * 100
                       
-                      // Get status from matching details if available
-                      let status = null
-                      if (task.matchingDetails?.predMatches) {
-                        const match = task.matchingDetails.predMatches.find(m => m.predIndex === idx)
-                        if (match) {
-                          status = match.status
-                        }
-                      }
+                      const status = statusOf(task, idx)
                       
                       return (
                         <div
@@ -195,18 +203,22 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
                             left: `${startPercent}%`,
                             width: `${widthPercent}%`
                           }}
-                          onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'Search Result', 'Evaluation Result', status, task.taskName || task.Name, e)}
+                          onClick={(e) => handleSegmentClick(label.StartTs, label.EndTs, label.Label || 'Search Result', 'Evaluation Result', status, task.taskName || task.Name, e, scoreOf(label), rankOf[idx], ranked.length)}
                           onMouseEnter={(e) => handleSegmentHover({
                             type: 'Evaluation Result',
                             label: label.Label || 'Search Result',
                             start: label.StartTs,
                             end: label.EndTs,
                             status,
-                            taskName: task.taskName || task.Name
+                            taskName: task.taskName || task.Name,
+                            score: scoreOf(label),
+                            rank: rankOf[idx]
                           }, e)}
                           onMouseMove={(e) => setTooltipPosition({ x: e.clientX, y: e.clientY })}
                           onMouseLeave={handleSegmentLeave}
-                        />
+                        >
+                          {rankOf[idx] && <span className="segment-score">#{rankOf[idx]}</span>}
+                        </div>
                       )
                     })}
                   </div>
@@ -218,6 +230,42 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
               {formatTime(currentTime)} / {formatTime(duration)}
             </div>
           </div>
+
+          {evaluationTasks.some(t => rankResults(t.Labels || []).length > 0) && (
+            <div className="results-by-score">
+              <div className="results-by-score-title">
+                Results by score <span className="results-by-score-hint">distance to the query, lower is closer; click to play</span>
+              </div>
+              {evaluationTasks.map((task, taskIdx) => {
+                const ranked = rankResults(task.Labels || [])
+                if (ranked.length === 0) return null
+                const name = task.taskName || task.Name
+                return (
+                  <div key={taskIdx} className="results-by-score-task">
+                    <div className="results-by-score-task-name">{name}</div>
+                    <div className="results-by-score-list">
+                      {ranked.map((r, i) => {
+                        const status = statusOf(task, r.idx)
+                        return (
+                          <button
+                            key={r.idx}
+                            type="button"
+                            className={`result-score-item ${status ? `status-${status.toLowerCase()}` : ''}`}
+                            onClick={(e) => handleSegmentClick(r.label.StartTs, r.label.EndTs, r.label.Label || 'Search Result', 'Evaluation Result', status, name, e, r.score, i + 1, ranked.length)}
+                          >
+                            <span className="result-score-rank">#{i + 1}</span>
+                            <span className="result-score-time">{formatTime(r.label.StartTs)} - {formatTime(r.label.EndTs)}</span>
+                            <span className="result-score-value">{formatScore(r.score)}</span>
+                            {status && <span className={`status-badge ${status.toLowerCase()}`}>{status}</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {selectedRange && (
             <div className="selected-range-info">
@@ -252,6 +300,14 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
                     {selectedRange.startTime.toFixed(2)}s - {selectedRange.endTime.toFixed(2)}s
                   </span>
                 </div>
+                {selectedRange.score !== null && selectedRange.score !== undefined && (
+                  <div className="range-info-item">
+                    <span className="range-info-label">Score:</span>
+                    <span className="range-info-value">
+                      {formatScore(selectedRange.score)} distance (lower is closer){selectedRange.rank ? `, rank ${selectedRange.rank} of ${selectedRange.rankedOf}` : ''}
+                    </span>
+                  </div>
+                )}
                 <div className="range-info-item">
                   <span className="range-info-label">Duration:</span>
                   <span className="range-info-value">
@@ -285,6 +341,11 @@ function MultiEvaluationComparisonModal({ video, groundTruthLabels, evaluationTa
               <div className="tooltip-time">
                 {hoveredSegment.start.toFixed(2)}s - {hoveredSegment.end.toFixed(2)}s
               </div>
+              {hoveredSegment.score !== null && hoveredSegment.score !== undefined && (
+                <div className="tooltip-time">
+                  Score {formatScore(hoveredSegment.score)} (distance){hoveredSegment.rank ? `, rank ${hoveredSegment.rank}` : ''}
+                </div>
+              )}
             </div>
           )}
         </div>

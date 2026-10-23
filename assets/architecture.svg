@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
   <title id="t">Local architecture of the video understanding evaluation framework</title>
-  <desc id="d">A React web UI talks to a FastAPI backend that runs the Lambda handlers on a boto3 compatibility layer backed by SQLite and local files. An embedding worker and a model registry call NVIDIA-hosted models on Brev and NIM, and optional Gemini or Bedrock providers.</desc>
+  <desc id="d">A React web UI talks to a FastAPI backend that runs the request handlers on a local storage layer backed by SQLite and local files. An embedding worker and a model registry call NVIDIA-hosted models on Brev and NIM, and optional providers such as Gemini.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#57606a"/>
@@ -9,7 +9,7 @@
 
   <rect width="1200" height="780" fill="#ffffff"/>
   <text x="30" y="40" font-size="22" font-weight="700" fill="#1f2328">Local architecture</text>
-  <text x="30" y="62" font-size="13" fill="#57606a">Everything runs on one machine; only the models are remote (NVIDIA Brev / NIM) or on your network.</text>
+  <text x="30" y="62" font-size="13" fill="#57606a">The app runs on one machine; models are hosted separately (NVIDIA Brev / NIM, vLLM, your network) and called over HTTP.</text>
 
   <!-- ===== Web UI ===== -->
   <rect x="30" y="90" width="220" height="440" rx="10" fill="#fff6ec" stroke="#f58220" stroke-width="1.5"/>
@@ -27,7 +27,7 @@
   <text x="58" y="430" font-size="12" fill="#57606a">Matching and metrics:</text>
   <text x="58" y="447" font-size="12" fill="#57606a">Precision, Recall, F1, mAP,</text>
   <text x="58" y="464" font-size="12" fill="#57606a">Recall@K, MRR, NDCG@10,</text>
-  <text x="58" y="481" font-size="12" fill="#57606a">efficiency (time, tokens, cost)</text>
+  <text x="58" y="481" font-size="12" fill="#57606a">efficiency (time, tokens)</text>
   <text x="58" y="502" font-size="12" fill="#57606a">No login: one local user</text>
 
   <!-- UI <-> backend -->
@@ -47,17 +47,17 @@
   <text x="330" y="189" font-size="12" fill="#57606a">app.py, handlers.py: POST /v1/... runs the matching handler, on demand</text>
 
   <rect x="316" y="208" width="528" height="52" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
-  <text x="330" y="228" font-size="13" font-weight="700" fill="#1f2328">Handlers (backend/lambdas, 27)</text>
-  <text x="330" y="246" font-size="12" fill="#57606a">videos, analysis tasks, ground truth, evaluations, search; the original Lambda code</text>
+  <text x="330" y="228" font-size="13" font-weight="700" fill="#1f2328">Request handlers (27 endpoints)</text>
+  <text x="330" y="246" font-size="12" fill="#57606a">videos, analysis tasks, ground truth, evaluations, search; one folder per endpoint</text>
 
   <rect x="316" y="270" width="528" height="104" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
-  <text x="330" y="290" font-size="13" font-weight="700" fill="#1f2328">boto3 compatibility layer (local_aws.py)</text>
-  <text x="330" y="306" font-size="11" fill="#57606a">the handlers call boto3 as before; each AWS service is swapped for a local one</text>
+  <text x="330" y="290" font-size="13" font-weight="700" fill="#1f2328">Local storage layer</text>
+  <text x="330" y="306" font-size="11" fill="#57606a">files, records, vectors and background jobs all stay on your machine</text>
   <g font-size="12" fill="#1f2328">
-    <rect x="330" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="389" y="337" text-anchor="middle">S3</text><text x="389" y="353" text-anchor="middle" fill="#57606a">local files</text>
-    <rect x="456" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="515" y="337" text-anchor="middle">DynamoDB</text><text x="515" y="353" text-anchor="middle" fill="#57606a">SQLite tables</text>
-    <rect x="582" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="641" y="337" text-anchor="middle">Lambda invoke</text><text x="641" y="353" text-anchor="middle" fill="#57606a">thread pool</text>
-    <rect x="708" y="316" width="122" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="769" y="337" text-anchor="middle">S3 Vectors</text><text x="769" y="353" text-anchor="middle" fill="#57606a">SQLite vectors</text>
+    <rect x="330" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="389" y="337" text-anchor="middle">Videos</text><text x="389" y="353" text-anchor="middle" fill="#57606a">local files</text>
+    <rect x="456" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="515" y="337" text-anchor="middle">Records</text><text x="515" y="353" text-anchor="middle" fill="#57606a">SQLite tables</text>
+    <rect x="582" y="316" width="118" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="641" y="337" text-anchor="middle">Background jobs</text><text x="641" y="353" text-anchor="middle" fill="#57606a">thread pool</text>
+    <rect x="708" y="316" width="122" height="48" rx="5" fill="#f6f8fa" stroke="#d0d7de"/><text x="769" y="337" text-anchor="middle">Vectors</text><text x="769" y="353" text-anchor="middle" fill="#57606a">SQLite vectors</text>
   </g>
 
   <rect x="316" y="386" width="258" height="130" rx="6" fill="#ffffff" stroke="#9ec5f0"/>
@@ -101,7 +101,7 @@
 
   <rect x="930" y="492" width="240" height="92" rx="10" fill="#ffffff" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="6 4"/>
   <text x="946" y="516" font-size="13" font-weight="700" fill="#1f2328">Optional providers</text>
-  <text x="946" y="536" font-size="12" fill="#57606a">Google Gemini, AWS Bedrock</text>
+  <text x="946" y="536" font-size="12" fill="#57606a">Google Gemini and others</text>
   <text x="946" y="554" font-size="12" fill="#57606a">(plug in with an API key; not</text>
   <text x="946" y="570" font-size="12" fill="#57606a">needed for the default setup)</text>
 

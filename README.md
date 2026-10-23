@@ -2,9 +2,9 @@
 
 A flexible tool that streamlines video labeling and evaluation, enabling teams to work with their own data, reduce ground-truth bias, and accelerate model development.
 
-> **Branches.** `main` runs entirely on your machine (FastAPI + SQLite + local files, models on NVIDIA Brev / NIM / any
-> OpenAI-compatible endpoint). The original AWS serverless version (Lambda, API Gateway, DynamoDB, S3, Bedrock, Cognito and
-> the CDK deployment) is kept on the [`aws-original`](https://github.com/lanazhang/video-understanding-evaluation-framework/tree/aws-original) branch.
+> The app runs entirely on your machine (FastAPI + SQLite + local files). It does not deploy or host models: it calls model
+> endpoints that you run separately, wherever you choose (for example NVIDIA NIM on Brev, vLLM, or any OpenAI-compatible
+> server), and you obtain each model under its own license.
 
 ## Why This Matters
 
@@ -29,7 +29,7 @@ This framework helps teams quickly assess customer-provided videos and recommend
 ### Key Features
 
 - **User-uploaded videos & custom labeling**: Efficiently label videos for specific use cases, reducing dependence on public/licensed datasets and minimizing ground-truth bias
-- **Cross-model comparison**: Compare video understanding (frame-sampling) and embedding-based methods side by side. NVIDIA-hosted models are the default (Qwen3-VL-Embedding-8B, Omni-Embed-Nemotron-3B, Cosmos-Embed1, NIM / OpenAI-compatible vision-language models); Gemini, Bedrock and other providers can be plugged in through `backend`'s model registry
+- **Cross-model comparison**: Compare video understanding (frame-sampling) and embedding-based methods side by side. NVIDIA-hosted models are the default (Qwen3-VL-Embedding-8B, Omni-Embed-Nemotron-3B, Cosmos-Embed1, NIM / OpenAI-compatible vision-language models); Gemini and other providers can be plugged in through `backend`'s model registry
 - **Fixed or shot-based segmenting**: embed fixed-length segments, or let ffmpeg find the shots and cut there (long shots are divided evenly, tiny ones merged), for any embedding model
 - **See how a video was segmented**: each embedding index draws its segments on a timeline (shots, long shots divided, zoom, click to play)
 - **Human-in-the-loop efficiency**: Auto-label with a base model and quickly refine with human input, reducing labeling time from weeks to hours
@@ -40,9 +40,9 @@ This framework helps teams quickly assess customer-provided videos and recommend
 
 ![Local architecture](assets/architecture.svg)
 
-The web UI talks to a FastAPI backend over REST. The backend runs the original Lambda handlers in-process, with each AWS
-service replaced by a local one (S3 by files, DynamoDB and S3 Vectors by SQLite, Lambda invokes by a thread pool), so the
-whole app needs no AWS account and no Docker. Only the models are remote.
+The web UI talks to a FastAPI backend over REST. The backend runs the request handlers in-process on a local
+storage layer (videos as files, records and vectors in SQLite, background jobs on a thread pool), so the whole app needs no
+cloud account and no Docker. Models are served outside the app and reached over HTTP.
 
 - **Upload**: the UI sends the video to the backend, which stores it under `data/files/` and records its metadata
   (duration, resolution, thumbnail) in SQLite.
@@ -125,7 +125,7 @@ a new evaluation to get the corrected metrics. The settings used are stored with
 
 ## Getting Started
 
-### Run the full stack locally (no AWS, no Docker)
+### Run the full stack locally (no cloud account, no Docker)
 
 The backend (FastAPI + SQLite + local files) and the web UI run on your machine, and models run on NVIDIA
 NIM / Brev (or any OpenAI-compatible endpoint). Setup, start commands and troubleshooting are in
@@ -185,7 +185,7 @@ cd frontend
 npm run build
 ```
 
-The build output will be in the `frontend/dist` directory. You can deploy this folder to any static hosting service (AWS S3, Netlify, Vercel, GitHub Pages, etc.).
+The build output will be in the `frontend/dist` directory. You can deploy this folder to any static hosting service (Netlify, Vercel, GitHub Pages, any web server, etc.).
 
 **Subfolder Deployment**: The app is served from the root (`/`) by default. To deploy under a subfolder, build with
 the path set, e.g. `VITE_BASE_PATH=/my-app/ npm run build`, then deploy the `dist` folder to that subfolder of your domain.
@@ -200,4 +200,4 @@ npm run preview
 
 - React + Vite (frontend)
 - FastAPI, SQLite and local file storage (local runtime, see [backend/README.md](backend/README.md))
-- The API handlers in `backend/lambdas` come from the original AWS serverless stack (Lambda, API Gateway, DynamoDB, S3, Bedrock); the local runtime loads them with AWS replaced by local equivalents. The AWS deployment (CDK) is on the `aws-original` branch
+- The API handlers live in `backend/lambdas` (one folder per endpoint); the local runtime loads them in-process behind FastAPI, on the local storage layer described above
